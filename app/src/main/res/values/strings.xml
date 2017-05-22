@@ -1,5 +1,10 @@
 <resources>
     <string name="app_name">first</string>
-    <string name="edit_message">Enter a message</string>
+    <string name="edit_message">Enter a package name</string>
     <string name="button_send">Send</string>
+    <string name="button_send_now">SearchNow</string>
+    <string name="msg_tip">Enter a package name</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment"></string>
 </resources>
