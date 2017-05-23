@@ -37,12 +37,13 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, frg).commit();
         }
     }
+    //ListView项目点击事件，实现OnFrgActionListener接口
     public void onItemClick(View view) {
         TextView tv = (TextView)view;
         String str = tv.getText().toString().split("：")[1];
         ClipboardManager clm = (ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
         clm.setPrimaryClip(ClipData.newPlainText(null,str));
-        Toast.makeText(this,"已复制到剪贴板",Toast.LENGTH_SHORT).show();
+        Toast.makeText(this,R.string.clip_toast,Toast.LENGTH_SHORT).show();
     }
     public void sendMsg(View view){
         Intent intent = new Intent(this, DisplayMessageActivity.class);
@@ -51,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         intent.putExtra(EXTRA_MESSAGE,msg);
         startActivity(intent);
     }
+    //查询应用
     public void sendMsgNow(View view){
         BlankFragment frg = new BlankFragment();
         EditText et = (EditText)findViewById(R.id.edit_message);

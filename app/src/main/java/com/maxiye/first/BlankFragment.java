@@ -2,6 +2,7 @@ package com.maxiye.first;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -30,7 +31,6 @@ public class BlankFragment extends Fragment {
     public static final String ARG_1 = "param1";
     public static final String ARG_2 = "param2";
 
-    // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
 
@@ -48,7 +48,6 @@ public class BlankFragment extends Fragment {
      * @param param2 Parameter 2.
      * @return A new instance of fragment BlankFragment.
      */
-    // TODO: Rename and change types and number of parameters
     public static BlankFragment newInstance(String param1, String param2) {
         BlankFragment fragment = new BlankFragment();
         Bundle args = new Bundle();
@@ -95,8 +94,14 @@ public class BlankFragment extends Fragment {
             }catch (PackageManager.NameNotFoundException e){
                 for (ApplicationInfo ai:al){
                     if((ai.flags & ApplicationInfo.FLAG_SYSTEM) == 0){
-                        if((pm.getApplicationLabel(ai).toString()+ai.packageName).toLowerCase().indexOf(mParam1.toLowerCase())>=0){
-                            strs.add(pm.getApplicationLabel(ai).toString()+"："+ai.packageName);
+                        String app_name = pm.getApplicationLabel(ai).toString();
+                        if((app_name+ai.packageName).toLowerCase().indexOf(mParam1.toLowerCase())>=0){
+                            try{
+                                PackageInfo pi = pm.getPackageInfo(ai.packageName,0);
+                                strs.add(app_name+" v"+pi.versionName+"("+pi.versionCode+")："+ai.packageName);
+                            }catch (PackageManager.NameNotFoundException ee){
+                                strs.add(app_name+"："+ai.packageName);
+                            }
                         }
                     }
                 }
@@ -104,7 +109,7 @@ public class BlankFragment extends Fragment {
 //                    tv.setText(strs.toString());
                     lv.setAdapter(new ArrayAdapter<String>(getActivity(),android.R.layout.simple_list_item_1, (String[])strs.toArray(new String[strs.size()])));
                 }else{
-                    tv.setText("未找到");
+                    tv.setText(R.string.not_found);
                 }
 
 
@@ -112,7 +117,12 @@ public class BlankFragment extends Fragment {
         }else{
             for (ApplicationInfo ai:al){
                 if((ai.flags & ApplicationInfo.FLAG_SYSTEM) == 0){
-                    strs.add(pm.getApplicationLabel(ai)+"："+ai.packageName);
+                    try{
+                        PackageInfo pi = pm.getPackageInfo(ai.packageName,0);
+                        strs.add(pm.getApplicationLabel(ai)+" v"+pi.versionName+"("+pi.versionCode+")："+ai.packageName);
+                    }catch (PackageManager.NameNotFoundException e){
+                        strs.add(pm.getApplicationLabel(ai)+"："+ai.packageName);
+                    }
                 }
 
             }
@@ -120,12 +130,6 @@ public class BlankFragment extends Fragment {
                     android.R.layout.simple_list_item_1, (String[])strs.toArray(new String[strs.size()])));
         }
 
-    }
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(View view) {
-        if (mListener != null) {
-            mListener.onItemClick(view);
-        }
     }
 
     @Override
@@ -156,7 +160,6 @@ public class BlankFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFrgActionListener {
-        // TODO: Update argument type and name
         public void onItemClick(View view);
     }
 }

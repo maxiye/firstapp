@@ -1,10 +1,12 @@
 <resources>
     <string name="app_name">firstapp</string>
-    <string name="edit_message">Enter a package name</string>
+    <string name="edit_message">Packagename or appname</string>
     <string name="button_send">Send</string>
     <string name="button_send_now">SearchNow</string>
     <string name="msg_tip">Enter a package name</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment"></string>
+    <string name="clip_toast">Copied to clipboard</string>
+    <string name="not_found">Not Found</string>
 </resources>
