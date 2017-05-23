@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">首个app</string>
-    <string name="edit_message">请输入包名</string>
+    <string name="app_name">第一个</string>
+    <string name="edit_message">请输入包名或应用名</string>
     <string name="button_send">发送</string>
     <string name="button_send_now">立即查询</string>
     <string name="msg_tip">请输入包名</string>

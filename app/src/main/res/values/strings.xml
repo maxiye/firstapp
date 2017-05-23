@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">first</string>
+    <string name="app_name">firstapp</string>
     <string name="edit_message">Enter a package name</string>
     <string name="button_send">Send</string>
     <string name="button_send_now">SearchNow</string>

@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:id="@+id/frg_blk"
-    tools:context="com.firstapp.com.first.BlankFragment">
+    tools:context="com.maxiye.first.BlankFragment">
 
     <!-- TODO: Update blank fragment layout -->
     <TextView
