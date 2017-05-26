@@ -18,18 +18,27 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="right"
+        android:gravity="end"
         android:orientation="horizontal">
         <Button
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="sendMsgNow"
             android:text="@string/button_send_now" />
         <Button
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:onClick="sendMsg"
-            android:text="@string/button_send" />
+            android:onClick="setting"
+            android:text="@string/button_setting" />
+        <Button
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="sentIntent"
+            android:visibility="gone"
+            android:text="test" />
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
