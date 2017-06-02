@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         }
 
     }
-
+    //处理图片intent
     private void handlePic() {
         Intent itt = getIntent();
         if(itt.getAction() != "android.intent.action.MAIN" && itt.getType().indexOf("image/") != -1){

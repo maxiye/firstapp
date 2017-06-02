@@ -7,5 +7,29 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
-
+    <!-- 应用于程序或者活动的主题 -->
+    <style name="CustomActBarThe" parent="Theme.AppCompat.Light">
+        <item name="android:actionBarStyle">@style/MyActionStyle</item>
+        <item name="android:actionMenuTextColor">@color/actionBarMenuColor</item>
+        <item name="android:windowActionBarOverlay">false</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+        <!-- 支持库兼容 -->
+        <item name="actionBarStyle">@style/MyActionStyle</item>
+        <item name="actionMenuTextColor">@color/actionBarMenuColor</item>
+        <item name="windowActionBarOverlay">false</item>
+    </style>
+    <!-- ActionBar 样式 -->
+    <style name="MyActionStyle" parent="Widget.AppCompat.Light.ActionBar.Solid.Inverse">
+        <item name="android:background">@color/colorMyActionBar</item>
+        <item name="android:titleTextStyle">@style/MyActionTitleStyle</item>
+        <!-- 支持库兼容 -->
+        <item name="background">@color/colorMyActionBar</item>
+        <item name="titleTextStyle">@style/MyActionTitleStyle</item>
+    </style>
+    <!-- ActionBar 标题文本 -->
+    <style name="MyActionTitleStyle" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
+        <item name="android:textColor">@color/actionBarTitleColor</item>
+        <!-- 文本颜色属性textColor是可以配合支持库向后兼容的 -->
+    </style>
 </resources>

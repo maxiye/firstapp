@@ -3,4 +3,7 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+    <color name="colorMyActionBar">#F66725</color>
+    <color name="actionBarMenuColor">#FFF</color>
+    <color name="actionBarTitleColor">#FFF</color>
 </resources>
