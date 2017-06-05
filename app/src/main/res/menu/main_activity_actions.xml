@@ -7,4 +7,14 @@
         android:icon="@drawable/ic_settings_black_24dp"
         android:title="@string/button_setting"
         first:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_share"
+        android:icon="@drawable/ic_share_black_24dp"
+        android:title="@string/button_share"
+        first:showAsAction="collapseActionView" />
+    <item
+        android:id="@+id/action_net_set"
+        android:icon="@drawable/ic_perm_data_setting_black_24dp"
+        android:title="@string/button_net_set"
+        first:showAsAction="collapseActionView" />
 </menu>

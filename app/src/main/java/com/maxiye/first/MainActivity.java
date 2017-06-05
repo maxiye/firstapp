@@ -10,8 +10,11 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.provider.ContactsContract;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -26,6 +29,11 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+
+import static android.R.attr.name;
 
 public class MainActivity extends AppCompatActivity implements BlankFragment.OnFrgActionListener,ActivityCompat.OnRequestPermissionsResultCallback {
     public final static String EXTRA_MESSAGE = "com.maxiye.first.MESSAGE";
@@ -70,26 +78,90 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             case R.id.action_setting:
                 setting(new View(this));
                 return true;
+            case R.id.action_share:
+                share();
+                return true;
+            case R.id.action_net_set:
+                addShortcut();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
 
     }
+    //设置
+    public void setting(View view) {
+        Intent intent = new Intent(this, SettingActivity.class);
+        EditText et = (EditText) findViewById(R.id.edit_message);
+        String msg = et.getText().toString();
+        intent.putExtra(EXTRA_MESSAGE, msg);
+        startActivity(intent);
+    }
+    public void share(){
+        Intent itt = new Intent(Intent.ACTION_SEND);
+        itt.setType("text/plain");
+        itt.putExtra(Intent.EXTRA_TEXT,"哈哈，你好阿斯蒂芬sad");
+        startActivity(itt.createChooser(itt,"选择文本发送到……"));
+        /*itt.setType("image*//*");//未完成
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Bitmap bim = BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher);
+        bim.compress(Bitmap.CompressFormat.PNG, 100, baos);
+//        itt.putExtra(Intent.EXTRA_STREAM, Uri.parse("file:///storage/emulated/0/Download/1.jpg"));
+        itt.putExtra(Intent.EXTRA_STREAM, baos.toByteArray());
+        startActivity(itt);*/
+
+    }
+    //添加快捷方式
+    private void addShortcut() {
+        Intent addShortcutIntent = new Intent("com.android.launcher.action.INSTALL_SHORTCUT");
+
+        // 不允许重复创建
+        addShortcutIntent.putExtra("duplicate", false);// 经测试不是根据快捷方式的名字判断重复的
+        // 应该是根据快链的Intent来判断是否重复的,即Intent.EXTRA_SHORTCUT_INTENT字段的value
+        // 但是名称不同时，虽然有的手机系统会显示Toast提示重复，仍然会建立快链
+        // 屏幕上没有空间时会提示
+        // 注意：重复创建的行为MIUI和三星手机上不太一样，小米上似乎不能重复创建快捷方式
+
+        // 名字
+        addShortcutIntent.putExtra(Intent.EXTRA_SHORTCUT_NAME, "网络设置");
+
+        // 图标
+        addShortcutIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE,
+                Intent.ShortcutIconResource.fromContext(MainActivity.this,
+                        R.drawable.ic_perm_data_setting_black_24dp));
+
+        // 设置关联程序
+        Intent launcherIntent = new Intent(Settings.ACTION_DATA_ROAMING_SETTINGS);//设置网络页面intent
+
+        addShortcutIntent
+                .putExtra(Intent.EXTRA_SHORTCUT_INTENT, launcherIntent);
+
+        // 发送广播
+        sendBroadcast(addShortcutIntent);
+    }
+
     //处理图片intent
     private void handlePic() {
         Intent itt = getIntent();
-        if(itt.getAction() != "android.intent.action.MAIN" && itt.getType().indexOf("image/") != -1){
+        if(itt.getAction() != "android.intent.action.MAIN"){
             Uri data = itt.getData();
-            Toast toast = Toast.makeText(this, data.toString(),Toast.LENGTH_SHORT);
-            toast.setGravity(Gravity.CENTER,0,0);
-            LinearLayout ll = (LinearLayout)toast.getView();
-            ImageView iv = new ImageView(this);
-            iv.setImageURI(data);
-            ll.addView(iv,0);
-            toast.show();
+            if (itt.getType().indexOf("image/") != -1) {
+                Toast toast = Toast.makeText(this, data.toString(),Toast.LENGTH_SHORT);
+                toast.setGravity(Gravity.CENTER,0,0);
+                LinearLayout ll = (LinearLayout)toast.getView();
+                ImageView iv = new ImageView(this);
+                iv.setImageURI(data);
+                ll.addView(iv,0);
+                toast.show();
+            }
+            if (itt.getType().indexOf("text/plain") != -1){
+                Toast.makeText(this, itt.getExtras().get(Intent.EXTRA_TEXT).toString(),Toast.LENGTH_SHORT).show();
+            }
+            Toast.makeText(this, itt.getType(),Toast.LENGTH_SHORT).show();
             Intent res = new Intent(getPackageName()+".RESULT_ACTION", Uri.parse("content://result_uri"));
             setResult(Activity.RESULT_OK, res);
             finish();
+
         }
     }
 
@@ -109,14 +181,6 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         Intent itt = new Intent(Intent.ACTION_VIEW,url);
         startActivity(itt);
     }
-    //设置
-    public void setting(View view) {
-        Intent intent = new Intent(this, SettingActivity.class);
-        EditText et = (EditText) findViewById(R.id.edit_message);
-        String msg = et.getText().toString();
-        intent.putExtra(EXTRA_MESSAGE, msg);
-        startActivity(intent);
-    }
 
     //查询应用
     public void sendMsgNow(View view) {
@@ -128,7 +192,6 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         frg.setArguments(args);
         getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, frg).addToBackStack(null).commit();
     }
-
     //创建数据库
     public void createDB(View view) {
         DBHelper dbh = new DBHelper(this);

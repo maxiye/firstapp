@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
@@ -13,7 +13,10 @@
         <item name="android:actionMenuTextColor">@color/actionBarMenuColor</item>
         <item name="android:windowActionBarOverlay">false</item>
         <item name="android:windowTranslucentStatus">false</item>
-        <item name="android:windowTranslucentNavigation">true</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <!--<item name="android:windowIsTranslucent">true</item>-->
+        <item name="android:statusBarColor" tools:targetApi="lollipop">@color/colorMyActionBar</item>
+        <!--<item name="android:navigationBarColor" tools:targetApi="lollipop">@color/colorTransparent</item>-->
         <!-- 支持库兼容 -->
         <item name="actionBarStyle">@style/MyActionStyle</item>
         <item name="actionMenuTextColor">@color/actionBarMenuColor</item>

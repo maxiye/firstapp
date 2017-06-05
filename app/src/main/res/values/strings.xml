@@ -11,4 +11,6 @@
     <string name="button_create_db">create db</string>
     <string name="title_main_activity">App Manage</string>
     <string name="title_setting_activity">Setting</string>
+    <string name="button_share">Share</string>
+    <string name="button_net_set">NetworkShortCut</string>
 </resources>

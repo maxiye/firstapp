@@ -6,4 +6,5 @@
     <color name="colorMyActionBar">#F66725</color>
     <color name="actionBarMenuColor">#FFF</color>
     <color name="actionBarTitleColor">#FFF</color>
+    <color name="colorTransparent">#00FFFFFF</color>
 </resources>
