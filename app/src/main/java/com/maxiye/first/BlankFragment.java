@@ -77,25 +77,26 @@ public class BlankFragment extends Fragment {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_blank, container, false);
     }
+
     @Override
-    public void onActivityCreated(Bundle savedInstanceState){
+    public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        sp = getActivity().getSharedPreferences(SettingActivity.SETTING,Context.MODE_PRIVATE);
+        sp = getActivity().getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
         boolean show_system_apps = sp.getBoolean(SettingActivity.SHOW_SYSTEM, false);
         PackageManager pm = getActivity().getPackageManager();
         ArrayList<ApplicationInfo> al = new ArrayList<>(pm.getInstalledApplications(0));
         //过滤
         String app_list = "";
-        for (int i=0;i<al.size();i++){
+        for (int i = 0; i < al.size(); i++) {
             ApplicationInfo ai = al.get(i);
-            if((!show_system_apps && ((ai.flags & ApplicationInfo.FLAG_SYSTEM) != 0))){
+            if ((!show_system_apps && ((ai.flags & ApplicationInfo.FLAG_SYSTEM) != 0))) {
                 al.remove(i);
                 i--;//??????????????????????????????????????????????坑爹啊尼玛
             }
-//            app_list += (ai.flags & ApplicationInfo.FLAG_SYSTEM)+"??";
+            //            app_list += (ai.flags & ApplicationInfo.FLAG_SYSTEM)+"??";
         }
         //写入文件
-//        SaveAppListEx("app_list.txt", app_list);
+        //        SaveAppListEx("app_list.txt", app_list);
         ListView lv = (ListView) getActivity().findViewById(R.id.lv_bfg);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -111,35 +112,35 @@ public class BlankFragment extends Fragment {
             }
         });
         ArrayList<CharSequence> strs = new ArrayList<>();
-        if (mParam1 != null && !mParam1.isEmpty()){
-            TextView tv = (TextView)getView().findViewById(R.id.frgtxt);
+        if (mParam1 != null && !mParam1.isEmpty()) {
+            TextView tv = (TextView) getView().findViewById(R.id.frgtxt);
             try {
-                ApplicationInfo app_info = pm.getApplicationInfo(mParam1,0);
-                CharSequence appname = pm.getApplicationLabel(app_info)+"："+app_info.packageName;
+                ApplicationInfo app_info = pm.getApplicationInfo(mParam1, 0);
+                CharSequence appname = pm.getApplicationLabel(app_info) + "：" + app_info.packageName;
                 tv.setText(appname);
-            }catch (PackageManager.NameNotFoundException e){
-                for (ApplicationInfo ai:al){
+            } catch (PackageManager.NameNotFoundException e) {
+                for (ApplicationInfo ai : al) {
                     String app_name = pm.getApplicationLabel(ai).toString();
-                    if((app_name+ai.packageName).toLowerCase().indexOf(mParam1.toLowerCase())>=0){
-                        try{
-                            PackageInfo pi = pm.getPackageInfo(ai.packageName,0);
-                            strs.add(app_name+" v"+pi.versionName+"("+pi.versionCode+")："+ai.packageName);
-                        }catch (PackageManager.NameNotFoundException ee){
-                            strs.add(app_name+"："+ai.packageName);
+                    if ((app_name + ai.packageName).toLowerCase().indexOf(mParam1.toLowerCase()) >= 0) {
+                        try {
+                            PackageInfo pi = pm.getPackageInfo(ai.packageName, 0);
+                            strs.add(app_name + " v" + pi.versionName + "(" + pi.versionCode + ")：" + ai.packageName);
+                        } catch (PackageManager.NameNotFoundException ee) {
+                            strs.add(app_name + "：" + ai.packageName);
                         }
                     }
                 }
-                if(!strs.isEmpty()){
-//                    tv.setText(strs.toString());
-                    lv.setAdapter(new ArrayAdapter<>(getActivity(),android.R.layout.simple_list_item_1, strs.toArray(new String[strs.size()])));
-                }else{
+                if (!strs.isEmpty()) {
+                    //                    tv.setText(strs.toString());
+                    lv.setAdapter(new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, strs.toArray(new String[strs.size()])));
+                } else {
                     tv.setText(R.string.not_found);
                 }
 
 
             }
-        }else{
-            for (ApplicationInfo ai:al){
+        } else {
+            for (ApplicationInfo ai : al) {
                 try {
                     PackageInfo pi = pm.getPackageInfo(ai.packageName, 0);
                     strs.add(pm.getApplicationLabel(ai) + " v" + pi.versionName + "(" + pi.versionCode + ")：" + ai.packageName);
@@ -154,22 +155,23 @@ public class BlankFragment extends Fragment {
     }
 
     private void SaveAppList(String fname, String content) {
-//        File file = new File(getActivity().getFilesDir(), fname);
+        //        File file = new File(getActivity().getFilesDir(), fname);
         FileOutputStream fos;
-        try{
+        try {
             /*if (!file.exists()){
                 file.createNewFile();
             }*/
-            fos = getActivity().openFileOutput(fname,getActivity().MODE_PRIVATE);
+            fos = getActivity().openFileOutput(fname, getActivity().MODE_PRIVATE);
             fos.write(content.getBytes());
             fos.flush();
             fos.close();
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
     /* Checks if external storage is available for read and write */
-    public boolean isExternalStorageWritable() {
+    public static boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
             return true;
@@ -178,7 +180,7 @@ public class BlankFragment extends Fragment {
     }
 
     /* Checks if external storage is available to at least read */
-    public boolean isExternalStorageReadable() {
+    public static boolean isExternalStorageReadable() {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state) ||
                 Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
@@ -186,18 +188,19 @@ public class BlankFragment extends Fragment {
         }
         return false;
     }
-    private void SaveAppListEx(String fname, String content){
-        if (isExternalStorageWritable()){
+
+    private void SaveAppListEx(String fname, String content) {
+        if (isExternalStorageWritable()) {
             File file = new File(getActivity().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fname);
-            try{
-                if (!file.exists()){
+            try {
+                if (!file.exists()) {
                     file.createNewFile();
                 }
                 RandomAccessFile raf = new RandomAccessFile(file, "rwd");
-//                raf.seek(file.length());//追加模式
+                //                raf.seek(file.length());//追加模式
                 raf.write(content.getBytes());
                 raf.close();
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -233,6 +236,7 @@ public class BlankFragment extends Fragment {
      */
     public interface OnFrgActionListener {
         void onItemClick(View view);
+
         void onItemLongClick(View view);
     }
 }

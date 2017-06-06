@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-      xmlns:first="http://schemas.android.com/apk/res-auto">
+    xmlns:first="http://schemas.android.com/apk/res-auto">
     <!-- 搜索, 应该作为动作按钮展示-->
     <item
         android:id="@+id/action_setting"

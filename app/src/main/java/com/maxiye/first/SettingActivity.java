@@ -10,12 +10,12 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.HashMap;
 
 public class SettingActivity extends AppCompatActivity {
     private SharedPreferences sp;
     public final static String SETTING = "com.maxiye.first.SETTING";
     public final static String SHOW_SYSTEM = "show_system_apps";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -28,12 +28,13 @@ public class SettingActivity extends AppCompatActivity {
 
         ViewGroup layout = (ViewGroup) findViewById(R.id.activity_setting);
         layout.addView(tv);*/
-        sp = getSharedPreferences(SETTING,Context.MODE_PRIVATE);
+        sp = getSharedPreferences(SETTING, Context.MODE_PRIVATE);
         //初始化设置
         initSetting();
     }
-    private void initSetting(){
-        Switch show_system_apps = (Switch)findViewById(R.id.show_system_apps);
+
+    private void initSetting() {
+        Switch show_system_apps = (Switch) findViewById(R.id.show_system_apps);
         show_system_apps.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -41,6 +42,6 @@ public class SettingActivity extends AppCompatActivity {
                 editor.putBoolean(SHOW_SYSTEM, isChecked).commit();
             }
         });
-        show_system_apps.setChecked(sp.getBoolean(SHOW_SYSTEM,false));
+        show_system_apps.setChecked(sp.getBoolean(SHOW_SYSTEM, false));
     }
 }

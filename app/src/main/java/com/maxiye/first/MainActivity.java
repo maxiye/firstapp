@@ -1,6 +1,5 @@
 package com.maxiye.first;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -10,12 +9,12 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.ContactsContract;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -30,20 +29,23 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
+import java.io.File;
 
-import static android.R.attr.name;
 
-public class MainActivity extends AppCompatActivity implements BlankFragment.OnFrgActionListener,ActivityCompat.OnRequestPermissionsResultCallback {
+public class MainActivity extends AppCompatActivity implements BlankFragment.OnFrgActionListener, ActivityCompat.OnRequestPermissionsResultCallback {
     public final static String EXTRA_MESSAGE = "com.maxiye.first.MESSAGE";
-    private final static int CONTACT_PICK_CODE = 100;
-    private final static int PERMISSION_REQUEST_CALL = 101;
+
+    private final static int INTENT_CONTACT_PICK_REQCODE = 100;
+    private final static int INTENT_IMG_VIEW_REQCODE = 101;
+    private final static int INTENT_IMG_PICK_REQCODE = 102;
+
+    private final static int PERMISSION_REQUEST_CALL = 200;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        handlePic();//图片intent
+        handleItt();//图片intent
         EditText et = (EditText) findViewById(R.id.edit_message);
         et.setOnKeyListener(new View.OnKeyListener() {
             @Override
@@ -74,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()){
+        switch (item.getItemId()) {
             case R.id.action_setting:
                 setting(new View(this));
                 return true;
@@ -89,6 +91,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         }
 
     }
+
     //设置
     public void setting(View view) {
         Intent intent = new Intent(this, SettingActivity.class);
@@ -97,23 +100,48 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         intent.putExtra(EXTRA_MESSAGE, msg);
         startActivity(intent);
     }
-    public void share(){
-        Intent itt = new Intent(Intent.ACTION_SEND);
+
+    public void share() {
+        //分享文本
+        /*Intent itt = new Intent(Intent.ACTION_SEND);
         itt.setType("text/plain");
-        itt.putExtra(Intent.EXTRA_TEXT,"哈哈，你好阿斯蒂芬sad");
-        startActivity(itt.createChooser(itt,"选择文本发送到……"));
-        /*itt.setType("image*//*");//未完成
+        itt.putExtra(Intent.EXTRA_TEXT, "哈哈，你好阿斯蒂芬sad");
+        startActivity(itt.createChooser(itt, "选择文本发送到……"));*/
+        /*Intent itt= new Intent(Intent.ACTION_VIEW);
+        itt.setType("image");//未完成
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Bitmap bim = BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher);
         bim.compress(Bitmap.CompressFormat.PNG, 100, baos);
 //        itt.putExtra(Intent.EXTRA_STREAM, Uri.parse("file:///storage/emulated/0/Download/1.jpg"));
         itt.putExtra(Intent.EXTRA_STREAM, baos.toByteArray());
         startActivity(itt);*/
+        //分享文件
+        if (BlankFragment.isExternalStorageReadable()) {
+            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "1.jpg");
+            try {
+                Uri fileUri = FileProvider.getUriForFile(this, "com.maxiye.first.fileprovider", file);
+                if (fileUri != null) {
+                    /*Intent itt = new Intent(Intent.ACTION_VIEW,fileUri);//错误？？？？？？？？？？？？？？？？？莫名奇妙
+                    itt.setType(getContentResolver().getType(fileUri));*/
+                    Intent itt = new Intent(Intent.ACTION_VIEW);
+                    itt.setDataAndType(fileUri, getContentResolver().getType(fileUri));//"image/jpeg"也可
+                    itt.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivityForResult(itt.createChooser(itt, "Open img"), INTENT_IMG_VIEW_REQCODE);
+                }
+
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+                Toast.makeText(this, "文件获取错误", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(this, "需要外部存储读取权限", Toast.LENGTH_SHORT).show();
+        }
 
     }
+
     //添加快捷方式
     private void addShortcut() {
-        Intent addShortcutIntent = new Intent("com.android.launcher.action.INSTALL_SHORTCUT");
+        Intent addShortcutIntent = new Intent("com.android.launcher.action.INSTALL_SHORTCUT");//"com.android.launcher.action.INSTALL_SHORTCUT"
 
         // 不允许重复创建
         addShortcutIntent.putExtra("duplicate", false);// 经测试不是根据快捷方式的名字判断重复的
@@ -127,12 +155,15 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
         // 图标
         addShortcutIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE,
-                Intent.ShortcutIconResource.fromContext(MainActivity.this,
+                Intent.ShortcutIconResource.fromContext(this,
                         R.drawable.ic_perm_data_setting_black_24dp));
 
         // 设置关联程序
         Intent launcherIntent = new Intent(Settings.ACTION_DATA_ROAMING_SETTINGS);//设置网络页面intent
-
+        /*// 设置关联程序
+        Intent launcherIntent = new Intent(Intent.ACTION_MAIN);
+        launcherIntent.setClass(MainActivity.this, MainActivity.class);
+        launcherIntent.addCategory(Intent.CATEGORY_LAUNCHER);*/
         addShortcutIntent
                 .putExtra(Intent.EXTRA_SHORTCUT_INTENT, launcherIntent);
 
@@ -141,24 +172,24 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     }
 
     //处理图片intent
-    private void handlePic() {
+    private void handleItt() {
         Intent itt = getIntent();
-        if(itt.getAction() != "android.intent.action.MAIN"){
+        if (itt.getAction() != "android.intent.action.MAIN") {
             Uri data = itt.getData();
             if (itt.getType().indexOf("image/") != -1) {
-                Toast toast = Toast.makeText(this, data.toString(),Toast.LENGTH_SHORT);
-                toast.setGravity(Gravity.CENTER,0,0);
-                LinearLayout ll = (LinearLayout)toast.getView();
+                Toast toast = Toast.makeText(this, data.toString(), Toast.LENGTH_SHORT);
+                toast.setGravity(Gravity.CENTER, 0, 0);
+                LinearLayout ll = (LinearLayout) toast.getView();
                 ImageView iv = new ImageView(this);
                 iv.setImageURI(data);
-                ll.addView(iv,0);
+                ll.addView(iv, 0);
                 toast.show();
             }
-            if (itt.getType().indexOf("text/plain") != -1){
-                Toast.makeText(this, itt.getExtras().get(Intent.EXTRA_TEXT).toString(),Toast.LENGTH_SHORT).show();
+            if (itt.getType().indexOf("text/plain") != -1) {
+                Toast.makeText(this, itt.getExtras().get(Intent.EXTRA_TEXT).toString(), Toast.LENGTH_SHORT).show();
             }
-            Toast.makeText(this, itt.getType(),Toast.LENGTH_SHORT).show();
-            Intent res = new Intent(getPackageName()+".RESULT_ACTION", Uri.parse("content://result_uri"));
+            Toast.makeText(this, itt.getType(), Toast.LENGTH_SHORT).show();
+            Intent res = new Intent(getPackageName() + ".RESULT_ACTION", Uri.parse("content://result_uri"));
             setResult(Activity.RESULT_OK, res);
             finish();
 
@@ -174,11 +205,12 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         clm.setPrimaryClip(ClipData.newPlainText(null, str));
         Toast.makeText(this, R.string.clip_toast, Toast.LENGTH_SHORT).show();
     }
+
     @Override
-    public void onItemLongClick(View view){
+    public void onItemLongClick(View view) {
         onItemClick(view);
         Uri url = Uri.parse("https://apkdownloader.com/");
-        Intent itt = new Intent(Intent.ACTION_VIEW,url);
+        Intent itt = new Intent(Intent.ACTION_VIEW, url);
         startActivity(itt);
     }
 
@@ -192,6 +224,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         frg.setArguments(args);
         getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, frg).addToBackStack(null).commit();
     }
+
     //创建数据库
     public void createDB(View view) {
         DBHelper dbh = new DBHelper(this);
@@ -209,38 +242,39 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         ctv.put("price", 16.09d);
         db.update(DBHelper.TB_BOOK, ctv, "id = ?", new String[]{"1"});
         //查
-//        Cursor cus = db.rawQuery("select * from "+DBHelper.TB_BOOK+" where name = ? ", new String[]{"花儿与老年"});
+        //        Cursor cus = db.rawQuery("select * from "+DBHelper.TB_BOOK+" where name = ? ", new String[]{"花儿与老年"});
         Cursor cus = db.query(DBHelper.TB_BOOK, new String[]{"*"}, "author = ?", new String[]{"zzz"}, null, null, "id desc");
         cus.moveToFirst();//必须，不然报错
     }
 
     @Override
-    public void onRequestPermissionsResult(int reqCode, String[] pers, int[] res){
-        switch (reqCode){
-            case PERMISSION_REQUEST_CALL:{
-                if (res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED){
-                    Toast.makeText(this,"权限已获取", Toast.LENGTH_SHORT).show();
-                }else{
-                    Toast.makeText(this,"权限被拒绝", Toast.LENGTH_SHORT).show();
+    public void onRequestPermissionsResult(int reqCode, String[] pers, int[] res) {
+        switch (reqCode) {
+            case PERMISSION_REQUEST_CALL: {
+                if (res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, "权限已获取", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "权限被拒绝", Toast.LENGTH_SHORT).show();
                 }
             }
         }
     }
+
     public void sentIntent(View view) {
         //打电话
-        Uri tel = Uri.parse("tel:10086");
+        /*Uri tel = Uri.parse("tel:10086");
         Intent intent = new Intent(Intent.ACTION_CALL, tel);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.CALL_PHONE)){
-                Toast.makeText(this,"打电话当然要打电话的权限啊，扑街", Toast.LENGTH_SHORT).show();
-            }else{
-                Toast.makeText(this,"Called failed,no permission", Toast.LENGTH_SHORT).show();
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CALL_PHONE)) {
+                Toast.makeText(this, "打电话当然要打电话的权限啊，扑街", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Called failed,no permission", Toast.LENGTH_SHORT).show();
             }
-            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.CALL_PHONE},PERMISSION_REQUEST_CALL);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE}, PERMISSION_REQUEST_CALL);
             return;
-        }else{
+        } else {
             startActivity(intent);
-        }
+        }*/
 
         //打开网页
         /*Uri url = Uri.parse("https://apkdownloader.com/");
@@ -269,26 +303,51 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         //选择联系人
         /*Intent telitt = new Intent(Intent.ACTION_PICK,Uri.parse("content://contacts"));
         telitt.setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE);
-        startActivityForResult(telitt,CONTACT_PICK_CODE);*/
+        startActivityForResult(telitt,INTENT_CONTACT_PICK_REQCODE);*/
 
         //选择图片
-        /*Intent picitt = new Intent(Intent.ACTION_GET_CONTENT);
-        picitt.setType("image*//*");
-        startActivityForResult(picitt,111);*/
+        Intent picitt = new Intent(Intent.ACTION_GET_CONTENT);
+        picitt.setType("image/*");
+        startActivityForResult(picitt, INTENT_IMG_PICK_REQCODE);
+        /*Intent picitt = new Intent(Intent.ACTION_PICK);
+        picitt.setType("image/*");
+        startActivityForResult(picitt.createChooser(picitt,"选择图片"),INTENT_IMG_PICK_REQCODE);*/
     }
+
     @Override
-    protected void onActivityResult(int reqCode, int resCode, Intent data){
-        if (reqCode == CONTACT_PICK_CODE){
-            if (resCode == RESULT_OK){
-                Uri contact = data.getData();
-                String[] proj = {ContactsContract.CommonDataKinds.Phone.NUMBER};
-                Cursor cur = getContentResolver().query(contact,proj,null,null,null);
-                cur.moveToFirst();
-                String num = cur.getString(cur.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                Toast.makeText(this, num, Toast.LENGTH_LONG).show();
-            }else{
-                Toast.makeText(this, "res not ok", Toast.LENGTH_LONG).show();
-            }
+    protected void onActivityResult(int reqCode, int resCode, Intent data) {
+        switch (reqCode) {
+            case INTENT_CONTACT_PICK_REQCODE:
+                if (resCode == RESULT_OK) {
+                    Uri contact = data.getData();
+                    String[] proj = {ContactsContract.CommonDataKinds.Phone.NUMBER};
+                    Cursor cur = getContentResolver().query(contact, proj, null, null, null);
+                    cur.moveToFirst();
+                    String num = cur.getString(cur.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                    Toast.makeText(this, num, Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(this, "Res not ok", Toast.LENGTH_LONG).show();
+                }
+                break;
+            case INTENT_IMG_VIEW_REQCODE:
+                if (resCode == RESULT_OK) {
+                    Uri picview = data.getData();
+                    //Toast.makeText(this,picview.toString(),Toast.LENGTH_SHORT).show();
+                }
+                break;
+            case INTENT_IMG_PICK_REQCODE:
+                if (resCode == RESULT_OK) {
+                    Uri pic = data.getData();
+                    /*Toast toast = Toast.makeText(this, data.getData().toString(), Toast.LENGTH_SHORT);
+                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    ImageView iv = new ImageView(this);iv.setImageURI(pic);
+                    LinearLayout ll = (LinearLayout) toast.getView();ll.addView(iv, 0);
+                    toast.show();*/
+                    Intent itt = new Intent(Intent.ACTION_VIEW);
+                    itt.setDataAndType(pic, getContentResolver().getType(pic));//"image/jpeg"也可
+                    //itt.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);//ACTION_GET_CONTENT和ES打开必须设置
+                    startActivityForResult(itt.createChooser(itt, "Open img"), INTENT_IMG_VIEW_REQCODE);
+                }
         }
     }
 }
