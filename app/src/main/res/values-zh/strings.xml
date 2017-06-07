@@ -11,6 +11,7 @@
     <string name="button_create_db">创建数据库</string>
     <string name="title_main_activity">应用管理</string>
     <string name="title_setting_activity">设置</string>
-    <string name="button_share">分享</string>
+    <string name="button_share">分享文件</string>
     <string name="button_net_set">网络设置ShortCut</string>
+    <string name="button_send_intent">发送Intent</string>
 </resources>
