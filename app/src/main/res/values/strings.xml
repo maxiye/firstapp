@@ -14,4 +14,5 @@
     <string name="button_share">ShareFile</string>
     <string name="button_net_set">NetworkShortCut</string>
     <string name="button_send_intent">SeindIntent</string>
+    <string name="button_test_nfc">TestNFC</string>
 </resources>

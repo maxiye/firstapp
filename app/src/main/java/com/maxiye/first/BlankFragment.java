@@ -93,10 +93,10 @@ public class BlankFragment extends Fragment {
                 al.remove(i);
                 i--;//??????????????????????????????????????????????坑爹啊尼玛
             }
-            //            app_list += (ai.flags & ApplicationInfo.FLAG_SYSTEM)+"??";
+            //app_list += (ai.flags & ApplicationInfo.FLAG_SYSTEM)+"??";
         }
         //写入文件
-        //        SaveAppListEx("app_list.txt", app_list);
+        //SaveAppListEx("app_list.txt", app_list);
         ListView lv = (ListView) getActivity().findViewById(R.id.lv_bfg);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -131,7 +131,7 @@ public class BlankFragment extends Fragment {
                     }
                 }
                 if (!strs.isEmpty()) {
-                    //                    tv.setText(strs.toString());
+                    //tv.setText(strs.toString());
                     lv.setAdapter(new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, strs.toArray(new String[strs.size()])));
                 } else {
                     tv.setText(R.string.not_found);
@@ -149,13 +149,13 @@ public class BlankFragment extends Fragment {
                 }
             }
             lv.setAdapter(new ArrayAdapter<>(getActivity(),
-                    android.R.layout.simple_list_item_1, strs.toArray(new String[strs.size()])));
+            android.R.layout.simple_list_item_1, strs.toArray(new String[strs.size()])));
         }
 
     }
 
     private void SaveAppList(String fname, String content) {
-        //        File file = new File(getActivity().getFilesDir(), fname);
+        //File file = new File(getActivity().getFilesDir(), fname);
         FileOutputStream fos;
         try {
             /*if (!file.exists()){
@@ -197,7 +197,7 @@ public class BlankFragment extends Fragment {
                     file.createNewFile();
                 }
                 RandomAccessFile raf = new RandomAccessFile(file, "rwd");
-                //                raf.seek(file.length());//追加模式
+                //raf.seek(file.length());//追加模式
                 raf.write(content.getBytes());
                 raf.close();
             } catch (Exception e) {

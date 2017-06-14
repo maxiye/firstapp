@@ -93,7 +93,8 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     @Override
     public void onItemLongClick(View view) {
         onItemClick(view);
-        Uri url = Uri.parse("https://apkdownloader.com/");
+        ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        Uri url = Uri.parse("https://apps.evozi.com/apk-downloader/?id=" + clm.getPrimaryClip().getItemAt(0).getText());
         Intent itt = new Intent(Intent.ACTION_VIEW, url);
         startActivity(itt);
     }

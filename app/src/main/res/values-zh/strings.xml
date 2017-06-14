@@ -14,4 +14,5 @@
     <string name="button_share">分享文件</string>
     <string name="button_net_set">网络设置ShortCut</string>
     <string name="button_send_intent">发送Intent</string>
+    <string name="button_test_nfc">测试NFC</string>
 </resources>

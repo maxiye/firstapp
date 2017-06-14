@@ -1,6 +1,7 @@
 package com.maxiye.first;
 
 import android.app.Activity;
+import android.app.Notification;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -9,6 +10,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.nfc.NfcAdapter;
+import android.nfc.NfcEvent;
+import android.os.Build;
 import android.os.Environment;
 import android.provider.ContactsContract;
 import android.provider.OpenableColumns;
@@ -37,6 +41,7 @@ public class TestActivity extends AppCompatActivity {
     private final static int PER_REQ_CALL = 200;
     private static final int PER_REQ_STORAGE_READ = 201;
 
+    private Uri[] mFileUris = new Uri[10];
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,9 +82,59 @@ public class TestActivity extends AppCompatActivity {
                     Toast.makeText(this, "权限被拒绝", Toast.LENGTH_SHORT).show();
                 }
             }
-            case PER_REQ_STORAGE_READ:{
+            case PER_REQ_STORAGE_READ: {
 
             }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int reqCode, int resCode, Intent data) {
+        switch (reqCode) {
+            case INTENT_CONTACT_PICK_REQCODE:
+                if (resCode == RESULT_OK) {
+                    Uri contact = data.getData();
+                    String[] proj = {ContactsContract.CommonDataKinds.Phone.NUMBER};
+                    Cursor cur = getContentResolver().query(contact, proj, null, null, null);
+                    cur.moveToFirst();
+                    String num = cur.getString(cur.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                    Toast.makeText(this, num, Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(this, "Res not ok", Toast.LENGTH_LONG).show();
+                }
+                break;
+            case INTENT_IMG_VIEW_REQCODE:
+                /*if (resCode == RESULT_OK) {
+                    Uri picview = data.getData();
+                    //Toast.makeText(this,picview.toString(),Toast.LENGTH_SHORT).show();
+                }*/
+                break;
+            case INTENT_IMG_PICK_REQCODE:
+                if (resCode == RESULT_OK) {
+                    Uri pic = data.getData();
+                    try {
+                        FileDescriptor infile = getContentResolver().openFileDescriptor(pic, "r").getFileDescriptor();
+                        Bitmap bm = BitmapFactory.decodeFileDescriptor(infile);
+                        Cursor cur = getContentResolver().query(pic, null, null, null, null);
+                        cur.moveToFirst();
+                        String fname = cur.getString(cur.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME));
+                        long flen = cur.getLong(cur.getColumnIndexOrThrow(OpenableColumns.SIZE));
+                        Toast toast = Toast.makeText(this, fname + "(" + flen + "bytes)===>" + data.getData().toString(), Toast.LENGTH_SHORT);
+                        toast.setGravity(Gravity.CENTER, 0, 0);
+                        ImageView iv = new ImageView(this);
+                        //iv.setImageURI(pic);
+                        iv.setImageBitmap(bm);
+                        LinearLayout ll = (LinearLayout) toast.getView();
+                        ll.addView(iv, 0);
+                        toast.show();
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                    /*Intent itt = new Intent(Intent.ACTION_VIEW);
+                    itt.setDataAndType(pic, getContentResolver().getType(pic));//"image/jpeg"也可
+                    itt.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);//ACTION_GET_CONTENT和ES打开必须设置
+                    startActivityForResult(itt.createChooser(itt, "Open img"), INTENT_IMG_VIEW_REQCODE);*/
+                }
         }
     }
 
@@ -137,55 +192,6 @@ public class TestActivity extends AppCompatActivity {
         startActivityForResult(picitt.createChooser(picitt,"选择图片"),INTENT_IMG_PICK_REQCODE);*/
     }
 
-    @Override
-    protected void onActivityResult(int reqCode, int resCode, Intent data) {
-        switch (reqCode) {
-            case INTENT_CONTACT_PICK_REQCODE:
-                if (resCode == RESULT_OK) {
-                    Uri contact = data.getData();
-                    String[] proj = {ContactsContract.CommonDataKinds.Phone.NUMBER};
-                    Cursor cur = getContentResolver().query(contact, proj, null, null, null);
-                    cur.moveToFirst();
-                    String num = cur.getString(cur.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                    Toast.makeText(this, num, Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(this, "Res not ok", Toast.LENGTH_LONG).show();
-                }
-                break;
-            case INTENT_IMG_VIEW_REQCODE:
-                /*if (resCode == RESULT_OK) {
-                    Uri picview = data.getData();
-                    //Toast.makeText(this,picview.toString(),Toast.LENGTH_SHORT).show();
-                }*/
-                break;
-            case INTENT_IMG_PICK_REQCODE:
-                if (resCode == RESULT_OK) {
-                    Uri pic = data.getData();
-                    try {
-                        FileDescriptor infile = getContentResolver().openFileDescriptor(pic,"r").getFileDescriptor();
-                        Bitmap bm = BitmapFactory.decodeFileDescriptor(infile);
-                        Cursor cur = getContentResolver().query(pic,null,null,null,null);
-                        cur.moveToFirst();
-                        String fname = cur.getString(cur.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME));
-                        long flen = cur.getLong(cur.getColumnIndexOrThrow(OpenableColumns.SIZE));
-                        Toast toast = Toast.makeText(this, fname+"("+flen+"bytes)===>"+data.getData().toString(), Toast.LENGTH_SHORT);
-                        toast.setGravity(Gravity.CENTER, 0, 0);
-                        ImageView iv = new ImageView(this);
-                        //iv.setImageURI(pic);
-                        iv.setImageBitmap(bm);
-                        LinearLayout ll = (LinearLayout) toast.getView();ll.addView(iv, 0);
-                        toast.show();
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
-                    /*Intent itt = new Intent(Intent.ACTION_VIEW);
-                    itt.setDataAndType(pic, getContentResolver().getType(pic));//"image/jpeg"也可
-                    itt.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);//ACTION_GET_CONTENT和ES打开必须设置
-                    startActivityForResult(itt.createChooser(itt, "Open img"), INTENT_IMG_VIEW_REQCODE);*/
-                }
-        }
-    }
-
     //处理图片intent
     private void handleItt() {
         Intent itt = getIntent();
@@ -240,7 +246,7 @@ public class TestActivity extends AppCompatActivity {
         itt.putExtra(Intent.EXTRA_TEXT, "哈哈，你好阿斯蒂芬sad");
         startActivity(itt.createChooser(itt, "选择文本发送到……"));*/
         /*Intent itt= new Intent(Intent.ACTION_VIEW);
-        itt.setType("image");//未完成
+        itt.setType("image");//targetSDK25禁止直接对fileURI共享
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Bitmap bim = BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher);
         bim.compress(Bitmap.CompressFormat.PNG, 100, baos);
@@ -301,5 +307,31 @@ public class TestActivity extends AppCompatActivity {
 
         // 发送广播
         sendBroadcast(addShortcutIntent);
+    }
+    
+    public void testNFC(View view) {
+        NfcAdapter nfc;
+        boolean mAndroidBeamAvailable = false;
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC)){
+            Toast.makeText(this, "没有NFC功能", Toast.LENGTH_SHORT).show();
+        }else if(Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1){
+            mAndroidBeamAvailable = false;
+            Toast.makeText(this, "安卓版本必须在4.1以上", Toast.LENGTH_SHORT).show();
+        }else{
+            nfc = NfcAdapter.getDefaultAdapter(this);
+            nfc.setBeamPushUrisCallback(new FileUrisCallBack(),this);
+        }
+
+    }
+    private class FileUrisCallBack implements NfcAdapter.CreateBeamUrisCallback {
+
+        @Override
+        public Uri[] createBeamUris(NfcEvent event) {
+            File sendfile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "1.jpg");
+            sendfile.setReadable(true,false);
+            Uri senduri = Uri.fromFile(sendfile);
+            mFileUris[0] = senduri;
+            return mFileUris;
+        }
     }
 }
