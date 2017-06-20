@@ -5,6 +5,6 @@
     <color name="colorAccent">#FF4081</color>
     <color name="colorMyActionBar">#F66725</color>
     <color name="actionBarMenuColor">#FFF</color>
-    <color name="actionBarTitleColor">#FFF</color>
+    <color name="actionBarTitleColor">#000</color>
     <color name="colorTransparent">#00FFFFFF</color>
 </resources>

@@ -15,4 +15,6 @@
     <string name="button_net_set">NetworkShortCut</string>
     <string name="button_send_intent">SeindIntent</string>
     <string name="button_test_nfc">TestNFC</string>
+    <string name="button_test_audio">TestAudio</string>
+    <string name="button_test_camera">TestCamera</string>
 </resources>

@@ -15,4 +15,6 @@
     <string name="button_net_set">网络设置ShortCut</string>
     <string name="button_send_intent">发送Intent</string>
     <string name="button_test_nfc">测试NFC</string>
+    <string name="button_test_audio">测试音频</string>
+    <string name="button_test_camera">测试相机</string>
 </resources>

@@ -7,12 +7,17 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
+import android.os.Process;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -34,12 +39,15 @@ public class BlankFragment extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     public static final String ARG_1 = "param1";
     public static final String ARG_2 = "param2";
+    private static final int MSG_TYPE_LV = 1;
+    private static final int MSG_TYPE_TV = 2;
 
     private String mParam1;
     private String mParam2;
 
     private OnFrgActionListener mListener;
     private SharedPreferences sp;
+    private Handler hdl;
 
     public BlankFragment() {
         // Required empty public constructor
@@ -81,23 +89,29 @@ public class BlankFragment extends Fragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        sp = getActivity().getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
-        boolean show_system_apps = sp.getBoolean(SettingActivity.SHOW_SYSTEM, false);
-        PackageManager pm = getActivity().getPackageManager();
-        ArrayList<ApplicationInfo> al = new ArrayList<>(pm.getInstalledApplications(0));
-        //过滤
-        String app_list = "";
-        for (int i = 0; i < al.size(); i++) {
-            ApplicationInfo ai = al.get(i);
-            if ((!show_system_apps && ((ai.flags & ApplicationInfo.FLAG_SYSTEM) != 0))) {
-                al.remove(i);
-                i--;//??????????????????????????????????????????????坑爹啊尼玛
+        final ListView lv = (ListView) getActivity().findViewById(R.id.lv_bfg);
+        final TextView tv= (TextView)getActivity().findViewById(R.id.frgtxt);
+        final ImageView im = (ImageView)getActivity().findViewById(R.id.loading_bfg);
+        im.setVisibility(View.VISIBLE);
+        im.startAnimation(AnimationUtils.loadAnimation(getActivity(), R.anim.load_rotate));
+        hdl = new Handler(){
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                im.clearAnimation();//清除动画后才能设为不可见
+                im.setVisibility(View.INVISIBLE);
+                switch (msg.what){
+                    case MSG_TYPE_LV:
+                        ArrayList<String> alstr = (ArrayList<String>) msg.obj;
+                        lv.setAdapter(new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, alstr.toArray(new String[alstr.size()])));
+                        break;
+                    case MSG_TYPE_TV:
+                        String tvtxt = (String)msg.obj;
+                        tv.setText(tvtxt);
+                        break;
+                }
             }
-            //app_list += (ai.flags & ApplicationInfo.FLAG_SYSTEM)+"??";
-        }
-        //写入文件
-        //SaveAppListEx("app_list.txt", app_list);
-        ListView lv = (ListView) getActivity().findViewById(R.id.lv_bfg);
+        };
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -111,47 +125,70 @@ public class BlankFragment extends Fragment {
                 return true;//取消点击事件
             }
         });
-        ArrayList<CharSequence> strs = new ArrayList<>();
+        new Thread(){
+            @Override
+            public void run() {
+                android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+                getListData();
+            }
+        }.start();
+
+    }
+
+    private void getListData(){
+        sp = getActivity().getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
+        boolean show_system_apps = sp.getBoolean(SettingActivity.SHOW_SYSTEM, false);
+        PackageManager pm = getActivity().getPackageManager();
+        ArrayList<ApplicationInfo> app_al = new ArrayList<>(pm.getInstalledApplications(0));
+        //过滤
+        String app_list = "";
+        for (int i = 0; i < app_al.size(); i++) {
+            ApplicationInfo ai = app_al.get(i);
+            if ((!show_system_apps && ((ai.flags & ApplicationInfo.FLAG_SYSTEM) != 0))) {
+                app_al.remove(i);
+                i--;//??????????????????????????????????????????????坑爹啊尼玛
+            }
+            //app_list += (ai.flags & ApplicationInfo.FLAG_SYSTEM)+"??";
+        }
+        //写入文件
+        //SaveAppListEx("app_list.txt", app_list);
+        ArrayList<CharSequence> strs_al = new ArrayList<>();
         if (mParam1 != null && !mParam1.isEmpty()) {
-            TextView tv = (TextView) getView().findViewById(R.id.frgtxt);
             try {
                 ApplicationInfo app_info = pm.getApplicationInfo(mParam1, 0);
                 CharSequence appname = pm.getApplicationLabel(app_info) + "：" + app_info.packageName;
-                tv.setText(appname);
+                hdl.sendMessage(hdl.obtainMessage(MSG_TYPE_TV,appname));
             } catch (PackageManager.NameNotFoundException e) {
-                for (ApplicationInfo ai : al) {
+                for (ApplicationInfo ai : app_al) {
                     String app_name = pm.getApplicationLabel(ai).toString();
                     if ((app_name + ai.packageName).toLowerCase().indexOf(mParam1.toLowerCase()) >= 0) {
                         try {
                             PackageInfo pi = pm.getPackageInfo(ai.packageName, 0);
-                            strs.add(app_name + " v" + pi.versionName + "(" + pi.versionCode + ")：" + ai.packageName);
+                            strs_al.add(app_name + " v" + pi.versionName + "(" + pi.versionCode + ")：" + ai.packageName);
                         } catch (PackageManager.NameNotFoundException ee) {
-                            strs.add(app_name + "：" + ai.packageName);
+                            strs_al.add(app_name + "：" + ai.packageName);
                         }
                     }
                 }
-                if (!strs.isEmpty()) {
-                    //tv.setText(strs.toString());
-                    lv.setAdapter(new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, strs.toArray(new String[strs.size()])));
+                if (!strs_al.isEmpty()) {
+                    hdl.sendMessage(hdl.obtainMessage(MSG_TYPE_LV,strs_al));
                 } else {
-                    tv.setText(R.string.not_found);
+                    hdl.sendMessage(hdl.obtainMessage(MSG_TYPE_TV,getString(R.string.not_found)));
                 }
 
 
             }
         } else {
-            for (ApplicationInfo ai : al) {
+            for (ApplicationInfo ai : app_al) {
                 try {
                     PackageInfo pi = pm.getPackageInfo(ai.packageName, 0);
-                    strs.add(pm.getApplicationLabel(ai) + " v" + pi.versionName + "(" + pi.versionCode + ")：" + ai.packageName);
+                    strs_al.add(pm.getApplicationLabel(ai) + " v" + pi.versionName + "(" + pi.versionCode + ")：" + ai.packageName);
                 } catch (PackageManager.NameNotFoundException e) {
-                    strs.add(pm.getApplicationLabel(ai) + "：" + ai.packageName);
+                    strs_al.add(pm.getApplicationLabel(ai) + "：" + ai.packageName);
                 }
             }
-            lv.setAdapter(new ArrayAdapter<>(getActivity(),
-            android.R.layout.simple_list_item_1, strs.toArray(new String[strs.size()])));
+            hdl.sendMessage(hdl.obtainMessage(MSG_TYPE_LV,strs_al));
         }
-
     }
 
     private void SaveAppList(String fname, String content) {

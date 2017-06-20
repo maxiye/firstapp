@@ -1,22 +1,27 @@
 package com.maxiye.first;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.Notification;
+import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcEvent;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.provider.Settings;
+import android.support.annotation.RequiresApi;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -32,11 +37,15 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class TestActivity extends AppCompatActivity {
     private final static int INTENT_CONTACT_PICK_REQCODE = 100;
     private final static int INTENT_IMG_VIEW_REQCODE = 101;
     private final static int INTENT_IMG_PICK_REQCODE = 102;
+    private final static int INTENT_IMG_CAPTURE_REQCODE = 103;
 
     private final static int PER_REQ_CALL = 200;
     private static final int PER_REQ_STORAGE_READ = 201;
@@ -47,6 +56,12 @@ public class TestActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_test);
         handleItt();//图片intent
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        setVolumeControlStream(AudioManager.USE_DEFAULT_STREAM_TYPE);//不再调节游戏或者音乐的音量
     }
 
     @Override
@@ -135,9 +150,24 @@ public class TestActivity extends AppCompatActivity {
                     itt.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);//ACTION_GET_CONTENT和ES打开必须设置
                     startActivityForResult(itt.createChooser(itt, "Open img"), INTENT_IMG_VIEW_REQCODE);*/
                 }
+                break;
+            case INTENT_IMG_CAPTURE_REQCODE:
+                if (resCode == RESULT_OK && data != null){
+                    Bundle bdl = data.getExtras();
+                    Bitmap bmp = (Bitmap)bdl.get("data");
+                    Toast toast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
+                    toast.setGravity(Gravity.CENTER,0,0);
+                    LinearLayout ll = (LinearLayout)toast.getView();
+                    ImageView im = new ImageView(this);
+                    im.setImageBitmap(bmp);
+                    ll.addView(im);
+                    toast.show();
+                }
         }
     }
-
+    private void alert(String msg){
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    }
     public void sentIntent(View view) {
         //打电话
         /*Uri tel = Uri.parse("tel:10086");
@@ -316,22 +346,65 @@ public class TestActivity extends AppCompatActivity {
             Toast.makeText(this, "没有NFC功能", Toast.LENGTH_SHORT).show();
         }else if(Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1){
             mAndroidBeamAvailable = false;
-            Toast.makeText(this, "安卓版本必须在4.1以上", Toast.LENGTH_SHORT).show();
+            alert("安卓版本必须在4.1以上");
         }else{
             nfc = NfcAdapter.getDefaultAdapter(this);
             nfc.setBeamPushUrisCallback(new FileUrisCallBack(),this);
         }
 
     }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void testAudio(View view) {
+        SharedPreferences sp = getPreferences(MODE_PRIVATE);
+        SharedPreferences.Editor sp_e = sp.edit();
+        boolean is_reg_mb = sp.getBoolean("ReceiveMediaBtn",false);
+        AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
+        if(is_reg_mb){
+            am.unregisterMediaButtonEventReceiver(new ComponentName(getPackageName(),RemoteControlReceiver.class.getName()));
+            sp_e.putBoolean("ReceiveMediaBtn", false).commit();
+            setVolumeControlStream(AudioManager.STREAM_RING);
+        }else{
+            am.registerMediaButtonEventReceiver(new ComponentName(getPackageName(),RemoteControlReceiver.class.getName()));
+            sp_e.putBoolean("ReceiveMediaBtn", true).commit();
+            setVolumeControlStream(AudioManager.STREAM_MUSIC);
+        }
+
+    }
+
     private class FileUrisCallBack implements NfcAdapter.CreateBeamUrisCallback {
 
         @Override
         public Uri[] createBeamUris(NfcEvent event) {
             File sendfile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "1.jpg");
-            sendfile.setReadable(true,false);
+            sendfile.setReadable(true, false);
             Uri senduri = Uri.fromFile(sendfile);
             mFileUris[0] = senduri;
+            alert(senduri.toString());
             return mFileUris;
+        }
+    }
+    private File createTempFile() throws IOException{
+        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String img_name = "JPEG_" + timestamp + "_";
+        File storedir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        File img = File.createTempFile(img_name,".jpg",storedir);
+        return img;
+    }
+    public void capture(View view){
+        Intent cap = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if(cap.resolveActivity(getPackageManager()) != null){
+            File img_f = null;
+            try {
+                img_f = createTempFile();
+            }catch (IOException e){
+                img_f = null;
+            }
+            if (img_f != null){
+                cap.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(this, "com.maxiye.first.fileprovider",img_f));
+            }
+            startActivityForResult(cap, INTENT_IMG_CAPTURE_REQCODE);
         }
     }
 }
