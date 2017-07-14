@@ -4,5 +4,7 @@
     <files-path path="images/" name="myimages" />
     <!--<files-path path="download/" name="download" />-->
     <!--Environment.getExternalStorageDirectory()下任意目录-->
-    <external-path path="" name="download"></external-path>
+    <external-path
+        path=""
+        name="download"/>
 </paths>

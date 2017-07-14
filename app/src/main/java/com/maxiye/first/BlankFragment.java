@@ -20,9 +20,11 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 
@@ -32,57 +34,44 @@ import java.util.ArrayList;
  * Activities that contain this fragment must implement the
  * {@link BlankFragment.OnFrgActionListener} interface
  * to handle interaction events.
- * Use the {@link BlankFragment#newInstance} factory method to
- * create an instance of this fragment.
  */
 public class BlankFragment extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    public static final String ARG_1 = "param1";
-    public static final String ARG_2 = "param2";
+    public static final String ARG_1 = "arg_1";
+    private static final int MSG_TYPE_START = 0;
     private static final int MSG_TYPE_LV = 1;
     private static final int MSG_TYPE_TV = 2;
 
-    private String mParam1;
-    private String mParam2;
+    protected String keyword;
 
     private OnFrgActionListener mListener;
-    private SharedPreferences sp;
-    private Handler hdl;
+    private Handler handler;
+    protected Thread thread;
 
     public BlankFragment() {
         // Required empty public constructor
     }
 
     /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment BlankFragment.
+     * 简写toast
+     * @param msg 消息
      */
-    public static BlankFragment newInstance(String param1, String param2) {
-        BlankFragment fragment = new BlankFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_1, param1);
-        args.putString(ARG_2, param2);
-        fragment.setArguments(args);
-        return fragment;
+    @SuppressWarnings("unused")
+    private void alert(String msg){
+        Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_1);
-            mParam2 = getArguments().getString(ARG_2);
+            keyword = getArguments().getString(ARG_1);
         }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_blank, container, false);
     }
 
@@ -90,28 +79,33 @@ public class BlankFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         final ListView lv = (ListView) getActivity().findViewById(R.id.lv_bfg);
-        final TextView tv= (TextView)getActivity().findViewById(R.id.frgtxt);
         final ImageView im = (ImageView)getActivity().findViewById(R.id.loading_bfg);
-        im.setVisibility(View.VISIBLE);
-        im.startAnimation(AnimationUtils.loadAnimation(getActivity(), R.anim.load_rotate));
-        hdl = new Handler(){
+        final TextView tv = (TextView)getActivity().findViewById(R.id.frgtxt);
+        handler = new Handler(new Handler.Callback() {
             @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-                im.clearAnimation();//清除动画后才能设为不可见
-                im.setVisibility(View.INVISIBLE);
-                switch (msg.what){
-                    case MSG_TYPE_LV:
-                        ArrayList<String> alstr = (ArrayList<String>) msg.obj;
-                        lv.setAdapter(new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, alstr.toArray(new String[alstr.size()])));
-                        break;
-                    case MSG_TYPE_TV:
-                        String tvtxt = (String)msg.obj;
-                        tv.setText(tvtxt);
-                        break;
-                }
+            public boolean handleMessage(Message msg) {
+            im.clearAnimation();//清除动画后才能设为不可见
+            im.setVisibility(View.INVISIBLE);
+            switch (msg.what){
+                case MSG_TYPE_START:
+                    lv.setAdapter(null);
+                    im.setVisibility(View.VISIBLE);
+                    im.startAnimation(AnimationUtils.loadAnimation(getActivity(), R.anim.load_rotate));
+                    break;
+                case MSG_TYPE_LV:
+                    @SuppressWarnings("unchecked")
+                    ArrayList<String> alstr = (ArrayList<String>) msg.obj;
+                    lv.setAdapter(new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, alstr.toArray(new String[alstr.size()])));
+                    break;
+                case MSG_TYPE_TV:
+                    String tvtxt = (String)msg.obj;
+                    tv.setText(tvtxt);
+                    break;
             }
-        };
+            return false;
+            }
+        });
+        //点按事件
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -125,80 +119,83 @@ public class BlankFragment extends Fragment {
                 return true;//取消点击事件
             }
         });
-        new Thread(){
+        thread = new Thread(){
             @Override
             public void run() {
                 android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
                 getListData();
             }
-        }.start();
-
+        };
+        thread.start();
     }
 
+    /**
+     * 获取Listview数据
+     */
     private void getListData(){
-        sp = getActivity().getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
+        handler.sendMessage(Message.obtain(handler, MSG_TYPE_START));
+        SharedPreferences sp = getActivity().getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
         boolean show_system_apps = sp.getBoolean(SettingActivity.SHOW_SYSTEM, false);
         PackageManager pm = getActivity().getPackageManager();
         ArrayList<ApplicationInfo> app_al = new ArrayList<>(pm.getInstalledApplications(0));
         //过滤
-        String app_list = "";
+        //String app_list = "";
         for (int i = 0; i < app_al.size(); i++) {
             ApplicationInfo ai = app_al.get(i);
             if ((!show_system_apps && ((ai.flags & ApplicationInfo.FLAG_SYSTEM) != 0))) {
                 app_al.remove(i);
                 i--;//??????????????????????????????????????????????坑爹啊尼玛
+                continue;
+            }
+            if (keyword != null && !keyword.isEmpty()) {
+                String app_name = pm.getApplicationLabel(ai).toString();
+                if (!(app_name + ai.packageName).toLowerCase().contains(keyword.toLowerCase())) {
+                    app_al.remove(i);
+                    i--;
+                }
             }
             //app_list += (ai.flags & ApplicationInfo.FLAG_SYSTEM)+"??";
         }
         //写入文件
         //SaveAppListEx("app_list.txt", app_list);
         ArrayList<CharSequence> strs_al = new ArrayList<>();
-        if (mParam1 != null && !mParam1.isEmpty()) {
-            try {
-                ApplicationInfo app_info = pm.getApplicationInfo(mParam1, 0);
-                CharSequence appname = pm.getApplicationLabel(app_info) + "：" + app_info.packageName;
-                hdl.sendMessage(hdl.obtainMessage(MSG_TYPE_TV,appname));
-            } catch (PackageManager.NameNotFoundException e) {
-                for (ApplicationInfo ai : app_al) {
-                    String app_name = pm.getApplicationLabel(ai).toString();
-                    if ((app_name + ai.packageName).toLowerCase().indexOf(mParam1.toLowerCase()) >= 0) {
-                        try {
-                            PackageInfo pi = pm.getPackageInfo(ai.packageName, 0);
-                            strs_al.add(app_name + " v" + pi.versionName + "(" + pi.versionCode + ")：" + ai.packageName);
-                        } catch (PackageManager.NameNotFoundException ee) {
-                            strs_al.add(app_name + "：" + ai.packageName);
-                        }
-                    }
-                }
-                if (!strs_al.isEmpty()) {
-                    hdl.sendMessage(hdl.obtainMessage(MSG_TYPE_LV,strs_al));
-                } else {
-                    hdl.sendMessage(hdl.obtainMessage(MSG_TYPE_TV,getString(R.string.not_found)));
-                }
-
-
-            }
-        } else {
+        try {
+            ApplicationInfo app_info = pm.getApplicationInfo(keyword, 0);
+            CharSequence appname = pm.getApplicationLabel(app_info) + "：" + app_info.packageName;
+            handler.sendMessage(handler.obtainMessage(MSG_TYPE_TV,appname));
+        } catch (PackageManager.NameNotFoundException e) {
             for (ApplicationInfo ai : app_al) {
                 try {
                     PackageInfo pi = pm.getPackageInfo(ai.packageName, 0);
                     strs_al.add(pm.getApplicationLabel(ai) + " v" + pi.versionName + "(" + pi.versionCode + ")：" + ai.packageName);
-                } catch (PackageManager.NameNotFoundException e) {
+                } catch (PackageManager.NameNotFoundException ee) {
                     strs_al.add(pm.getApplicationLabel(ai) + "：" + ai.packageName);
                 }
             }
-            hdl.sendMessage(hdl.obtainMessage(MSG_TYPE_LV,strs_al));
+
+            if (!strs_al.isEmpty()) {
+                handler.sendMessage(handler.obtainMessage(MSG_TYPE_LV,strs_al));
+            } else {
+                handler.sendMessage(handler.obtainMessage(MSG_TYPE_TV,getString(R.string.not_found)));
+            }
         }
     }
 
-    private void SaveAppList(String fname, String content) {
+    /**
+     * 保存applist到内部存储
+     * @param fname Filename
+     * @param content File content
+     */
+    @SuppressWarnings("unused")
+    public void SaveAppList(String fname, String content) {
         //File file = new File(getActivity().getFilesDir(), fname);
         FileOutputStream fos;
         try {
             /*if (!file.exists()){
                 file.createNewFile();
             }*/
-            fos = getActivity().openFileOutput(fname, getActivity().MODE_PRIVATE);
+            getActivity();
+            fos = getActivity().openFileOutput(fname, Context.MODE_PRIVATE);
             fos.write(content.getBytes());
             fos.flush();
             fos.close();
@@ -210,28 +207,28 @@ public class BlankFragment extends Fragment {
     /* Checks if external storage is available for read and write */
     public static boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state)) {
-            return true;
-        }
-        return false;
+        return Environment.MEDIA_MOUNTED.equals(state);
     }
 
     /* Checks if external storage is available to at least read */
     public static boolean isExternalStorageReadable() {
         String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state) ||
-                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-            return true;
-        }
-        return false;
+        return Environment.MEDIA_MOUNTED.equals(state) ||
+                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state);
     }
 
+    /**
+     * 保存applist到外部存储
+     * @param fname Filename
+     * @param content File content
+     */
+    @SuppressWarnings("unused")
     private void SaveAppListEx(String fname, String content) {
         if (isExternalStorageWritable()) {
             File file = new File(getActivity().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fname);
             try {
-                if (!file.exists()) {
-                    file.createNewFile();
+                if (!file.exists() && !file.createNewFile()) {
+                    throw new IOException();
                 }
                 RandomAccessFile raf = new RandomAccessFile(file, "rwd");
                 //raf.seek(file.length());//追加模式
@@ -271,7 +268,7 @@ public class BlankFragment extends Fragment {
      * "http://developer.android.com/training/basics/fragments/communicating.html"
      * >Communicating with Other Fragments</a> for more information.
      */
-    public interface OnFrgActionListener {
+    interface OnFrgActionListener {
         void onItemClick(View view);
 
         void onItemLongClick(View view);

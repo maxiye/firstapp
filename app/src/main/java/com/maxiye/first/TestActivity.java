@@ -17,10 +17,12 @@ import android.nfc.NfcAdapter;
 import android.nfc.NfcEvent;
 import android.os.Build;
 import android.os.Environment;
+import android.os.ParcelFileDescriptor;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
@@ -35,11 +37,11 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 public class TestActivity extends AppCompatActivity {
     private final static int INTENT_CONTACT_PICK_REQCODE = 100;
@@ -88,7 +90,7 @@ public class TestActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int reqCode, String[] pers, int[] res) {
+    public void onRequestPermissionsResult(int reqCode, @NonNull String[] pers, @NonNull int[] res) {
         switch (reqCode) {
             case PER_REQ_CALL: {
                 if (res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED) {
@@ -111,8 +113,10 @@ public class TestActivity extends AppCompatActivity {
                     Uri contact = data.getData();
                     String[] proj = {ContactsContract.CommonDataKinds.Phone.NUMBER};
                     Cursor cur = getContentResolver().query(contact, proj, null, null, null);
+                    assert cur != null;
                     cur.moveToFirst();
                     String num = cur.getString(cur.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                    cur.close();
                     Toast.makeText(this, num, Toast.LENGTH_LONG).show();
                 } else {
                     Toast.makeText(this, "Res not ok", Toast.LENGTH_LONG).show();
@@ -128,12 +132,15 @@ public class TestActivity extends AppCompatActivity {
                 if (resCode == RESULT_OK) {
                     Uri pic = data.getData();
                     try {
-                        FileDescriptor infile = getContentResolver().openFileDescriptor(pic, "r").getFileDescriptor();
-                        Bitmap bm = BitmapFactory.decodeFileDescriptor(infile);
+                        ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(pic, "r");
+                        if (pfd == null) throw new FileNotFoundException();
+                        Bitmap bm = BitmapFactory.decodeFileDescriptor(pfd.getFileDescriptor());
                         Cursor cur = getContentResolver().query(pic, null, null, null, null);
+                        assert cur != null;
                         cur.moveToFirst();
                         String fname = cur.getString(cur.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME));
                         long flen = cur.getLong(cur.getColumnIndexOrThrow(OpenableColumns.SIZE));
+                        cur.close();
                         Toast toast = Toast.makeText(this, fname + "(" + flen + "bytes)===>" + data.getData().toString(), Toast.LENGTH_SHORT);
                         toast.setGravity(Gravity.CENTER, 0, 0);
                         ImageView iv = new ImageView(this);
@@ -165,6 +172,11 @@ public class TestActivity extends AppCompatActivity {
                 }
         }
     }
+
+    /**
+     * 简写toast
+     * @param msg 消息
+     */
     private void alert(String msg){
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
@@ -227,7 +239,7 @@ public class TestActivity extends AppCompatActivity {
         Intent itt = getIntent();
         if (itt.getType() != null) {
             Uri data = itt.getData();
-            if (itt.getType().indexOf("image/") != -1) {
+            if (itt.getType().contains("image/")) {
                 Toast toast = Toast.makeText(this, data.toString(), Toast.LENGTH_SHORT);
                 toast.setGravity(Gravity.CENTER, 0, 0);
                 LinearLayout ll = (LinearLayout) toast.getView();
@@ -236,7 +248,8 @@ public class TestActivity extends AppCompatActivity {
                 ll.addView(iv, 0);
                 toast.show();
             }
-            if (itt.getType().indexOf("text/plain") != -1) {
+            if (itt.getType().contains("text/plain")) {
+                //noinspection ConstantConditions
                 Toast.makeText(this, itt.getExtras().get(Intent.EXTRA_TEXT).toString(), Toast.LENGTH_SHORT).show();
             }
             Toast.makeText(this, itt.getType(), Toast.LENGTH_SHORT).show();
@@ -267,6 +280,7 @@ public class TestActivity extends AppCompatActivity {
         //        Cursor cus = db.rawQuery("select * from "+DBHelper.TB_BOOK+" where name = ? ", new String[]{"花儿与老年"});
         Cursor cus = db.query(DBHelper.TB_BOOK, new String[]{"*"}, "author = ?", new String[]{"zzz"}, null, null, "id desc");
         cus.moveToFirst();//必须，不然报错
+        cus.close();
     }
 
     public void share() {
@@ -294,7 +308,7 @@ public class TestActivity extends AppCompatActivity {
                     Intent itt = new Intent(Intent.ACTION_VIEW);
                     itt.setDataAndType(fileUri, getContentResolver().getType(fileUri));//"image/jpeg"也可
                     itt.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    startActivityForResult(itt.createChooser(itt, "Open img"), INTENT_IMG_VIEW_REQCODE);
+                    startActivityForResult(Intent.createChooser(itt, "Open img"), INTENT_IMG_VIEW_REQCODE);
                 }
 
             } catch (IllegalArgumentException e) {
@@ -341,19 +355,16 @@ public class TestActivity extends AppCompatActivity {
     
     public void testNFC(View view) {
         NfcAdapter nfc;
-        boolean mAndroidBeamAvailable = false;
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC)){
             Toast.makeText(this, "没有NFC功能", Toast.LENGTH_SHORT).show();
-        }else if(Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1){
-            mAndroidBeamAvailable = false;
-            alert("安卓版本必须在4.1以上");
-        }else{
+        }else {
             nfc = NfcAdapter.getDefaultAdapter(this);
             nfc.setBeamPushUrisCallback(new FileUrisCallBack(),this);
         }
 
     }
 
+    @SuppressWarnings("deprecation")
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void testAudio(View view) {
@@ -363,7 +374,7 @@ public class TestActivity extends AppCompatActivity {
         AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
         if(is_reg_mb){
             am.unregisterMediaButtonEventReceiver(new ComponentName(getPackageName(),RemoteControlReceiver.class.getName()));
-            sp_e.putBoolean("ReceiveMediaBtn", false).commit();
+            sp_e.putBoolean("ReceiveMediaBtn", false).apply();
             setVolumeControlStream(AudioManager.STREAM_RING);
         }else{
             am.registerMediaButtonEventReceiver(new ComponentName(getPackageName(),RemoteControlReceiver.class.getName()));
@@ -378,24 +389,27 @@ public class TestActivity extends AppCompatActivity {
         @Override
         public Uri[] createBeamUris(NfcEvent event) {
             File sendfile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "1.jpg");
-            sendfile.setReadable(true, false);
-            Uri senduri = Uri.fromFile(sendfile);
-            mFileUris[0] = senduri;
-            alert(senduri.toString());
-            return mFileUris;
+            boolean ret = sendfile.setReadable(true, true);
+            if (ret) {
+                Uri senduri = Uri.fromFile(sendfile);
+                mFileUris[0] = senduri;
+                alert(senduri.toString());
+                return mFileUris;
+            } else {
+                return null;
+            }
         }
     }
     private File createTempFile() throws IOException{
-        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
         String img_name = "JPEG_" + timestamp + "_";
         File storedir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        File img = File.createTempFile(img_name,".jpg",storedir);
-        return img;
+        return File.createTempFile(img_name,".jpg",storedir);
     }
     public void capture(View view){
         Intent cap = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if(cap.resolveActivity(getPackageManager()) != null){
-            File img_f = null;
+            File img_f;
             try {
                 img_f = createTempFile();
             }catch (IOException e){

@@ -5,15 +5,15 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.widget.Toast;
 
-/**
+/**数据库助手
  * Created by Administrator on 2017-05-25.
  */
 
-public class DBHelper extends SQLiteOpenHelper {
+class DBHelper extends SQLiteOpenHelper {
     private final static String DB_NAME = "first.db";
     private final static int DB_VERSION = 1;
-    public final static String TB_BOOK = "book";
-    public final static String CREATE_BOOK = "create table " + TB_BOOK + "("
+    final static String TB_BOOK = "book";
+    private final static String CREATE_BOOK = "create table " + TB_BOOK + "("
             + "id integer primary key autoincrement,"
             + "author text, "
             + "price real, "
@@ -22,7 +22,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String DROP_BOOK =
             "DROP TABLE IF EXISTS " + TB_BOOK;
     private Context mCont;
-    public DBHelper(Context context) {
+    DBHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
         mCont = context;
     }

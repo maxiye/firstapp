@@ -17,9 +17,15 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.Date;
+
 
 public class MainActivity extends AppCompatActivity implements BlankFragment.OnFrgActionListener, ActivityCompat.OnRequestPermissionsResultCallback {
     public final static String EXTRA_MESSAGE = "com.maxiye.first.MESSAGE";
+    private final static int INTERVAL = 600;
+    private long last_press_time = 0;
+
+    private BlankFragment frg;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,17 +35,21 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         et.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keycode, KeyEvent ke) {
-                if (keycode == KeyEvent.KEYCODE_ENTER) {//修改回车键功能
-                    sendMsgNow(v);
+                switch (keycode) {
+                    case KeyEvent.KEYCODE_ENTER://修改回车键功能
+                        sendMsgNow(v);
+                        break;
+                    default:
+                        break;
                 }
                 return false;
             }
         });
+        frg = new BlankFragment();
         if (findViewById(R.id.fragment_container) != null) {
             if (savedInstanceState != null) {
                 return;
             }
-            BlankFragment frg = new BlankFragment();
             frg.setArguments(getIntent().getExtras());
             getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, frg).commit();
         }
@@ -65,6 +75,26 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
     }
 
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_BACK:
+                long now = new Date().getTime();
+                long interval = now - last_press_time;
+                if (interval < INTERVAL) {
+                    finish();
+                } else {
+                    last_press_time = now;
+                    alert(getString(R.string.alert_exit));
+                }
+                break;
+
+            default:
+                break;
+        }
+        return false;
+    }
+
     //设置
     public void setting(View view) {
         Intent intent = new Intent(this, SettingActivity.class);
@@ -74,7 +104,15 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         startActivity(intent);
     }
 
-    //设置
+    /**
+     * 简写toast
+     * @param msg 消息
+     */
+    private void alert(String msg){
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    //测试
     public void test(View view) {
         Intent intent = new Intent(this, TestActivity.class);
         startActivity(intent);
@@ -101,13 +139,20 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
     //查询应用
     public void sendMsgNow(View view) {
-        BlankFragment frg = new BlankFragment();
+        if (!frg.thread.isAlive()) {
+            EditText et = (EditText) findViewById(R.id.edit_message);
+            frg.keyword = et.getText().toString();
+            new Thread(frg.thread).start();
+        } else {
+            alert(getString(R.string.loading));
+        }
+        /*BlankFragment frg = new BlankFragment();
         EditText et = (EditText) findViewById(R.id.edit_message);
         String msg = et.getText().toString();
         Bundle args = new Bundle();
         args.putString(BlankFragment.ARG_1, msg);
         frg.setArguments(args);
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, frg).addToBackStack(null).commit();
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, frg).commit();*/
     }
 
 }

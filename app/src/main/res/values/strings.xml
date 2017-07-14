@@ -4,7 +4,7 @@
     <string name="button_setting">Setting</string>
     <string name="button_send_now">SearchNow</string>
     <string name="msg_tip">Enter a package name</string>
-    <string name="hello_blank_fragment"></string>
+    <string name="hello_blank_fragment"> </string>
     <string name="clip_toast">Copied to clipboard</string>
     <string name="not_found">Not Found</string>
     <string name="system_app">Show system apps</string>
@@ -17,4 +17,7 @@
     <string name="button_test_nfc">TestNFC</string>
     <string name="button_test_audio">TestAudio</string>
     <string name="button_test_camera">TestCamera</string>
+    <string name="loading">Loading</string>
+    <string name="test">Test</string>
+    <string name="alert_exit">Press once more to exit</string>
 </resources>
