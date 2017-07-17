@@ -106,9 +106,10 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
 
     /**
      * 简写toast
+     *
      * @param msg 消息
      */
-    private void alert(String msg){
+    private void alert(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 

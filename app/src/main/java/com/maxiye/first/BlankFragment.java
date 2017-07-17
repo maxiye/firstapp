@@ -84,25 +84,26 @@ public class BlankFragment extends Fragment {
         handler = new Handler(new Handler.Callback() {
             @Override
             public boolean handleMessage(Message msg) {
-            im.clearAnimation();//清除动画后才能设为不可见
-            im.setVisibility(View.INVISIBLE);
-            switch (msg.what){
-                case MSG_TYPE_START:
-                    lv.setAdapter(null);
-                    im.setVisibility(View.VISIBLE);
-                    im.startAnimation(AnimationUtils.loadAnimation(getActivity(), R.anim.load_rotate));
-                    break;
-                case MSG_TYPE_LV:
-                    @SuppressWarnings("unchecked")
-                    ArrayList<String> alstr = (ArrayList<String>) msg.obj;
-                    lv.setAdapter(new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, alstr.toArray(new String[alstr.size()])));
-                    break;
-                case MSG_TYPE_TV:
-                    String tvtxt = (String)msg.obj;
-                    tv.setText(tvtxt);
-                    break;
-            }
-            return false;
+                tv.setText("");
+                im.clearAnimation();//清除动画后才能设为不可见
+                im.setVisibility(View.INVISIBLE);
+                switch (msg.what){
+                    case MSG_TYPE_START:
+                        lv.setAdapter(null);
+                        im.setVisibility(View.VISIBLE);
+                        im.startAnimation(AnimationUtils.loadAnimation(getActivity(), R.anim.load_rotate));
+                        break;
+                    case MSG_TYPE_LV:
+                        @SuppressWarnings("unchecked")
+                        ArrayList<String> alstr = (ArrayList<String>) msg.obj;
+                        lv.setAdapter(new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, alstr.toArray(new String[alstr.size()])));
+                        break;
+                    case MSG_TYPE_TV:
+                        String tvtxt = (String)msg.obj;
+                        tv.setText(tvtxt);
+                        break;
+                }
+                return false;
             }
         });
         //点按事件
