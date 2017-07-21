@@ -22,6 +22,7 @@ class DBHelper extends SQLiteOpenHelper {
     private static final String DROP_BOOK =
             "DROP TABLE IF EXISTS " + TB_BOOK;
     private Context mCont;
+
     DBHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
         mCont = context;

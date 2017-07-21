@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:paddingTop="0dp">
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              android:paddingTop="0dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/msg_tip" />
+        android:text="@string/msg_tip"/>
 
     <EditText
         android:id="@+id/edit_message"
@@ -16,7 +16,7 @@
         android:layout_height="wrap_content"
         android:hint="@string/edit_message"
         android:imeOptions="actionSearch"
-        android:inputType="text" />
+        android:inputType="text"/>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -25,11 +25,12 @@
         android:orientation="horizontal">
 
         <Button
+            android:id="@+id/search_now"
             style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="sendMsgNow"
-            android:text="@string/button_send_now" />
+            android:text="@string/button_send_now"/>
 
         <Button
             style="?android:attr/buttonBarButtonStyle"
@@ -37,7 +38,7 @@
             android:layout_height="wrap_content"
             android:onClick="setting"
             android:text="@string/button_setting"
-            android:visibility="gone" />
+            android:visibility="gone"/>
 
         <Button
             android:id="@+id/btn_test"
@@ -46,7 +47,7 @@
             android:layout_height="wrap_content"
             android:onClick="test"
             android:text="@string/test"
-            android:visibility="visible" />
+            android:visibility="visible"/>
     </LinearLayout>
 
     <LinearLayout
@@ -55,9 +56,9 @@
         android:orientation="horizontal">
 
         <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/fragment_container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+                     android:id="@+id/fragment_container"
+                     android:layout_width="match_parent"
+                     android:layout_height="match_parent"/>
     </LinearLayout>
 </LinearLayout>
 

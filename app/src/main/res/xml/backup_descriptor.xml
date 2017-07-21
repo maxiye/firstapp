@@ -2,8 +2,8 @@
 <full-backup-content>
     <!-- Remove the following "exclude" elements to make them a part of the auto backup -->
     <!--<exclude-->
-        <!--domain="database"-->
-        <!--path="first.db"/>-->
+    <!--domain="database"-->
+    <!--path="first.db"/>-->
     <!-- Exclude the shared preferences file that contains the GCM registrationId -->
     <exclude
         domain="sharedpref"

@@ -13,6 +13,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -52,6 +53,16 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             }
             frg.setArguments(getIntent().getExtras());
             getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, frg).commit();
+            //清空缓存
+            Button btn = (Button) findViewById(R.id.search_now);
+            btn.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    frg.ai_al = null;
+                    alert("clear");
+                    return false;
+                }
+            });
         }
     }
 
@@ -122,8 +133,8 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     @Override
     //ListView项目点击事件，实现OnFrgActionListener接口
     public void onItemClick(View view) {
-        TextView tv = (TextView) view;
-        String str = tv.getText().toString().split("：")[1];
+        TextView tv = (TextView) view.findViewById(R.id.package_name);
+        String str = tv.getText().toString();
         ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         clm.setPrimaryClip(ClipData.newPlainText(null, str));
         Toast.makeText(this, R.string.clip_toast, Toast.LENGTH_SHORT).show();

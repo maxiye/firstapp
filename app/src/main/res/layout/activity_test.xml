@@ -5,50 +5,57 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.maxiye.first.TestActivity">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="8dp">
+
         <Button
             style="?android:attr/buttonBarButtonStyle"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="@string/button_create_db"
-            android:onClick="createDB"/>
+            android:layout_weight="1"
+            android:onClick="createDB"
+            android:text="@string/button_create_db"/>
+
         <Button
             style="?android:attr/buttonBarButtonStyle"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="@string/button_send_intent"
-            android:onClick="sentIntent"/>
+            android:layout_weight="1"
+            android:onClick="sentIntent"
+            android:text="@string/button_send_intent"/>
+
         <Button
             style="?android:attr/buttonBarButtonStyle"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="@string/button_test_nfc"
-            android:onClick="testNFC"/>
+            android:layout_weight="1"
+            android:onClick="testNFC"
+            android:text="@string/button_test_nfc"/>
+
         <Button
             style="?android:attr/buttonBarButtonStyle"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="@string/button_test_audio"
-            android:onClick="testAudio"/>
+            android:layout_weight="1"
+            android:onClick="testAudio"
+            android:text="@string/button_test_audio"/>
     </LinearLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="8dp"
-        android:layout_marginTop="50dp">
+        android:layout_marginTop="50dp"
+        android:padding="8dp">
+
         <Button
             style="?android:attr/buttonBarButtonStyle"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="@string/button_test_camera"
-            android:onClick="capture"/>
+            android:layout_weight="1"
+            android:onClick="capture"
+            android:text="@string/button_test_camera"/>
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>

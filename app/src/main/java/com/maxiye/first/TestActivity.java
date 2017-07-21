@@ -53,6 +53,7 @@ public class TestActivity extends AppCompatActivity {
     private static final int PER_REQ_STORAGE_READ = 201;
 
     private Uri[] mFileUris = new Uri[10];
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -133,7 +134,8 @@ public class TestActivity extends AppCompatActivity {
                     Uri pic = data.getData();
                     try {
                         ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(pic, "r");
-                        if (pfd == null) throw new FileNotFoundException();
+                        if (pfd == null)
+                            throw new FileNotFoundException();
                         Bitmap bm = BitmapFactory.decodeFileDescriptor(pfd.getFileDescriptor());
                         Cursor cur = getContentResolver().query(pic, null, null, null, null);
                         assert cur != null;
@@ -159,12 +161,12 @@ public class TestActivity extends AppCompatActivity {
                 }
                 break;
             case INTENT_IMG_CAPTURE_REQCODE:
-                if (resCode == RESULT_OK && data != null){
+                if (resCode == RESULT_OK && data != null) {
                     Bundle bdl = data.getExtras();
-                    Bitmap bmp = (Bitmap)bdl.get("data");
+                    Bitmap bmp = (Bitmap) bdl.get("data");
                     Toast toast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
-                    toast.setGravity(Gravity.CENTER,0,0);
-                    LinearLayout ll = (LinearLayout)toast.getView();
+                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    LinearLayout ll = (LinearLayout) toast.getView();
                     ImageView im = new ImageView(this);
                     im.setImageBitmap(bmp);
                     ll.addView(im);
@@ -175,11 +177,13 @@ public class TestActivity extends AppCompatActivity {
 
     /**
      * 简写toast
+     *
      * @param msg 消息
      */
-    private void alert(String msg){
+    private void alert(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
+
     public void sentIntent(View view) {
         //打电话
         /*Uri tel = Uri.parse("tel:10086");
@@ -352,14 +356,14 @@ public class TestActivity extends AppCompatActivity {
         // 发送广播
         sendBroadcast(addShortcutIntent);
     }
-    
+
     public void testNFC(View view) {
         NfcAdapter nfc;
-        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC)){
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC)) {
             Toast.makeText(this, "没有NFC功能", Toast.LENGTH_SHORT).show();
-        }else {
+        } else {
             nfc = NfcAdapter.getDefaultAdapter(this);
-            nfc.setBeamPushUrisCallback(new FileUrisCallBack(),this);
+            nfc.setBeamPushUrisCallback(new FileUrisCallBack(), this);
         }
 
     }
@@ -370,14 +374,14 @@ public class TestActivity extends AppCompatActivity {
     public void testAudio(View view) {
         SharedPreferences sp = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor sp_e = sp.edit();
-        boolean is_reg_mb = sp.getBoolean("ReceiveMediaBtn",false);
+        boolean is_reg_mb = sp.getBoolean("ReceiveMediaBtn", false);
         AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
-        if(is_reg_mb){
-            am.unregisterMediaButtonEventReceiver(new ComponentName(getPackageName(),RemoteControlReceiver.class.getName()));
+        if (is_reg_mb) {
+            am.unregisterMediaButtonEventReceiver(new ComponentName(getPackageName(), RemoteControlReceiver.class.getName()));
             sp_e.putBoolean("ReceiveMediaBtn", false).apply();
             setVolumeControlStream(AudioManager.STREAM_RING);
-        }else{
-            am.registerMediaButtonEventReceiver(new ComponentName(getPackageName(),RemoteControlReceiver.class.getName()));
+        } else {
+            am.registerMediaButtonEventReceiver(new ComponentName(getPackageName(), RemoteControlReceiver.class.getName()));
             sp_e.putBoolean("ReceiveMediaBtn", true).commit();
             setVolumeControlStream(AudioManager.STREAM_MUSIC);
         }
@@ -400,23 +404,25 @@ public class TestActivity extends AppCompatActivity {
             }
         }
     }
-    private File createTempFile() throws IOException{
+
+    private File createTempFile() throws IOException {
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
         String img_name = "JPEG_" + timestamp + "_";
         File storedir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        return File.createTempFile(img_name,".jpg",storedir);
+        return File.createTempFile(img_name, ".jpg", storedir);
     }
-    public void capture(View view){
+
+    public void capture(View view) {
         Intent cap = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if(cap.resolveActivity(getPackageManager()) != null){
+        if (cap.resolveActivity(getPackageManager()) != null) {
             File img_f;
             try {
                 img_f = createTempFile();
-            }catch (IOException e){
+            } catch (IOException e) {
                 img_f = null;
             }
-            if (img_f != null){
-                cap.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(this, "com.maxiye.first.fileprovider",img_f));
+            if (img_f != null) {
+                cap.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(this, "com.maxiye.first.fileprovider", img_f));
             }
             startActivityForResult(cap, INTENT_IMG_CAPTURE_REQCODE);
         }

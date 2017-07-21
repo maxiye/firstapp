@@ -5,11 +5,15 @@ import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Process;
+import android.support.annotation.LayoutRes;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,6 +31,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -47,6 +54,9 @@ public class BlankFragment extends Fragment {
     private OnFrgActionListener mListener;
     private Handler handler;
     protected Thread thread;
+    private SharedPreferences sp;
+    private PackageManager pm;
+    protected ArrayList<ApplicationInfo> ai_al;
 
     public BlankFragment() {
         // Required empty public constructor
@@ -54,10 +64,11 @@ public class BlankFragment extends Fragment {
 
     /**
      * 简写toast
+     *
      * @param msg 消息
      */
     @SuppressWarnings("unused")
-    private void alert(String msg){
+    private void alert(String msg) {
         Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
     }
 
@@ -79,15 +90,15 @@ public class BlankFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         final ListView lv = (ListView) getActivity().findViewById(R.id.lv_bfg);
-        final ImageView im = (ImageView)getActivity().findViewById(R.id.loading_bfg);
-        final TextView tv = (TextView)getActivity().findViewById(R.id.frgtxt);
+        final ImageView im = (ImageView) getActivity().findViewById(R.id.loading_bfg);
+        final TextView tv = (TextView) getActivity().findViewById(R.id.frgtxt);
         handler = new Handler(new Handler.Callback() {
             @Override
             public boolean handleMessage(Message msg) {
                 tv.setText("");
                 im.clearAnimation();//清除动画后才能设为不可见
                 im.setVisibility(View.INVISIBLE);
-                switch (msg.what){
+                switch (msg.what) {
                     case MSG_TYPE_START:
                         lv.setAdapter(null);
                         im.setVisibility(View.VISIBLE);
@@ -95,11 +106,13 @@ public class BlankFragment extends Fragment {
                         break;
                     case MSG_TYPE_LV:
                         @SuppressWarnings("unchecked")
-                        ArrayList<String> alstr = (ArrayList<String>) msg.obj;
-                        lv.setAdapter(new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, alstr.toArray(new String[alstr.size()])));
+                        /*ArrayList<String> alstr = (ArrayList<String>) msg.obj;
+                        lv.setAdapter(new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, alstr.toArray(new String[alstr.size()])));*/
+                                List<Map<String, Object>> app_al = (List<Map<String, Object>>) msg.obj;
+                        lv.setAdapter(new MyAdapter(getActivity(), R.layout.listview_applist, app_al));
                         break;
                     case MSG_TYPE_TV:
-                        String tvtxt = (String)msg.obj;
+                        String tvtxt = (String) msg.obj;
                         tv.setText(tvtxt);
                         break;
                 }
@@ -120,7 +133,7 @@ public class BlankFragment extends Fragment {
                 return true;//取消点击事件
             }
         });
-        thread = new Thread(){
+        thread = new Thread() {
             @Override
             public void run() {
                 android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
@@ -133,25 +146,27 @@ public class BlankFragment extends Fragment {
     /**
      * 获取Listview数据
      */
-    private void getListData(){
+    private void getListData() {
         handler.sendMessage(Message.obtain(handler, MSG_TYPE_START));
-        SharedPreferences sp = getActivity().getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
+        if (ai_al == null) {
+            sp = getActivity().getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
+            pm = getActivity().getPackageManager();
+            ai_al = new ArrayList<>(pm.getInstalledApplications(0));
+        }
         boolean show_system_apps = sp.getBoolean(SettingActivity.SHOW_SYSTEM, false);
-        PackageManager pm = getActivity().getPackageManager();
-        ArrayList<ApplicationInfo> app_al = new ArrayList<>(pm.getInstalledApplications(0));
         //过滤
         //String app_list = "";
-        for (int i = 0; i < app_al.size(); i++) {
-            ApplicationInfo ai = app_al.get(i);
+        for (int i = 0; i < ai_al.size(); i++) {
+            ApplicationInfo ai = ai_al.get(i);
             if ((!show_system_apps && ((ai.flags & ApplicationInfo.FLAG_SYSTEM) != 0))) {
-                app_al.remove(i);
+                ai_al.remove(i);
                 i--;//??????????????????????????????????????????????坑爹啊尼玛
                 continue;
             }
             if (keyword != null && !keyword.isEmpty()) {
                 String app_name = pm.getApplicationLabel(ai).toString();
                 if (!(app_name + ai.packageName).toLowerCase().contains(keyword.toLowerCase())) {
-                    app_al.remove(i);
+                    ai_al.remove(i);
                     i--;
                 }
             }
@@ -159,32 +174,38 @@ public class BlankFragment extends Fragment {
         }
         //写入文件
         //SaveAppListEx("app_list.txt", app_list);
-        ArrayList<CharSequence> strs_al = new ArrayList<>();
+        List<Map<String, Object>> app_map_al = new ArrayList<>();
         try {
             ApplicationInfo app_info = pm.getApplicationInfo(keyword, 0);
             CharSequence appname = pm.getApplicationLabel(app_info) + "：" + app_info.packageName;
-            handler.sendMessage(handler.obtainMessage(MSG_TYPE_TV,appname));
+            handler.sendMessage(handler.obtainMessage(MSG_TYPE_TV, appname));
         } catch (PackageManager.NameNotFoundException e) {
-            for (ApplicationInfo ai : app_al) {
-                try {
+            HashMap<String, Object> app_info;
+            try {
+                for (ApplicationInfo ai : ai_al) {
+                    app_info = new HashMap<>();
                     PackageInfo pi = pm.getPackageInfo(ai.packageName, 0);
-                    strs_al.add(pm.getApplicationLabel(ai) + " v" + pi.versionName + "(" + pi.versionCode + ")：" + ai.packageName);
-                } catch (PackageManager.NameNotFoundException ee) {
-                    strs_al.add(pm.getApplicationLabel(ai) + "：" + ai.packageName);
+                    app_info.put("name", pm.getApplicationLabel(ai) + " v" + pi.versionName + "(" + pi.versionCode + ")");
+                    app_info.put("pkg", ai.packageName);
+                    app_info.put("icon", pm.getApplicationIcon(ai));
+                    app_map_al.add(app_info);
                 }
+            } catch (PackageManager.NameNotFoundException ee) {
+                ee.printStackTrace();
             }
 
-            if (!strs_al.isEmpty()) {
-                handler.sendMessage(handler.obtainMessage(MSG_TYPE_LV,strs_al));
+            if (!app_map_al.isEmpty()) {
+                handler.sendMessage(handler.obtainMessage(MSG_TYPE_LV, app_map_al));
             } else {
-                handler.sendMessage(handler.obtainMessage(MSG_TYPE_TV,getString(R.string.not_found)));
+                handler.sendMessage(handler.obtainMessage(MSG_TYPE_TV, getString(R.string.not_found)));
             }
         }
     }
 
     /**
      * 保存applist到内部存储
-     * @param fname Filename
+     *
+     * @param fname   Filename
      * @param content File content
      */
     @SuppressWarnings("unused")
@@ -220,7 +241,8 @@ public class BlankFragment extends Fragment {
 
     /**
      * 保存applist到外部存储
-     * @param fname Filename
+     *
+     * @param fname   Filename
      * @param content File content
      */
     @SuppressWarnings("unused")
@@ -273,5 +295,47 @@ public class BlankFragment extends Fragment {
         void onItemClick(View view);
 
         void onItemLongClick(View view);
+    }
+
+    private class MyAdapter extends ArrayAdapter {
+        private List<Map<String, Object>> data;
+        private int res;
+        private Context context;
+
+        @SuppressWarnings("unchecked")
+        MyAdapter(@NonNull Context context, @LayoutRes int resource, @NonNull List<Map<String, Object>> objects) {
+            super(context, resource, objects);
+            this.context = context;
+            this.res = resource;
+            this.data = objects;
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            ViewHolder holder;
+            if (convertView == null) {
+                convertView = LayoutInflater.from(context).inflate(res, null);
+                holder = new ViewHolder();
+                holder.icon = (ImageView) convertView.findViewById(R.id.app_icon);
+                holder.name = (TextView) convertView.findViewById(R.id.app_name);
+                holder.pkg = (TextView) convertView.findViewById(R.id.package_name);
+            } else {
+                holder = (ViewHolder) convertView.getTag();
+            }
+            HashMap<String, Object> app_info = (HashMap<String, Object>) data.get(position);
+            holder.icon.setImageDrawable((Drawable) app_info.get("icon"));
+            holder.name.setText((String) app_info.get("name"));
+            holder.pkg.setText((String) app_info.get("pkg"));
+            convertView.setTag(holder);
+            return convertView;
+        }
+
+    }
+
+    private static class ViewHolder {
+        TextView name;
+        TextView pkg;
+        ImageView icon;
     }
 }
