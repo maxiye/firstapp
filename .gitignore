@@ -1,1 +1,5 @@
 /build/android-profile
+/.gradle
+/.idea
+/build
+/captures

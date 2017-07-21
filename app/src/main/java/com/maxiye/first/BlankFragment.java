@@ -106,10 +106,9 @@ public class BlankFragment extends Fragment {
                         break;
                     case MSG_TYPE_LV:
                         @SuppressWarnings("unchecked")
-                        /*ArrayList<String> alstr = (ArrayList<String>) msg.obj;
-                        lv.setAdapter(new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, alstr.toArray(new String[alstr.size()])));*/
-                                List<Map<String, Object>> app_al = (List<Map<String, Object>>) msg.obj;
+                        List<Map<String, Object>> app_al = (List<Map<String, Object>>) msg.obj;
                         lv.setAdapter(new MyAdapter(getActivity(), R.layout.listview_applist, app_al));
+                        msg.obj = null;
                         break;
                     case MSG_TYPE_TV:
                         String tvtxt = (String) msg.obj;
@@ -141,6 +140,12 @@ public class BlankFragment extends Fragment {
             }
         };
         thread.start();
+    }
+
+    @Override
+    public void onDestroy() {
+        handler.removeCallbacksAndMessages(null);
+        super.onDestroy();
     }
 
     /**
