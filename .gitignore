@@ -1,5 +1,8 @@
-/build/android-profile
-/.gradle
-/.idea
 /build
+/android-profile
+
+/.gradle
+
+/build
+
 /captures
