@@ -158,20 +158,22 @@ public class BlankFragment extends Fragment {
             pm = getActivity().getPackageManager();
             ai_al = new ArrayList<>(pm.getInstalledApplications(0));
         }
+        @SuppressWarnings("unchecked")
+        ArrayList<ApplicationInfo> ai_al_c = (ArrayList<ApplicationInfo>)ai_al.clone();
         boolean show_system_apps = sp.getBoolean(SettingActivity.SHOW_SYSTEM, false);
         //过滤
         //String app_list = "";
-        for (int i = 0; i < ai_al.size(); i++) {
-            ApplicationInfo ai = ai_al.get(i);
+        for (int i = 0; i < ai_al_c.size(); i++) {
+            ApplicationInfo ai = ai_al_c.get(i);
             if ((!show_system_apps && ((ai.flags & ApplicationInfo.FLAG_SYSTEM) != 0))) {
-                ai_al.remove(i);
+                ai_al_c.remove(i);
                 i--;//??????????????????????????????????????????????坑爹啊尼玛
                 continue;
             }
             if (keyword != null && !keyword.isEmpty()) {
                 String app_name = pm.getApplicationLabel(ai).toString();
                 if (!(app_name + ai.packageName).toLowerCase().contains(keyword.toLowerCase())) {
-                    ai_al.remove(i);
+                    ai_al_c.remove(i);
                     i--;
                 }
             }
@@ -187,7 +189,7 @@ public class BlankFragment extends Fragment {
         } catch (PackageManager.NameNotFoundException e) {
             HashMap<String, Object> app_info;
             try {
-                for (ApplicationInfo ai : ai_al) {
+                for (ApplicationInfo ai : ai_al_c) {
                     app_info = new HashMap<>();
                     PackageInfo pi = pm.getPackageInfo(ai.packageName, 0);
                     app_info.put("name", pm.getApplicationLabel(ai) + " v" + pi.versionName + "(" + pi.versionCode + ")");
