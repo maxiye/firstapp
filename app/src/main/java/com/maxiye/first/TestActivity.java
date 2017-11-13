@@ -113,6 +113,7 @@ public class TestActivity extends AppCompatActivity {
                 if (resCode == RESULT_OK) {
                     Uri contact = data.getData();
                     String[] proj = {ContactsContract.CommonDataKinds.Phone.NUMBER};
+                    assert contact != null;
                     Cursor cur = getContentResolver().query(contact, proj, null, null, null);
                     assert cur != null;
                     cur.moveToFirst();
@@ -133,6 +134,7 @@ public class TestActivity extends AppCompatActivity {
                 if (resCode == RESULT_OK) {
                     Uri pic = data.getData();
                     try {
+                        assert pic != null;
                         ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(pic, "r");
                         if (pfd == null)
                             throw new FileNotFoundException();
@@ -163,6 +165,7 @@ public class TestActivity extends AppCompatActivity {
             case INTENT_IMG_CAPTURE_REQCODE:
                 if (resCode == RESULT_OK && data != null) {
                     Bundle bdl = data.getExtras();
+                    assert bdl != null;
                     Bitmap bmp = (Bitmap) bdl.get("data");
                     Toast toast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
                     toast.setGravity(Gravity.CENTER, 0, 0);
@@ -244,6 +247,7 @@ public class TestActivity extends AppCompatActivity {
         if (itt.getType() != null) {
             Uri data = itt.getData();
             if (itt.getType().contains("image/")) {
+                assert data != null;
                 Toast toast = Toast.makeText(this, data.toString(), Toast.LENGTH_SHORT);
                 toast.setGravity(Gravity.CENTER, 0, 0);
                 LinearLayout ll = (LinearLayout) toast.getView();
@@ -376,6 +380,7 @@ public class TestActivity extends AppCompatActivity {
         SharedPreferences.Editor sp_e = sp.edit();
         boolean is_reg_mb = sp.getBoolean("ReceiveMediaBtn", false);
         AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
+        assert am != null;
         if (is_reg_mb) {
             am.unregisterMediaButtonEventReceiver(new ComponentName(getPackageName(), RemoteControlReceiver.class.getName()));
             sp_e.putBoolean("ReceiveMediaBtn", false).apply();

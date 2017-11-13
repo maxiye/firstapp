@@ -136,6 +136,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         TextView tv = (TextView) view.findViewById(R.id.package_name);
         String str = tv.getText().toString();
         ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        assert clm != null;
         clm.setPrimaryClip(ClipData.newPlainText(null, str));
         Toast.makeText(this, R.string.clip_toast, Toast.LENGTH_SHORT).show();
     }
@@ -144,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     public void onItemLongClick(View view) {
         onItemClick(view);
         ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        Uri url = Uri.parse("https://apps.evozi.com/apk-downloader/?id=" + clm.getPrimaryClip().getItemAt(0).getText());
+        Uri url = Uri.parse("https://apps.evozi.com/apk-downloader/?id=" + (clm != null ? clm.getPrimaryClip().getItemAt(0).getText() : null));
         Intent itt = new Intent(Intent.ACTION_VIEW, url);
         startActivity(itt);
     }
