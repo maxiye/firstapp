@@ -31,7 +31,7 @@ public class SettingActivity extends AppCompatActivity {
     }
 
     private void initSetting() {
-        Switch show_system_apps = (Switch) findViewById(R.id.show_system_apps);
+        Switch show_system_apps = findViewById(R.id.show_system_apps);
         show_system_apps.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {

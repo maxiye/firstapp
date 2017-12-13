@@ -3,8 +3,21 @@
       xmlns:first="http://schemas.android.com/apk/res-auto">
     <!-- 搜索, 应该作为动作按钮展示-->
     <item
+        android:id="@+id/action_search"
+        android:icon="@drawable/ic_search_black_24dp"
+        android:title="@string/button_search"
+        first:showAsAction="always"
+        first:actionViewClass="android.widget.SearchView"/>
+    <!-- 设置, 应该作为动作按钮展示-->
+    <item
         android:id="@+id/action_setting"
         android:icon="@drawable/ic_settings_black_24dp"
         android:title="@string/button_setting"
+        first:showAsAction="ifRoom"/>
+    <!-- 测试, 应该作为动作按钮展示-->
+    <item
+        android:id="@+id/action_test"
+        android:icon="@drawable/ic_settings_ethernet_black_24dp"
+        android:title="@string/test"
         first:showAsAction="ifRoom"/>
 </menu>

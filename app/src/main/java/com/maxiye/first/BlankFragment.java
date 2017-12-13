@@ -19,6 +19,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
@@ -89,9 +90,9 @@ public class BlankFragment extends Fragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        final ListView lv = (ListView) getActivity().findViewById(R.id.lv_bfg);
-        final ImageView im = (ImageView) getActivity().findViewById(R.id.loading_bfg);
-        final TextView tv = (TextView) getActivity().findViewById(R.id.frgtxt);
+        final ListView lv = getActivity().findViewById(R.id.lv_bfg);
+        final ImageView im = getActivity().findViewById(R.id.loading_bfg);
+        final TextView tv = getActivity().findViewById(R.id.frgtxt);
         handler = new Handler(new Handler.Callback() {
             @Override
             public boolean handleMessage(Message msg) {
@@ -130,6 +131,28 @@ public class BlankFragment extends Fragment {
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 mListener.onItemLongClick(view);
                 return true;//取消点击事件
+            }
+        });
+        lv.setOnScrollListener(new AbsListView.OnScrollListener() {
+            private int oldVisibleItem = 0;
+            private boolean touchFlg = true;
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+                touchFlg = true;
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                if (firstVisibleItem > oldVisibleItem) {
+                    // 向上滑动
+                    mListener.onListScroll(true);
+                }
+                if (oldVisibleItem > firstVisibleItem) {
+                    // 向下滑动
+                    mListener.onListScroll(false);
+                }
+                touchFlg = false;
+                oldVisibleItem = firstVisibleItem;
             }
         });
         thread = new Thread() {
@@ -302,6 +325,7 @@ public class BlankFragment extends Fragment {
         void onItemClick(View view);
 
         void onItemLongClick(View view);
+        void onListScroll(boolean flg);
     }
 
     private class MyAdapter extends ArrayAdapter {
@@ -324,9 +348,9 @@ public class BlankFragment extends Fragment {
             if (convertView == null) {
                 convertView = LayoutInflater.from(context).inflate(res, null);
                 holder = new ViewHolder();
-                holder.icon = (ImageView) convertView.findViewById(R.id.app_icon);
-                holder.name = (TextView) convertView.findViewById(R.id.app_name);
-                holder.pkg = (TextView) convertView.findViewById(R.id.package_name);
+                holder.icon = convertView.findViewById(R.id.app_icon);
+                holder.name = convertView.findViewById(R.id.app_name);
+                holder.pkg = convertView.findViewById(R.id.package_name);
             } else {
                 holder = (ViewHolder) convertView.getTag();
             }

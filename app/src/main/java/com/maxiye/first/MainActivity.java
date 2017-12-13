@@ -4,48 +4,38 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
+import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Date;
 
 
-public class MainActivity extends AppCompatActivity implements BlankFragment.OnFrgActionListener, ActivityCompat.OnRequestPermissionsResultCallback {
+public class MainActivity extends AppCompatActivity implements BlankFragment.OnFrgActionListener, ActivityCompat.OnRequestPermissionsResultCallback, SearchView.OnQueryTextListener {
     public final static String EXTRA_MESSAGE = "com.maxiye.first.MESSAGE";
+    public static final String EXTRA_URL = "com.maxiye.first.URL";
     private final static int INTERVAL = 600;
     private long last_press_time = 0;
 
     private BlankFragment frg;
+    private SearchView mSearchView;
+    private ActionBar ab;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        EditText et = (EditText) findViewById(R.id.edit_message);
-        et.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keycode, KeyEvent ke) {
-                switch (keycode) {
-                    case KeyEvent.KEYCODE_ENTER://修改回车键功能
-                        sendMsgNow(v);
-                        break;
-                    default:
-                        break;
-                }
-                return false;
-            }
-        });
+        ab = getSupportActionBar();
+        assert ab != null;
         frg = new BlankFragment();
         if (findViewById(R.id.fragment_container) != null) {
             if (savedInstanceState != null) {
@@ -54,7 +44,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             frg.setArguments(getIntent().getExtras());
             getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, frg).commit();
             //清空缓存
-            Button btn = (Button) findViewById(R.id.search_now);
+            /*Button btn = (Button) findViewById(R.id.search_now);
             btn.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
@@ -62,16 +52,33 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
                     alert("clear");
                     return false;
                 }
-            });
+            });*/
         }
     }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // 为ActionBar扩展菜单项
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main_activity_actions, menu);
+        mSearchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+        setupSearchView();
         return super.onCreateOptionsMenu(menu);
+    }
+    private void setupSearchView() {
+        mSearchView.setIconifiedByDefault(true);
+        mSearchView.setOnQueryTextListener(this);
+        mSearchView.setQueryHint(getString(R.string.edit_message));
+    }
+    @Override
+    public boolean onQueryTextChange(String newText) {
+        //implement the filterng techniques
+        return false;
+    }
+
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        search(query);
+        return false;
     }
 
     @Override
@@ -79,6 +86,10 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         switch (item.getItemId()) {
             case R.id.action_setting:
                 setting(new View(this));
+                return true;
+            case R.id.action_test:
+                Intent intent = new Intent(this, TestActivity.class);
+                startActivity(intent);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -109,8 +120,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     //设置
     public void setting(View view) {
         Intent intent = new Intent(this, SettingActivity.class);
-        EditText et = (EditText) findViewById(R.id.edit_message);
-        String msg = et.getText().toString();
+        String msg = "helloworld";
         intent.putExtra(EXTRA_MESSAGE, msg);
         startActivity(intent);
     }
@@ -124,16 +134,10 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
-    //测试
-    public void test(View view) {
-        Intent intent = new Intent(this, TestActivity.class);
-        startActivity(intent);
-    }
-
     @Override
     //ListView项目点击事件，实现OnFrgActionListener接口
     public void onItemClick(View view) {
-        TextView tv = (TextView) view.findViewById(R.id.package_name);
+        TextView tv = view.findViewById(R.id.package_name);
         String str = tv.getText().toString();
         ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         assert clm != null;
@@ -145,16 +149,29 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     public void onItemLongClick(View view) {
         onItemClick(view);
         ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        Uri url = Uri.parse("https://apps.evozi.com/apk-downloader/?id=" + (clm != null ? clm.getPrimaryClip().getItemAt(0).getText() : null));
-        Intent itt = new Intent(Intent.ACTION_VIEW, url);
-        startActivity(itt);
+        String url = "https://m.downloadatoz.com/search.html?q=" + (clm != null ? clm.getPrimaryClip().getItemAt(0).getText() : null);
+        Intent intent = new Intent(this, WebViewActivity.class);
+        intent.putExtra(EXTRA_URL, url);
+        startActivity(intent);
+        /*Uri uri = Uri.parse(url);
+        Intent itt = new Intent(Intent.ACTION_VIEW, uri);
+        startActivity(itt);*/
+    }
+
+    @Override
+    public void onListScroll(boolean flg) {
+        if (flg) {
+            //上滑
+            if (ab.isShowing()) ab.hide();
+        } else {
+            if (!ab.isShowing()) ab.show();
+        }
     }
 
     //查询应用
-    public void sendMsgNow(View view) {
+    public void search(String search) {
         if (!frg.thread.isAlive()) {
-            EditText et = (EditText) findViewById(R.id.edit_message);
-            frg.keyword = et.getText().toString();
+            frg.keyword = search;
             new Thread(frg.thread).start();
         } else {
             alert(getString(R.string.loading));
