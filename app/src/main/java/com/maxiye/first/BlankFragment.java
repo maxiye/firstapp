@@ -143,15 +143,16 @@ public class BlankFragment extends Fragment {
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                if (firstVisibleItem > oldVisibleItem) {
+                if (firstVisibleItem > oldVisibleItem && touchFlg) {
                     // 向上滑动
                     mListener.onListScroll(true);
+                    touchFlg = false;
                 }
-                if (oldVisibleItem > firstVisibleItem) {
+                if (oldVisibleItem > firstVisibleItem && touchFlg) {
                     // 向下滑动
                     mListener.onListScroll(false);
+                    touchFlg = false;
                 }
-                touchFlg = false;
                 oldVisibleItem = firstVisibleItem;
             }
         });
