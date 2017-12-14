@@ -2,29 +2,39 @@ package com.maxiye.first;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.KeyEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.webkit.DownloadListener;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 public class WebViewActivity extends AppCompatActivity {
 
     private WebView webview;
+    private ProgressBar web_progress;
+
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_web_view);
         ActionBar ab = getSupportActionBar();
-        assert ab != null;ab.hide();
+        assert ab != null;
+        ab.hide();
         Intent intent = getIntent();
         String url = intent.getStringExtra(MainActivity.EXTRA_URL);
         webview = findViewById(R.id.webView1);
+        web_progress = findViewById(R.id.web_progress);
         WebSettings webSettings = webview.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webview.setWebViewClient(new WebViewClient() {
@@ -33,8 +43,29 @@ public class WebViewActivity extends AppCompatActivity {
                 return false;
             }
         });
+        webview.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onProgressChanged(WebView view, int newProgress) {
+                if (newProgress == 100) {
+                    web_progress.setVisibility(View.GONE);//加载完网页进度条消失
+                } else {
+                    web_progress.setVisibility(View.VISIBLE);//开始加载网页时显示进度条
+                    web_progress.setProgress(newProgress);//设置进度值
+                }
+                super.onProgressChanged(view, newProgress);
+            }
+        });
+        webview.setDownloadListener(new DownloadListener() {
+            @Override
+            public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
+                Uri uri = Uri.parse(url);
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                startActivity(intent);
+            }
+        });
         webview.loadUrl(url);
     }
+
     /**
      * 简写toast
      *
@@ -44,6 +75,7 @@ public class WebViewActivity extends AppCompatActivity {
     private void alert(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         switch (keyCode) {
@@ -52,10 +84,23 @@ public class WebViewActivity extends AppCompatActivity {
                     webview.goBack();
                     return true;
                 }
-                return super.onKeyDown(keyCode, event);
+                break;
             default:
                 break;
         }
-        return false;
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (webview != null) {
+            webview.loadDataWithBaseURL(null, "", "text/html", "utf-8", null);
+            webview.clearHistory();
+
+            ((ViewGroup) webview.getParent()).removeView(webview);
+            webview.destroy();
+            webview = null;
+        }
+        super.onDestroy();
     }
 }
