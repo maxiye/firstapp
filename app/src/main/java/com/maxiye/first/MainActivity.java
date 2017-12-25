@@ -43,16 +43,6 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             }
             frg.setArguments(getIntent().getExtras());
             getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, frg).commit();
-            //清空缓存
-            /*Button btn = (Button) findViewById(R.id.search_now);
-            btn.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    frg.ai_al = null;
-                    alert("clear");
-                    return false;
-                }
-            });*/
         }
     }
     @Override
@@ -142,7 +132,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         assert clm != null;
         clm.setPrimaryClip(ClipData.newPlainText(null, str));
-        Toast.makeText(this, R.string.clip_toast, Toast.LENGTH_SHORT).show();
+        alert(getString(R.string.clip_toast));
     }
 
     @Override
@@ -176,13 +166,6 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         } else {
             alert(getString(R.string.loading));
         }
-        /*BlankFragment frg = new BlankFragment();
-        EditText et = (EditText) findViewById(R.id.edit_message);
-        String msg = et.getText().toString();
-        Bundle args = new Bundle();
-        args.putString(BlankFragment.ARG_1, msg);
-        frg.setArguments(args);
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, frg).commit();*/
     }
 
 }

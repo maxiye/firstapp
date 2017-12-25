@@ -20,13 +20,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.widget.AbsListView;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -35,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 /**
@@ -44,7 +43,6 @@ import java.util.Map;
  * to handle interaction events.
  */
 public class BlankFragment extends Fragment {
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     public static final String ARG_1 = "arg_1";
     private static final int MSG_TYPE_START = 0;
     private static final int MSG_TYPE_LV = 1;
@@ -93,45 +91,34 @@ public class BlankFragment extends Fragment {
         final ListView lv = getActivity().findViewById(R.id.lv_bfg);
         final ImageView im = getActivity().findViewById(R.id.loading_bfg);
         final TextView tv = getActivity().findViewById(R.id.frgtxt);
-        handler = new Handler(new Handler.Callback() {
-            @Override
-            public boolean handleMessage(Message msg) {
-                tv.setText("");
-                im.clearAnimation();//清除动画后才能设为不可见
-                im.setVisibility(View.INVISIBLE);
-                switch (msg.what) {
-                    case MSG_TYPE_START:
-                        lv.setAdapter(null);
-                        im.setVisibility(View.VISIBLE);
-                        im.startAnimation(AnimationUtils.loadAnimation(getActivity(), R.anim.load_rotate));
-                        break;
-                    case MSG_TYPE_LV:
-                        @SuppressWarnings("unchecked")
-                        List<Map<String, Object>> app_al = (List<Map<String, Object>>) msg.obj;
-                        lv.setAdapter(new MyAdapter(getActivity(), R.layout.listview_applist, app_al));
-                        msg.obj = null;
-                        break;
-                    case MSG_TYPE_TV:
-                        String tvtxt = (String) msg.obj;
-                        tv.setText(tvtxt);
-                        break;
-                }
-                return false;
+        handler = new Handler(msg -> {
+            tv.setText("");
+            im.clearAnimation();//清除动画后才能设为不可见
+            im.setVisibility(View.INVISIBLE);
+            switch (msg.what) {
+                case MSG_TYPE_START:
+                    lv.setAdapter(null);
+                    im.setVisibility(View.VISIBLE);
+                    im.startAnimation(AnimationUtils.loadAnimation(getActivity(), R.anim.load_rotate));
+                    break;
+                case MSG_TYPE_LV:
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> app_al = (List<Map<String, Object>>) msg.obj;
+                    lv.setAdapter(new MyAdapter(getActivity(), R.layout.listview_applist, app_al));
+                    msg.obj = null;
+                    break;
+                case MSG_TYPE_TV:
+                    String tvtxt = (String) msg.obj;
+                    tv.setText(tvtxt);
+                    break;
             }
+            return false;
         });
         //点按事件
-        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                mListener.onItemClick(view);
-            }
-        });
-        lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                mListener.onItemLongClick(view);
-                return true;//取消点击事件
-            }
+        lv.setOnItemClickListener((parent, view, position, id) -> mListener.onItemClick(view));
+        lv.setOnItemLongClickListener((parent, view, position, id) -> {
+            mListener.onItemLongClick(view);
+            return true;//取消点击事件
         });
         lv.setOnScrollListener(new AbsListView.OnScrollListener() {
             private int oldVisibleItem = 0;
@@ -156,13 +143,10 @@ public class BlankFragment extends Fragment {
                 oldVisibleItem = firstVisibleItem;
             }
         });
-        thread = new Thread() {
-            @Override
-            public void run() {
-                android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-                getListData();
-            }
-        };
+        thread = new Thread(() -> {
+            android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+            getListData();
+        });
         thread.start();
     }
 
@@ -182,55 +166,43 @@ public class BlankFragment extends Fragment {
             pm = getActivity().getPackageManager();
             ai_al = new ArrayList<>(pm.getInstalledApplications(0));
         }
-        @SuppressWarnings("unchecked")
-        ArrayList<ApplicationInfo> ai_al_c = (ArrayList<ApplicationInfo>)ai_al.clone();
         boolean show_system_apps = sp.getBoolean(SettingActivity.SHOW_SYSTEM, false);
         //过滤
         //String app_list = "";
-        for (int i = 0; i < ai_al_c.size(); i++) {
-            ApplicationInfo ai = ai_al_c.get(i);
-            if ((!show_system_apps && ((ai.flags & ApplicationInfo.FLAG_SYSTEM) != 0))) {
-                ai_al_c.remove(i);
-                i--;//??????????????????????????????????????????????坑爹啊尼玛
-                continue;
-            }
-            if (keyword != null && !keyword.isEmpty()) {
-                String app_name = pm.getApplicationLabel(ai).toString();
-                if (!(app_name + ai.packageName).toLowerCase().contains(keyword.toLowerCase())) {
-                    ai_al_c.remove(i);
-                    i--;
-                }
-            }
-            //app_list += (ai.flags & ApplicationInfo.FLAG_SYSTEM)+"??";
-        }
+        List<ApplicationInfo> ai_al_c = ai_al.stream()
+                .filter(ai -> show_system_apps || ((ai.flags & ApplicationInfo.FLAG_SYSTEM) == 0))
+                .filter(ai -> {
+                    if (keyword != null && !keyword.isEmpty()) {
+                        String app_name = pm.getApplicationLabel(ai).toString();
+                        return (app_name + ai.packageName).toLowerCase().contains(keyword.toLowerCase());
+                    }
+                    return true;
+                })
+//                .forEach(ai -> app_list += (ai.flags & ApplicationInfo.FLAG_SYSTEM)+"??")
+                .collect(Collectors.toList());
         //写入文件
         //SaveAppListEx("app_list.txt", app_list);
-        List<Map<String, Object>> app_map_al = new ArrayList<>();
+        Message msg;
         try {
             ApplicationInfo app_info = pm.getApplicationInfo(keyword, 0);
             CharSequence appname = pm.getApplicationLabel(app_info) + "：" + app_info.packageName;
-            handler.sendMessage(handler.obtainMessage(MSG_TYPE_TV, appname));
+            msg = handler.obtainMessage(MSG_TYPE_TV, appname);
         } catch (PackageManager.NameNotFoundException e) {
-            HashMap<String, Object> app_info;
-            try {
-                for (ApplicationInfo ai : ai_al_c) {
-                    app_info = new HashMap<>();
+            List<Map<String, Object>> app_map_al = ai_al_c.stream().map(ai -> {
+                HashMap<String, Object> app_info = new HashMap<>();
+                try {
                     PackageInfo pi = pm.getPackageInfo(ai.packageName, 0);
                     app_info.put("name", pm.getApplicationLabel(ai) + " v" + pi.versionName + "(" + pi.versionCode + ")");
                     app_info.put("pkg", ai.packageName);
                     app_info.put("icon", pm.getApplicationIcon(ai));
-                    app_map_al.add(app_info);
+                } catch (PackageManager.NameNotFoundException e1) {
+                    e1.printStackTrace();
                 }
-            } catch (PackageManager.NameNotFoundException ee) {
-                ee.printStackTrace();
-            }
-
-            if (!app_map_al.isEmpty()) {
-                handler.sendMessage(handler.obtainMessage(MSG_TYPE_LV, app_map_al));
-            } else {
-                handler.sendMessage(handler.obtainMessage(MSG_TYPE_TV, getString(R.string.not_found)));
-            }
+                return app_info;
+            }).collect(Collectors.toList());
+            msg = app_map_al.isEmpty() ? handler.obtainMessage(MSG_TYPE_TV, getString(R.string.not_found)) : handler.obtainMessage(MSG_TYPE_LV, app_map_al);
         }
+        handler.sendMessage(msg);
     }
 
     /**
@@ -241,13 +213,8 @@ public class BlankFragment extends Fragment {
      */
     @SuppressWarnings("unused")
     public void SaveAppList(String fname, String content) {
-        //File file = new File(getActivity().getFilesDir(), fname);
         FileOutputStream fos;
         try {
-            /*if (!file.exists()){
-                file.createNewFile();
-            }*/
-            getActivity();
             fos = getActivity().openFileOutput(fname, Context.MODE_PRIVATE);
             fos.write(content.getBytes());
             fos.flush();
@@ -324,7 +291,6 @@ public class BlankFragment extends Fragment {
      */
     interface OnFrgActionListener {
         void onItemClick(View view);
-
         void onItemLongClick(View view);
         void onListScroll(boolean flg);
     }

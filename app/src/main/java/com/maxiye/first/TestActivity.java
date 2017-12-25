@@ -1,5 +1,6 @@
 package com.maxiye.first;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ComponentName;
@@ -7,6 +8,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.database.Cursor;
@@ -27,6 +29,7 @@ import android.provider.OpenableColumns;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -37,6 +40,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import java.io.File;
@@ -44,9 +48,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
-public class TestActivity extends AppCompatActivity {
+public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
     private final static int INTENT_CONTACT_PICK_REQCODE = 100;
     private final static int INTENT_IMG_VIEW_REQCODE = 101;
     private final static int INTENT_IMG_PICK_REQCODE = 102;
@@ -66,8 +71,8 @@ public class TestActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        super.onStop();
         setVolumeControlStream(AudioManager.USE_DEFAULT_STREAM_TYPE);//不再调节游戏或者音乐的音量
+        super.onStop();
     }
 
     @Override
@@ -90,7 +95,6 @@ public class TestActivity extends AppCompatActivity {
             default:
                 return super.onOptionsItemSelected(item);
         }
-
     }
 
     @Override
@@ -98,9 +102,9 @@ public class TestActivity extends AppCompatActivity {
         switch (reqCode) {
             case PER_REQ_CALL: {
                 if (res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(this, "权限已获取", Toast.LENGTH_SHORT).show();
+                    alert("权限已获取");
                 } else {
-                    Toast.makeText(this, "权限被拒绝", Toast.LENGTH_SHORT).show();
+                    alert("权限被拒绝");
                 }
             }
             case PER_REQ_STORAGE_READ: {
@@ -122,16 +126,16 @@ public class TestActivity extends AppCompatActivity {
                     cur.moveToFirst();
                     String num = cur.getString(cur.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
                     cur.close();
-                    Toast.makeText(this, num, Toast.LENGTH_LONG).show();
+                    alert(num);
                 } else {
-                    Toast.makeText(this, "Res not ok", Toast.LENGTH_LONG).show();
+                    alert("Res not ok");
                 }
                 break;
             case INTENT_IMG_VIEW_REQCODE:
-                /*if (resCode == RESULT_OK) {
+                if (resCode == RESULT_OK) {
                     Uri picview = data.getData();
-                    //Toast.makeText(this,picview.toString(),Toast.LENGTH_SHORT).show();
-                }*/
+                    alert(picview != null ? picview.toString() : null);
+                }
                 break;
             case INTENT_IMG_PICK_REQCODE:
                 if (resCode == RESULT_OK) {
@@ -191,57 +195,10 @@ public class TestActivity extends AppCompatActivity {
     }
 
     public void sentIntent(View view) {
-        //打电话
-        /*Uri tel = Uri.parse("tel:10086");
-        Intent intent = new Intent(Intent.ACTION_CALL, tel);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CALL_PHONE)) {
-                Toast.makeText(this, "打电话当然要打电话的权限啊，扑街", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Called failed,no permission", Toast.LENGTH_SHORT).show();
-            }
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE}, PER_REQ_CALL);
-            return;
-        } else {
-            startActivity(intent);
-        }*/
-
-        //打开网页
-        /*Uri url = Uri.parse("https://apkdownloader.com/");
-        Intent itt = new Intent(Intent.ACTION_VIEW,url);
-        startActivity(itt);*/
-
-        //打开地图
-        /*Uri location = Uri.parse("geo:0,0?q=1600+Amphitheatre+Parkway,+Mountain+View,+California");
-        Intent itt = new Intent(Intent.ACTION_VIEW,location);
-        startActivity(itt);*/
-
-        //发邮件
-        /*Intent itt = new Intent(Intent.ACTION_SEND);
-        itt.setType("text/plain");
-        itt.putExtra(Intent.EXTRA_EMAIL,new String[]{"912877398@qq.com"});
-        itt.putExtra(Intent.EXTRA_SUBJECT,"你好");
-        itt.putExtra(Intent.EXTRA_TEXT,"hahahaahahahahahaha");
-        itt.putExtra(Intent.EXTRA_STREAM,Uri.parse("content://path/to/email/attachment"));
-        PackageManager pm = getPackageManager();
-        List<ResolveInfo> acts = pm.queryIntentActivities(itt,PackageManager.MATCH_DEFAULT_ONLY);
-        for (ResolveInfo ri:acts){
-            Toast.makeText(this, ri.toString(), Toast.LENGTH_LONG).show();
-        }
-        startActivity(itt);*/
-
-        //选择联系人
-        /*Intent telitt = new Intent(Intent.ACTION_PICK,Uri.parse("content://contacts"));
-        telitt.setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE);
-        startActivityForResult(telitt,INTENT_CONTACT_PICK_REQCODE);*/
-
-        //选择图片
-        Intent picitt = new Intent(Intent.ACTION_GET_CONTENT);
-        picitt.setType("image/*");
-        startActivityForResult(picitt, INTENT_IMG_PICK_REQCODE);
-        /*Intent picitt = new Intent(Intent.ACTION_PICK);
-        picitt.setType("image/*");
-        startActivityForResult(picitt.createChooser(picitt,"选择图片"),INTENT_IMG_PICK_REQCODE);*/
+        PopupMenu pMenu = new PopupMenu(this, view);
+        pMenu.getMenuInflater().inflate(R.menu.test_activity_popupmenu, pMenu.getMenu());
+        pMenu.setOnMenuItemClickListener(this);
+        pMenu.show();
     }
 
     //处理图片intent
@@ -261,9 +218,9 @@ public class TestActivity extends AppCompatActivity {
             }
             if (itt.getType().contains("text/plain")) {
                 //noinspection ConstantConditions
-                Toast.makeText(this, itt.getExtras().get(Intent.EXTRA_TEXT).toString(), Toast.LENGTH_SHORT).show();
+                alert(itt.getExtras().get(Intent.EXTRA_TEXT).toString());
             }
-            Toast.makeText(this, itt.getType(), Toast.LENGTH_SHORT).show();
+            alert(itt.getType());
             Intent res = new Intent(getPackageName() + ".RESULT_ACTION", Uri.parse("content://result_uri"));
             setResult(Activity.RESULT_OK, res);
             finish();
@@ -272,23 +229,24 @@ public class TestActivity extends AppCompatActivity {
     }
 
     //创建数据库
+    @SuppressWarnings("unused")
     public void createDB(View view) {
         DBHelper dbh = new DBHelper(this);
         SQLiteDatabase db = dbh.getWritableDatabase();//此时创建数据库,生成.db文件
         //增
         ContentValues ctv = new ContentValues();
-        /*ctv.put("author","zzz");
+        ctv.put("author","zzz");
         ctv.put("price",9.99f);
         ctv.put("pages",180);
         ctv.put("name","花儿与老年");
-        long newId = db.insert(DBHelper.TB_BOOK,null,ctv);*/
+        long newId = db.insert(DBHelper.TB_BOOK,null,ctv);
         //删
         db.delete(DBHelper.TB_BOOK, "id = ?", new String[]{"2"});
         //改
         ctv.put("price", 16.09d);
         db.update(DBHelper.TB_BOOK, ctv, "id = ?", new String[]{"1"});
         //查
-        //        Cursor cus = db.rawQuery("select * from "+DBHelper.TB_BOOK+" where name = ? ", new String[]{"花儿与老年"});
+        //Cursor cus = db.rawQuery("select * from "+DBHelper.TB_BOOK+" where name = ? ", new String[]{"花儿与老年"});
         Cursor cus = db.query(DBHelper.TB_BOOK, new String[]{"*"}, "author = ?", new String[]{"zzz"}, null, null, "id desc");
         cus.moveToFirst();//必须，不然报错
         cus.close();
@@ -305,7 +263,7 @@ public class TestActivity extends AppCompatActivity {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Bitmap bim = BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher);
         bim.compress(Bitmap.CompressFormat.PNG, 100, baos);
-//        itt.putExtra(Intent.EXTRA_STREAM, Uri.parse("file:///storage/emulated/0/Download/1.jpg"));
+        //itt.putExtra(Intent.EXTRA_STREAM, Uri.parse("file:///storage/emulated/0/Download/1.jpg"));
         itt.putExtra(Intent.EXTRA_STREAM, baos.toByteArray());
         startActivity(itt);*/
         //分享文件
@@ -314,7 +272,7 @@ public class TestActivity extends AppCompatActivity {
             try {
                 Uri fileUri = FileProvider.getUriForFile(this, "com.maxiye.first.fileprovider", file);
                 if (fileUri != null) {
-                    /*Intent itt = new Intent(Intent.ACTION_VIEW,fileUri);//错误？？？？？？？？？？？？？？？？？莫名奇妙
+                    /*Intent itt = new Intent(Intent.ACTION_VIEW,fileUri);//错误？不能直接使用fileUri
                     itt.setType(getContentResolver().getType(fileUri));*/
                     Intent itt = new Intent(Intent.ACTION_VIEW);
                     itt.setDataAndType(fileUri, getContentResolver().getType(fileUri));//"image/jpeg"也可
@@ -324,10 +282,10 @@ public class TestActivity extends AppCompatActivity {
 
             } catch (IllegalArgumentException e) {
                 e.printStackTrace();
-                Toast.makeText(this, "文件获取错误", Toast.LENGTH_SHORT).show();
+                alert("文件获取错误");
             }
         } else {
-            Toast.makeText(this, "需要外部存储读取权限", Toast.LENGTH_SHORT).show();
+            alert("需要外部存储读取权限");
         }
 
     }
@@ -376,7 +334,7 @@ public class TestActivity extends AppCompatActivity {
     public void testNFC(View view) {
         NfcAdapter nfc;
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC)) {
-            Toast.makeText(this, "没有NFC功能", Toast.LENGTH_SHORT).show();
+            alert("没有NFC功能");
         } else {
             nfc = NfcAdapter.getDefaultAdapter(this);
             nfc.setBeamPushUrisCallback(new FileUrisCallBack(), this);
@@ -403,6 +361,76 @@ public class TestActivity extends AppCompatActivity {
             setVolumeControlStream(AudioManager.STREAM_MUSIC);
         }
 
+    }
+
+    /**
+     * Called when pointer capture is enabled or disabled for the current window.
+     *
+     * @param hasCapture True if the window has pointer capture.
+     */
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
+
+    }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+        int item_id = item.getItemId();
+        Intent intent;
+        switch (item_id) {
+            case R.id.test_call:
+                Uri tel = Uri.parse("tel:10086");
+                intent = new Intent(Intent.ACTION_CALL, tel);
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CALL_PHONE)) {
+                        alert("打电话当然要打电话的权限啊，扑街");
+                    } else {
+                        alert("Called failed,no permission");
+                    }
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE}, PER_REQ_CALL);
+                } else {
+                    startActivity(intent);
+                }
+                break;
+            case R.id.test_contact:
+                intent = new Intent(Intent.ACTION_PICK,Uri.parse("content://contacts"));
+                intent.setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE);
+                startActivityForResult(intent,INTENT_CONTACT_PICK_REQCODE);
+                break;
+            case R.id.test_email:
+                intent = new Intent(Intent.ACTION_SEND);
+                intent.setType("text/plain");
+                intent.putExtra(Intent.EXTRA_EMAIL,new String[]{"912877398@qq.com"});
+                intent.putExtra(Intent.EXTRA_SUBJECT,"你好");
+                intent.putExtra(Intent.EXTRA_TEXT,"hahahaahahahahahaha");
+                intent.putExtra(Intent.EXTRA_STREAM,Uri.parse("content://path/to/email/attachment"));
+                PackageManager pm = getPackageManager();
+                List<ResolveInfo> acts = pm.queryIntentActivities(intent,PackageManager.MATCH_DEFAULT_ONLY);
+                acts.forEach(ri -> alert(ri.toString()));
+                startActivity(intent);
+                break;
+            case R.id.test_map:
+                Uri location = Uri.parse("geo:0,0?q=1600+Amphitheatre+Parkway,+Mountain+View,+California");
+                intent = new Intent(Intent.ACTION_VIEW,location);
+                startActivity(intent);
+                break;
+            case R.id.test_pic:
+                intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType("image/*");
+                startActivityForResult(intent, INTENT_IMG_PICK_REQCODE);
+                /*Intent picitt = new Intent(Intent.ACTION_PICK);
+                picitt.setType("image/*");
+                startActivityForResult(picitt.createChooser(picitt,"选择图片"),INTENT_IMG_PICK_REQCODE);*/
+                break;
+            case R.id.test_web:
+                Uri url = Uri.parse("https://apkdownloader.com/");
+                intent = new Intent(Intent.ACTION_VIEW,url);
+                startActivity(intent);
+                break;
+            default:
+                return false;
+        }
+        return true;
     }
 
     private class FileUrisCallBack implements NfcAdapter.CreateBeamUrisCallback {

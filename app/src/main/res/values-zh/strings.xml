@@ -22,4 +22,10 @@
     <string name="alert_exit">再按一次退出程序</string>
     <string name="app_icon">app图标</string>
     <string name="button_search">搜索</string>
+    <string name="test_call">打电话</string>
+    <string name="test_web">打开网页</string>
+    <string name="test_map">打开地图</string>
+    <string name="test_email">发邮件</string>
+    <string name="test_contact">选择联系人</string>
+    <string name="test_pic">选择图片</string>
 </resources>

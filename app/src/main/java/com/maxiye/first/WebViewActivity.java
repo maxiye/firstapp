@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.DownloadListener;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -55,13 +54,10 @@ public class WebViewActivity extends AppCompatActivity {
                 super.onProgressChanged(view, newProgress);
             }
         });
-        webview.setDownloadListener(new DownloadListener() {
-            @Override
-            public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
-                Uri uri = Uri.parse(url);
-                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                startActivity(intent);
-            }
+        webview.setDownloadListener((url1, userAgent, contentDisposition, mimetype, contentLength) -> {
+            Uri uri = Uri.parse(url1);
+            Intent intent1 = new Intent(Intent.ACTION_VIEW, uri);
+            startActivity(intent1);
         });
         webview.loadUrl(url);
     }

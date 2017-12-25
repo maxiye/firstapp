@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:id="@+id/test_call" android:title="@string/test_call"/>
+    <item android:id="@+id/test_web" android:title="@string/test_web"/>
+    <item android:id="@+id/test_map" android:title="@string/test_map"/>
+    <item android:id="@+id/test_email" android:title="@string/test_email"/>
+    <item android:id="@+id/test_contact" android:title="@string/test_contact"/>
+    <item android:id="@+id/test_pic" android:title="@string/test_pic"/>
+</menu>

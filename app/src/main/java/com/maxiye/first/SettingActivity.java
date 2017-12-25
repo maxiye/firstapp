@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.widget.CompoundButton;
 import android.widget.Switch;
 
 
@@ -32,12 +31,9 @@ public class SettingActivity extends AppCompatActivity {
 
     private void initSetting() {
         Switch show_system_apps = findViewById(R.id.show_system_apps);
-        show_system_apps.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                SharedPreferences.Editor editor = sp.edit();
-                editor.putBoolean(SHOW_SYSTEM, isChecked).apply();
-            }
+        show_system_apps.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            SharedPreferences.Editor editor = sp.edit();
+            editor.putBoolean(SHOW_SYSTEM, isChecked).apply();
         });
         show_system_apps.setChecked(sp.getBoolean(SHOW_SYSTEM, false));
     }
