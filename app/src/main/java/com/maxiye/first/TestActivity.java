@@ -1,7 +1,6 @@
 package com.maxiye.first;
 
 import android.Manifest;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ContentValues;
@@ -28,7 +27,6 @@ import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
-import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
@@ -343,8 +341,6 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     }
 
     @SuppressWarnings("deprecation")
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void testAudio(View view) {
         SharedPreferences sp = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor sp_e = sp.edit();
