@@ -35,4 +35,13 @@
         <item name="android:textColor">@color/actionBarTitleColor</item>
         <!-- 文本颜色属性textColor是可以配合支持库向后兼容的 -->
     </style>
+
+    <style name="CustomActBarThe.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="CustomActBarThe.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar"/>
+
+    <style name="CustomActBarThe.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
 </resources>

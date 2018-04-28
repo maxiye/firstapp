@@ -44,8 +44,8 @@
         </provider>
 
         <activity
-            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:name=".MainActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -54,15 +54,15 @@
             </intent-filter>
         </activity>
         <activity
-            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:name=".SettingActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:label="@string/title_setting_activity"
             android:logo="@drawable/ic_settings_black_24dp"
             android:parentActivityName=".MainActivity">
         </activity>
         <activity
-            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:name=".TestActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:parentActivityName=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
@@ -92,8 +92,19 @@
             </intent-filter>
         </receiver>
 
-        <activity android:name=".WebViewActivity"
+        <activity
+            android:name=".WebViewActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout">
+        </activity>
+        <activity
+            android:name=".GetGifActivity"
+            android:label="@string/title_activity_get_gif"
+            android:theme="@style/CustomActBarThe.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
         </activity>
     </application>
 

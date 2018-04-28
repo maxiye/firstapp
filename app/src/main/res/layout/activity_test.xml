@@ -57,5 +57,13 @@
             android:layout_weight="1"
             android:onClick="capture"
             android:text="@string/button_test_camera"/>
+
+        <Button
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="getGif"
+            android:text="@string/button_get_gif"/>
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>

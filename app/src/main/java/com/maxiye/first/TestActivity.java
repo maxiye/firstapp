@@ -429,6 +429,15 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         return true;
     }
 
+    /**
+     * 获取动态图
+     * @param view
+     */
+    public void getGif(View view) {
+        Intent getGifInt = new Intent(this, GetGifActivity.class);
+        startActivity(getGifInt);
+    }
+
     private class FileUrisCallBack implements NfcAdapter.CreateBeamUrisCallback {
 
         @Override
