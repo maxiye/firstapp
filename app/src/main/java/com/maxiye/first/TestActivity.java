@@ -50,13 +50,14 @@ import java.util.List;
 import java.util.Locale;
 
 public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
-    private final static int INTENT_CONTACT_PICK_REQCODE = 100;
-    private final static int INTENT_IMG_VIEW_REQCODE = 101;
-    private final static int INTENT_IMG_PICK_REQCODE = 102;
-    private final static int INTENT_IMG_CAPTURE_REQCODE = 103;
+    public static final String GET_NEW_FLG = "Test.getNewFlg";
+    private final int INTENT_CONTACT_PICK_REQCODE = 100;
+    private final int INTENT_IMG_VIEW_REQCODE = 101;
+    private final int INTENT_IMG_PICK_REQCODE = 102;
+    private final int INTENT_IMG_CAPTURE_REQCODE = 103;
 
-    private final static int PER_REQ_CALL = 200;
-    private static final int PER_REQ_STORAGE_READ = 201;
+    private final int PER_REQ_CALL = 200;
+    private final int PER_REQ_STORAGE_READ = 201;
 
     private Uri[] mFileUris = new Uri[10];
 
@@ -336,6 +337,7 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         } else {
             nfc = NfcAdapter.getDefaultAdapter(this);
             nfc.setBeamPushUrisCallback(new FileUrisCallBack(), this);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PER_REQ_STORAGE_READ);
         }
 
     }
@@ -431,11 +433,31 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
 
     /**
      * 获取动态图
-     * @param view
+     * @param view View
      */
     public void getGif(View view) {
         Intent getGifInt = new Intent(this, GetGifActivity.class);
         startActivity(getGifInt);
+        /*AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("提示：");
+        builder.setMessage("是否获取最新的动图?");
+        builder.setIcon(R.drawable.ic_info_black_24dp);
+        //设置正面按钮
+        builder.setPositiveButton("是的", (dialog, which) -> {
+            getGifInt.putExtra(GET_NEW_FLG, true);
+            dialog.dismiss();
+            startActivity(getGifInt);
+        });
+        //设置反面按钮
+        builder.setNegativeButton("否", (dialog, which) -> {
+            getGifInt.putExtra(GET_NEW_FLG, false);
+            dialog.dismiss();
+            startActivity(getGifInt);
+        });
+        //点击对话框以外的区域是否让对话框消失
+        builder.setCancelable(true);
+        AlertDialog dialog = builder.create();
+        dialog.show();*/
     }
 
     private class FileUrisCallBack implements NfcAdapter.CreateBeamUrisCallback {

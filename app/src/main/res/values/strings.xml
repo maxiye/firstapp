@@ -29,7 +29,10 @@
     <string name="test_pic">Test pick pictrue</string>
     <string name="button_get_gif">Get gif</string>
     <string name="title_activity_get_gif">GetGifActivity</string>
-    <string name="action_settings">Settings</string>
+    <string name="action_refresh">Refresh</string>
     <string name="gif_desc">Gif Desc</string>
     <string name="section_format">Hello World from section: %1$d</string>
+    <string name="download_gif">Download Gif</string>
+    <string name="action_skip_to">Go To</string>
+    <string name="action_change_url">Change Url</string>
 </resources>

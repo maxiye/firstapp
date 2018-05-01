@@ -44,9 +44,9 @@ import java.util.stream.Collectors;
  */
 public class BlankFragment extends Fragment {
     public static final String ARG_1 = "arg_1";
-    private static final int MSG_TYPE_START = 0;
-    private static final int MSG_TYPE_LV = 1;
-    private static final int MSG_TYPE_TV = 2;
+    private final int MSG_TYPE_START = 0;
+    private final int MSG_TYPE_LV = 1;
+    private final int MSG_TYPE_TV = 2;
 
     protected String keyword;
 

@@ -30,4 +30,10 @@
     <string name="test_pic">选择图片</string>
     <string name="button_get_gif">获取动态图</string>
     <string name="gif_desc">Gif Desc</string>
+    <string name="title_activity_get_gif">获取动态图</string>
+    <string name="section_format">页面: %1$d</string>
+    <string name="action_refresh">刷新</string>
+    <string name="download_gif">下载</string>
+    <string name="action_skip_to">输入</string>
+    <string name="action_change_url">修改文章id</string>
 </resources>
