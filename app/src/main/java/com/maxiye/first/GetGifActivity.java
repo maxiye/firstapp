@@ -31,6 +31,9 @@ import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
@@ -89,6 +92,7 @@ public class GetGifActivity extends AppCompatActivity {
         Log.w("end", "onCreateOver");
         gifList.clear();
         webPage = 1;
+        endFlg = false;
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             getNewFlg = getIntent().getExtras().getBoolean(TestActivity.GET_NEW_FLG, false);
@@ -267,12 +271,13 @@ public class GetGifActivity extends AppCompatActivity {
                         ImageView iv = rootView.findViewById(gifId);
                         TextView tv = rootView.findViewById(txtId);
                         iv.setImageBitmap(null);
+                        GlideApp.with(this).clear(iv);
                         GlideApp.with(this)
                                 .asGif()
                                 .load(gifUrl)
                                 .placeholder(R.drawable.ic_sync_black_24dp)
                                 .error(android.R.drawable.ic_delete)
-                                .centerCrop()
+                                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
                                 .into(iv);
                         tv.setText(txt);
                         gifIndex++;
@@ -313,9 +318,9 @@ public class GetGifActivity extends AppCompatActivity {
                 new Thread(this::loadGif).start();
             } else {
                 if (getActivity() != null) {
-                    ((ImageView) getActivity().findViewById(R.id.gif_1)).setImageResource(R.drawable.ic_sync_black_24dp);
-                    ((ImageView) getActivity().findViewById(R.id.gif_2)).setImageResource(R.drawable.ic_sync_black_24dp);
-                    ((ImageView) getActivity().findViewById(R.id.gif_3)).setImageResource(R.drawable.ic_sync_black_24dp);
+                    GlideApp.with(this).clear((ImageView)getActivity().findViewById(R.id.gif_1));
+                    GlideApp.with(this).clear((ImageView)getActivity().findViewById(R.id.gif_2));
+                    GlideApp.with(this).clear((ImageView)getActivity().findViewById(R.id.gif_3));
                 }
             }
         }
@@ -448,6 +453,7 @@ public class GetGifActivity extends AppCompatActivity {
                 if (mt.find()) {
                     title = mt.group(3);
                     artId = Integer.parseInt(mt.group(2));
+                    endFlg = false;
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -469,7 +475,7 @@ public class GetGifActivity extends AppCompatActivity {
                 return gifList.get(offset);
             }
         }
-
+        @SuppressWarnings("unused")
         private Bitmap getHttpGif(String url) {
             Bitmap bitmap;
             try {
@@ -521,7 +527,7 @@ public class GetGifActivity extends AppCompatActivity {
         @Override
         public int getCount() {
             // Show 3 total pages.
-            return 31;
+            return 33;
         }
 
         @Override
