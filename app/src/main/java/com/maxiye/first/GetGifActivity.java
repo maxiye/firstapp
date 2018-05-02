@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -27,15 +28,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
@@ -48,6 +47,11 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import pl.droidsonroids.gif.GifDrawable;
+import pl.droidsonroids.gif.GifImageView;
 
 public class GetGifActivity extends AppCompatActivity {
 
@@ -244,7 +248,7 @@ public class GetGifActivity extends AppCompatActivity {
             TextView textView = rootView.findViewById(R.id.section_label);
             assert getArguments() != null;
             textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
-            handler = new Handler(msg -> {
+            handler = new Handler((Message msg) -> {
                 textView.setText(title + "：" + getArguments().getInt(ARG_SECTION_NUMBER));
                 int gifId;
                 int txtId;
@@ -268,23 +272,16 @@ public class GetGifActivity extends AppCompatActivity {
                                 txtId = R.id.gtxt_1;
 
                         }
-                        ImageView iv = rootView.findViewById(gifId);
+                        GifImageView iv = rootView.findViewById(gifId);
                         TextView tv = rootView.findViewById(txtId);
-                        iv.setImageBitmap(null);
-                        GlideApp.with(this).clear(iv);
-                        GlideApp.with(this)
-                                .asGif()
-                                .load(gifUrl)
-                                .placeholder(R.drawable.ic_sync_black_24dp)
-                                .error(android.R.drawable.ic_delete)
-                                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
-                                .into(iv);
+                        GifDrawable gifFromStream = (GifDrawable) msg.obj;
+                        iv.setImageDrawable(gifFromStream);
+                        iv.setMinimumHeight(gifFromStream.getIntrinsicHeight() * 2);
+                        iv.setMinimumWidth(gifFromStream.getIntrinsicWidth() * 2);
                         tv.setText(txt);
                         gifIndex++;
                         if (gifIndex < 4) {
                             new Thread(this::loadGif).start();
-                        } else {
-                            gifIndex = 1;
                         }
                         break;
                     case MSG_TYPE_DOWNLOADED:
@@ -314,13 +311,14 @@ public class GetGifActivity extends AppCompatActivity {
         public void setUserVisibleHint(boolean isVisibleToUser) {
             super.setUserVisibleHint(isVisibleToUser);
             if (isVisibleToUser) {
-                gifIndex = 1;
-                new Thread(this::loadGif).start();
+                if (gifIndex == 1) {
+                    new Thread(this::loadGif).start();
+                }
             } else {
                 if (getActivity() != null) {
-                    GlideApp.with(this).clear((ImageView)getActivity().findViewById(R.id.gif_1));
-                    GlideApp.with(this).clear((ImageView)getActivity().findViewById(R.id.gif_2));
-                    GlideApp.with(this).clear((ImageView)getActivity().findViewById(R.id.gif_3));
+                    /*((GifImageView)getActivity().findViewById(R.id.gif_1)).setImageResource(R.drawable.ic_sync_black_24dp);
+                    ((GifImageView)getActivity().findViewById(R.id.gif_2)).setImageResource(R.drawable.ic_sync_black_24dp);
+                    ((GifImageView)getActivity().findViewById(R.id.gif_3)).setImageResource(R.drawable.ic_sync_black_24dp);*/
                 }
             }
         }
@@ -382,7 +380,39 @@ public class GetGifActivity extends AppCompatActivity {
                 Log.w("info", "loadGif:" + gifInfo[1]);
                 gifUrl = gifInfo[0];
                 txt = gifInfo[1];
-                handler.sendMessage(handler.obtainMessage(MSG_TYPE_START, ""));
+                Request request = new Request.Builder().url(gifUrl).build();
+                OkHttpClient okHttpClient = new OkHttpClient();
+                try {
+                    Response response = okHttpClient.newCall(request).execute();
+                    try {
+                        if (response.body() != null) {
+                            BufferedInputStream bis = new BufferedInputStream( response.body().byteStream(), (int)response.body().contentLength() );
+                            GifDrawable gifFromStream = new GifDrawable( bis );
+                            handler.sendMessage(handler.obtainMessage(MSG_TYPE_START, gifFromStream));
+                        }
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } catch (Exception e) {
+                    try {
+                        GifDrawable gifFromStream = new GifDrawable( getResources(), R.drawable.ic_sync_black_24dp );
+                        handler.sendMessage(handler.obtainMessage(MSG_TYPE_START, gifFromStream));
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+                    e.printStackTrace();
+                }
+                /*okHttpClient.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
+                    }
+                    @Override
+                    public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+
+                    }
+                });*/
             }
         }
 

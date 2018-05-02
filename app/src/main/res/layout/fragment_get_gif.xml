@@ -21,25 +21,29 @@
         <LinearLayout
             android:id="@+id/giflli1"
             android:layout_below="@id/gifll1"
+            android:layout_marginTop="15dp"
             android:layout_centerHorizontal="true"
             android:scaleType="centerCrop"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
-            <ImageView
+            <pl.droidsonroids.gif.GifImageView
                 android:id="@+id/gif_1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:src="@drawable/ic_sync_black_24dp"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:contentDescription="@string/gif_desc"/>
         </LinearLayout>
         <LinearLayout
             android:id="@+id/gifllt1"
             android:layout_below="@id/giflli1"
+            android:layout_marginTop="10dp"
             android:layout_centerHorizontal="true"
             android:scaleType="centerCrop"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
             <TextView
                 android:id="@+id/gtxt_1"
+                android:src="@drawable/ic_sync_black_24dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
         </LinearLayout>
@@ -47,20 +51,22 @@
         <LinearLayout
             android:id="@+id/giflli2"
             android:layout_below="@id/gifllt1"
+            android:layout_marginTop="15dp"
             android:layout_centerHorizontal="true"
             android:scaleType="centerCrop"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
-            <ImageView
+            <pl.droidsonroids.gif.GifImageView
                 android:id="@+id/gif_2"
-                android:layout_marginTop="3dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:src="@drawable/ic_sync_black_24dp"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:contentDescription="@string/gif_desc"/>
         </LinearLayout>
         <LinearLayout
             android:id="@+id/gifllt2"
             android:layout_below="@id/giflli2"
+            android:layout_marginTop="10dp"
             android:layout_centerHorizontal="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
@@ -73,19 +79,21 @@
         <LinearLayout
             android:id="@+id/giflli3"
             android:layout_below="@id/gifllt2"
+            android:layout_marginTop="15dp"
             android:layout_centerHorizontal="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
-            <ImageView
+            <pl.droidsonroids.gif.GifImageView
                 android:id="@+id/gif_3"
-                android:layout_marginTop="3dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:src="@drawable/ic_sync_black_24dp"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:contentDescription="@string/gif_desc"/>
         </LinearLayout>
         <LinearLayout
             android:id="@+id/gifllt3"
             android:layout_below="@id/giflli3"
+            android:layout_marginTop="10dp"
             android:layout_centerHorizontal="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
