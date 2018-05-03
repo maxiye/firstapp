@@ -2,9 +2,13 @@ package com.maxiye.first;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.ContentValues;
+import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -16,6 +20,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.content.FileProvider;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -27,26 +32,33 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -65,12 +77,13 @@ public class GetGifActivity extends AppCompatActivity {
      */
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private static final int PER_REQ_STORAGE_WRT = 100;
-    private static boolean getNewFlg = true;
-    private static int artId = 1042254;
+    private static boolean getNewFlg = false;//todo
+    private static int artId = 1023742;
     private static String title = "动态图";
     private static int webPage = 1;
     private static boolean endFlg = false;
     protected static ArrayList<String[]> gifList = new ArrayList<>();
+    static SQLiteDatabase db;
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -84,8 +97,7 @@ public class GetGifActivity extends AppCompatActivity {
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        // Create the adapter that will return a fragment for each of the three
-        // primary sections of the activity.
+        // Create the adapter that will return a fragment
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
         // Set up the ViewPager with the sections adapter.
         mViewPager = findViewById(R.id.container);
@@ -94,15 +106,22 @@ public class GetGifActivity extends AppCompatActivity {
         fab.setOnClickListener(view -> Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show());
         Log.w("end", "onCreateOver");
-        gifList.clear();
-        webPage = 1;
-        endFlg = false;
+        DBHelper dbh = new DBHelper(this);
+        db = dbh.getWritableDatabase();//此时创建数据库,生成.db文件
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             getNewFlg = getIntent().getExtras().getBoolean(TestActivity.GET_NEW_FLG, false);
             Log.w("end", getNewFlg ? "true" : "false");
         }
-//        Glide.get(this).clearDiskCache();
+        gifList.clear();
+        webPage = 1;
+        endFlg = false;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        CacheUtil.clearAllCache(this);
     }
 
     @Override
@@ -110,7 +129,6 @@ public class GetGifActivity extends AppCompatActivity {
         switch (reqCode) {
             case PER_REQ_STORAGE_WRT: {
                 if (res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED) {
-//                    alert("权限已获取");
                     Log.i("perm", "获取写权限");
                 } else {
                     alert("权限被拒绝");
@@ -149,7 +167,7 @@ public class GetGifActivity extends AppCompatActivity {
         switch (id) {
             case R.id.action_refresh:
                 PlaceholderFragment pf = mSectionsPagerAdapter.currentFragment;
-                Log.w("end", pf.txt + "");
+                Log.w("end", pf.gufTitle + "");
                 pf.refresh();
                 return true;
             case R.id.action_skip_to:
@@ -215,18 +233,20 @@ public class GetGifActivity extends AppCompatActivity {
          * The fragment argument representing the section number for this
          * fragment.
          */
-        private static Lock lock = new ReentrantLock();
+//        private static Lock lock = new ReentrantLock();
         private static final String ARG_SECTION_NUMBER = "section_number";
-        private int gifIndex = 1;
+        private int gifPosition = 1;
         private int downloadPosition = 1;
         private Handler handler;
         private String gifUrl;
-        private String txt;
-        private static final int MSG_TYPE_START = 100;
-        private static final int MSG_TYPE_DOWNLOADED = 101;
+        private String gufTitle;
+        private static final int MSG_TYPE_PRE = 100;
+        private static final int MSG_TYPE_START = 101;
+        private static final int MSG_TYPE_DOWNLOADED = 102;
+        private static final int MSG_TYPE_DOWNLOAD_ERR = 103;
+        private static final int MSG_TYPE_EMPTY = 104;
 
-        public PlaceholderFragment() {
-        }
+        public PlaceholderFragment() {}
 
         /**
          * Returns a new instance of this fragment for the given section
@@ -248,59 +268,60 @@ public class GetGifActivity extends AppCompatActivity {
             TextView textView = rootView.findViewById(R.id.section_label);
             assert getArguments() != null;
             textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
+            GifImageView gif_1 = rootView.findViewById(R.id.gif_1);
+            GifImageView gif_2 = rootView.findViewById(R.id.gif_2);
+            GifImageView gif_3 = rootView.findViewById(R.id.gif_3);
             handler = new Handler((Message msg) -> {
                 textView.setText(title + "：" + getArguments().getInt(ARG_SECTION_NUMBER));
-                int gifId;
-                int txtId;
                 switch (msg.what) {
-                    case MSG_TYPE_START:
-                        switch (gifIndex) {
-                            case 1:
-                                gifId = R.id.gif_1;
-                                txtId = R.id.gtxt_1;
-                                break;
-                            case 2:
-                                gifId = R.id.gif_2;
-                                txtId = R.id.gtxt_2;
-                                break;
-                            case 3:
-                                gifId = R.id.gif_3;
-                                txtId = R.id.gtxt_3;
-                                break;
-                            default:
-                                gifId = R.id.gif_1;
-                                txtId = R.id.gtxt_1;
-
+                    case MSG_TYPE_PRE:
+                        TextView tv = rootView.findViewById(getResources().getIdentifier("gtxt_" + gifPosition, "id", getActivity().getPackageName()));
+                        tv.setText(gufTitle);
+                        gifPosition++;
+                        if (gifPosition < 4) {
+                            new Thread(this::loadGif).start();
+                        } else {
+                            gifPosition = 1;
                         }
-                        GifImageView iv = rootView.findViewById(gifId);
-                        TextView tv = rootView.findViewById(txtId);
+                        break;
+                    case MSG_TYPE_START:
+                        GifImageView iv = rootView.findViewById(getResources().getIdentifier("gif_" + msg.arg1, "id", getActivity().getPackageName()));
+                        iv.clearAnimation();
                         GifDrawable gifFromStream = (GifDrawable) msg.obj;
                         iv.setImageDrawable(gifFromStream);
                         iv.setMinimumHeight(gifFromStream.getIntrinsicHeight() * 2);
                         iv.setMinimumWidth(gifFromStream.getIntrinsicWidth() * 2);
-                        tv.setText(txt);
-                        gifIndex++;
-                        if (gifIndex < 4) {
-                            new Thread(this::loadGif).start();
-                        }
                         break;
                     case MSG_TYPE_DOWNLOADED:
-                        String info = (String) msg.obj;
-                        Toast.makeText(getActivity(), info, Toast.LENGTH_SHORT).show();
+                        File gif = (File) msg.obj;
+                        Snackbar.make(rootView, "下载完成", Snackbar.LENGTH_SHORT)
+                                .setAction("打开", v -> {
+                                    Intent imgView = new Intent(Intent.ACTION_VIEW);
+                                    imgView.setDataAndType(FileProvider.getUriForFile(getActivity(), "com.maxiye.first.fileprovider", gif), "image/gif");
+                                    imgView.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);//不加黑屏读取不了
+                                    getActivity().startActivity(imgView);
+                                }).show();
+                        break;
+                    case MSG_TYPE_EMPTY:
+                        Toast.makeText(getActivity(), "资源获取失败", Toast.LENGTH_SHORT).show();
                         break;
                 }
                 return false;
             });
             rootView.setLongClickable(true);
-            rootView.findViewById(R.id.gif_1).setOnLongClickListener((View view) -> {
+            Animation anim = AnimationUtils.loadAnimation(getActivity(), R.anim.load_rotate);
+            gif_1.setAnimation(anim);
+            gif_2.setAnimation(anim);
+            gif_3.setAnimation(anim);
+            gif_1.setOnLongClickListener((View view) -> {
                 longClickCb(1, view);
                 return true;
             });
-            rootView.findViewById(R.id.gif_2).setOnLongClickListener((View view) -> {
+            gif_2.setOnLongClickListener((View view) -> {
                 longClickCb(2, view);
                 return true;
             });
-            rootView.findViewById(R.id.gif_3).setOnLongClickListener((View view) -> {
+            gif_3.setOnLongClickListener((View view) -> {
                 longClickCb(3, view);
                 return true;
             });
@@ -311,7 +332,7 @@ public class GetGifActivity extends AppCompatActivity {
         public void setUserVisibleHint(boolean isVisibleToUser) {
             super.setUserVisibleHint(isVisibleToUser);
             if (isVisibleToUser) {
-                if (gifIndex == 1) {
+                if (gifPosition == 1) {
                     new Thread(this::loadGif).start();
                 }
             } else {
@@ -342,7 +363,6 @@ public class GetGifActivity extends AppCompatActivity {
             Toast.makeText(getActivity(), "开始下载文件...", Toast.LENGTH_SHORT).show();
             new Thread(() -> {
                 String[] gifInfo = getGifInfo(getGifOffset(downloadPosition));
-                String gifUrl = gifInfo[0];
                 File gif = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/gif/" + gifInfo[1]);
                 Log.w("download", "download:path:" + gif.getAbsolutePath());
                 try {
@@ -355,17 +375,32 @@ public class GetGifActivity extends AppCompatActivity {
                             throw new Exception("create file error");
                         }
                     }
-                    URL gurl = new URL(gifUrl);
-                    InputStream fis = gurl.openStream();
-                    RandomAccessFile raf = new RandomAccessFile(gif, "rwd");
-                    byte[] b = new byte[2096];int n;
-                    while ((n = fis.read(b)) != -1) {
-                        raf.write(b, 0, n);
+                    File cacheGif = new File(getActivity().getCacheDir(), artId + "-" + getGifOffset(downloadPosition) + ".gif");
+                    if (!cacheGif.exists()) throw new Exception("未发现缓存文件");
+                    if (Build.VERSION.SDK_INT > 26) {
+                        Files.copy(cacheGif.toPath(), gif.toPath());
+                    } else {
+                        try {
+                            FileInputStream input = new FileInputStream(cacheGif);
+                            FileOutputStream output = new FileOutputStream(gif);
+                            byte[] buf = new byte[4096];
+                            int bytesRead;
+                            while ((bytesRead = input.read(buf)) > 0) {
+                                output.write(buf, 0, bytesRead);
+                            }
+                            input.close();
+                            output.close();
+                        } catch (Exception e){
+                            e.printStackTrace();
+                        }
                     }
-                    raf.close();
-                    handler.sendMessage(handler.obtainMessage(MSG_TYPE_DOWNLOADED, "下载完成"));
+                    //发送广播
+                    Intent scanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                    scanIntent.setData(Uri.fromFile(gif));
+                    getActivity().sendBroadcast(scanIntent);
+                    handler.sendMessage(handler.obtainMessage(MSG_TYPE_DOWNLOADED, gif));
                 } catch (Exception e) {
-                    handler.sendMessage(handler.obtainMessage(MSG_TYPE_DOWNLOADED, "下载失败"));
+                    handler.sendMessage(handler.obtainMessage(MSG_TYPE_DOWNLOAD_ERR, "下载失败"));
                     e.printStackTrace();
                 }
             }).start();
@@ -373,63 +408,85 @@ public class GetGifActivity extends AppCompatActivity {
         }
 
         public void loadGif() {
-            int startOffset = getGifOffset(gifIndex);
+            int nowPos = gifPosition;
+            int startOffset = getGifOffset(nowPos);
             Log.w("info", "loadGif:" + startOffset);
             String[] gifInfo = getGifInfo(startOffset);
-            if (gifInfo != null) {
-                Log.w("info", "loadGif:" + gifInfo[1]);
-                gifUrl = gifInfo[0];
-                txt = gifInfo[1];
-                Request request = new Request.Builder().url(gifUrl).build();
-                OkHttpClient okHttpClient = new OkHttpClient();
-                try {
-                    Response response = okHttpClient.newCall(request).execute();
-                    try {
-                        if (response.body() != null) {
-                            BufferedInputStream bis = new BufferedInputStream( response.body().byteStream(), (int)response.body().contentLength() );
-                            GifDrawable gifFromStream = new GifDrawable( bis );
-                            handler.sendMessage(handler.obtainMessage(MSG_TYPE_START, gifFromStream));
+            if (gifInfo == null) return;
+            gifUrl = gifInfo[0];
+            gufTitle = gifInfo[1];
+            handler.sendMessage(handler.obtainMessage(MSG_TYPE_PRE, ""));
+            try {
+                File cacheGif = new File(getActivity().getCacheDir(), artId + "-" +startOffset + ".gif");
+                if (cacheGif.exists()) {
+                    Log.w("info", "loadGif(fromCache):" + gifInfo[1]);
+                    GifDrawable gifFromStream = new GifDrawable(cacheGif);
+                    handler.sendMessage(handler.obtainMessage(MSG_TYPE_START, nowPos, 0, gifFromStream));
+                } else {
+                    Log.w("info", "loadGif:" + gifInfo[1]);
+                    Request request = new Request.Builder().url(gifUrl).build();
+                    OkHttpClient okHttpClient = new OkHttpClient();
+                    okHttpClient.newCall(request).enqueue(new Callback() {
+                        @Override
+                        public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                            try {
+                                GifDrawable gifFromStream = new GifDrawable( getResources(), R.drawable.ic_sync_black_24dp );
+                                handler.sendMessage(handler.obtainMessage(MSG_TYPE_START, nowPos, 0, gifFromStream));
+                            } catch (IOException e1) {
+                                handler.sendMessage(handler.obtainMessage(MSG_TYPE_EMPTY, ""));
+                                e1.printStackTrace();
+                            }
+                            e.printStackTrace();
                         }
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                } catch (Exception e) {
-                    try {
-                        GifDrawable gifFromStream = new GifDrawable( getResources(), R.drawable.ic_sync_black_24dp );
-                        handler.sendMessage(handler.obtainMessage(MSG_TYPE_START, gifFromStream));
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
-                    e.printStackTrace();
+                        @Override
+                        public void onResponse(@NonNull Call call, @NonNull Response response) {
+                            try {
+                                if (response.body() != null) {
+                                    Log.w("info", "loadGif(fromNet):" + gifInfo[1]);
+                                    byte[] b = response.body().bytes();
+                                    if (cacheGif.createNewFile()) {
+                                        RandomAccessFile raf = new RandomAccessFile(cacheGif, "rwd");
+                                        raf.write(b);
+                                        raf.close();
+                                    }
+                                    GifDrawable gifFromStream = new GifDrawable(b);//始终占用bis;
+                                    handler.sendMessage(handler.obtainMessage(MSG_TYPE_START, nowPos, 0, gifFromStream));
+                                } else {
+                                    handler.sendMessage(handler.obtainMessage(MSG_TYPE_EMPTY, ""));
+                                    cacheGif.delete();
+                                    throw new Exception("图片资源获取失败");
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
                 }
-                /*okHttpClient.newCall(request).enqueue(new Callback() {
-                    @Override
-                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
-
-                    }
-                    @Override
-                    public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-
-                    }
-                });*/
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 
-        private void loadGifList() {
-            if (endFlg) {
-                return;
+        private synchronized void loadGifList() {
+            //数据库获取
+            if (webPage == 1) {
+                if (getNewFlg) getNewArtId();
+                if (getDbGifList()) return;
             }
-            lock.lock();
+            if (endFlg) return;
             Log.w("start", "loadGifList(lock):" + webPage);
-            if (webPage == 1 && getNewFlg) {
-                getNewArtId();
-            }
             String baseUrl = "http://wap.gamersky.com/news/Content-" + artId;
             String reg = "alt=\".+\"[^>]*?src=\"(http://[^\"]+.gif)\"[^>]*>(<br>\\r\\n([^<]+))?</p>";
             Pattern pt = Pattern.compile(reg);
             try {
                 String url = baseUrl + (webPage > 1 ? "_" + webPage : "") + ".html";
+                if (webPage == 1) {
+                    String[] webInfo = new String[3];
+                    webInfo[0] = url;
+                    webInfo[1] = title;
+                    webInfo[2] = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+                    setDbGifList(DBHelper.TB_GIF_WEB, webInfo);
+                }
                 System.out.println(url);
                 URL req = new URL(url);
                 URLConnection uc = req.openConnection();
@@ -441,6 +498,7 @@ public class GetGifActivity extends AppCompatActivity {
                 while ((line = read.readLine()) != null) {
                     content.append(line).append("\r\n");
                 }
+                is.close();
                 read.close();
                 Matcher mt = pt.matcher(content.toString());
                 while (mt.find()) {
@@ -451,16 +509,64 @@ public class GetGifActivity extends AppCompatActivity {
                     gifInfo[0] = mt.group(1);
                     gifInfo[1] = name;
                     gifList.add(gifInfo);
+                    setDbGifList(DBHelper.TB_GIF_WEB_ITEM, gifInfo);
                 }
                 webPage++;
             } catch (Exception e) {
                 endFlg = webPage > 27;
                 e.printStackTrace();
             } finally {
-                lock.unlock();
                 Log.w("end", "loadGifList(unlock):end:" + webPage);
                 System.out.println(gifList.toString());
             }
+        }
+
+        private boolean getDbGifList() {
+            Cursor cus = db.query(DBHelper.TB_GIF_WEB, new String[]{"*"}, "art_id = ?", new String[]{artId + ""}, null, null, "id desc", "1");
+            Log.w("db_web", cus.getCount() + "");
+            if (cus.getCount() > 0) {
+                cus.moveToFirst();
+                title = cus.getString(cus.getColumnIndex("title"));
+                int totalPage = cus.getInt(cus.getColumnIndex("pages"));
+                Cursor cus2 = db.query(DBHelper.TB_GIF_WEB_ITEM, new String[]{"page,title,url"}, "art_id = ?", new String[]{artId + ""}, null, null, "page asc");
+                int count = cus2.getCount();
+                if (count > 0) {
+                    Log.w("db_item", count + "");
+                    cus2.moveToFirst();
+                    for (int i = 0;i < count;i++) {
+                        String[] gifInfo = new String[2];
+                        gifInfo[0] = cus2.getString(cus2.getColumnIndex("url"));
+                        gifInfo[1] = cus2.getString(cus2.getColumnIndex("title"));
+                        gifList.add(gifInfo);
+                        webPage = cus2.getInt(cus2.getColumnIndex("page"));
+                        cus2.moveToNext();
+                    }
+                }
+                cus2.close();
+                if (totalPage == webPage) endFlg = true;
+            }
+            cus.close();
+            return false;
+        }
+
+        private void setDbGifList(String dbName, String[] data) {
+            ContentValues ctv = new ContentValues();
+            if (dbName.equals(DBHelper.TB_GIF_WEB)) {
+                ctv.put("art_id", artId);
+                ctv.put("web_url", data[0]);
+                ctv.put("title", data[1]);
+                ctv.put("time", data[2]);
+                long newId = db.insert(dbName, null, ctv);
+                Log.w("db_web_insert: ", newId + "");
+            } else {
+                ctv.put("art_id", artId);
+                ctv.put("page", webPage);
+                ctv.put("title", data[1]);
+                ctv.put("url", data[0]);
+                long newId = db.insert(dbName, null, ctv);
+                Log.w("db_web_item_insert: ", newId + "");
+            }
+
         }
 
         private void getNewArtId() {
@@ -478,6 +584,7 @@ public class GetGifActivity extends AppCompatActivity {
                 while ((line = read.readLine()) != null) {
                     content.append(line).append("\r\n");
                 }
+                is.close();
                 read.close();
                 Matcher mt = pt.matcher(content.toString());
                 if (mt.find()) {
@@ -495,32 +602,16 @@ public class GetGifActivity extends AppCompatActivity {
         public String[] getGifInfo(int offset) {
             Log.w("start", "getGifInfo:" + offset);
             if (gifList.size() <= offset) {
-                if(!endFlg) {
-                    loadGifList();
-                    return getGifInfo(offset);
-                } else {
-                    return null;
-                }
+                if (endFlg) return null;
+                loadGifList();
+                return getGifInfo(offset);
             } else {
                 return gifList.get(offset);
             }
         }
-        @SuppressWarnings("unused")
-        private Bitmap getHttpGif(String url) {
-            Bitmap bitmap;
-            try {
-                URL gurl = new URL(url);
-                InputStream fis = gurl.openStream();
-                bitmap = BitmapFactory.decodeStream(fis);
-            } catch (Exception e) {
-                bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_fingerprint_orange_24dp);
-                e.printStackTrace();
-            }
-            return bitmap;
-        }
 
         public void refresh() {
-            this.gifIndex = 1;
+            this.gifPosition = 1;
             new Thread(this::loadGif).start();
         }
 
@@ -556,7 +647,6 @@ public class GetGifActivity extends AppCompatActivity {
 
         @Override
         public int getCount() {
-            // Show 3 total pages.
             return 33;
         }
 

@@ -8,5 +8,5 @@
     <!--Environment.getExternalStorageDirectory()下任意目录-->
     <external-path
         name="download"
-        path="download/"/>
+        path="Download/"/>
 </paths>
