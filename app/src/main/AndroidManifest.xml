@@ -99,6 +99,7 @@
         <activity
             android:name=".GetGifActivity"
             android:label="@string/title_activity_get_gif"
+            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:theme="@style/CustomActBarThe.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
