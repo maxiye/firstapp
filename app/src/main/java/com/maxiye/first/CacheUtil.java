@@ -15,13 +15,17 @@ import android.os.Environment;
  */
 public class CacheUtil {
 
+    public static final String UNIT_KB = "KB";
+    public static final String UNIT_MB = "MB";
+    public static final String UNIT_GB = "GB";
+
     /**
      * @param context Activity
      * @return string String
      * @throws Exception
      *             获取当前缓存
      */
-    public static String getTotalCacheSize(Context context) throws Exception {
+    public static String getTotalCacheSize(Context context) {
         long cacheSize = getFolderSize(context.getCacheDir());
         if (Environment.getExternalStorageState().equals(
                 Environment.MEDIA_MOUNTED)) {
@@ -122,5 +126,25 @@ public class CacheUtil {
         BigDecimal result4 = new BigDecimal(teraBytes);
         return result4.setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString()
                 + "TB";
+    }
+
+    public static double getSize(Context context, String unit) {
+        long cacheSize = getFolderSize(context.getCacheDir());
+        if (Environment.getExternalStorageState().equals(
+                Environment.MEDIA_MOUNTED)) {
+            cacheSize += getFolderSize(context.getExternalCacheDir());
+        }
+        double kiloByte = cacheSize / 1024;
+        if (unit.equals(UNIT_KB)) return fix2(kiloByte);
+        double megaByte = kiloByte / 1024;
+        if (unit.equals(UNIT_MB)) return fix2(megaByte);
+        double gigaByte = megaByte / 1024;
+        if (unit.equals(UNIT_KB)) return fix2(gigaByte);
+        return fix2(megaByte);
+    }
+
+    private static double fix2(double size) {
+        BigDecimal result = new BigDecimal(size);
+        return result.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
     }
 }
