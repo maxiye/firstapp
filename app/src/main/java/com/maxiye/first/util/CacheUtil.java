@@ -1,4 +1,4 @@
-package com.maxiye.first;
+package com.maxiye.first.util;
 
 /*
   数据库助手

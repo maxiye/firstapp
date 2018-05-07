@@ -40,6 +40,9 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.maxiye.first.util.CacheUtil;
+import com.maxiye.first.util.PermissionUtil;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -137,18 +140,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
 
     @Override
     public void onRequestPermissionsResult(int reqCode, @NonNull String[] pers, @NonNull int[] res) {
-        switch (reqCode) {
-            case PER_REQ_STORAGE_WRT: {
-                if (res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.i("perm", "获取写权限");
-                } else {
-                    alert("权限被拒绝");
-                }
-            }
-            default: {
-
-            }
-        }
+        PermissionUtil.res(this, reqCode, pers, res);
     }
 
     /**
@@ -302,8 +294,8 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                         iv.clearAnimation();
                         GifDrawable gifFromStream = (GifDrawable) msg.obj;
                         iv.setImageDrawable(gifFromStream);
-                        iv.setMinimumHeight(gifFromStream.getIntrinsicHeight() * 2);
-                        iv.setMinimumWidth(gifFromStream.getIntrinsicWidth() * 2);
+                        iv.setMinimumHeight((int)Math.round(gifFromStream.getIntrinsicHeight() * 2.5));
+                        iv.setMinimumWidth((int)Math.round(gifFromStream.getIntrinsicWidth() * 2.5));
                         break;
                     case MSG_TYPE_OVER:
                         fragment.mListener.checkPageEnd(webPage - 1);
@@ -397,53 +389,53 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
 
         private void download() {
             Log.w("download", "download:start");
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PER_REQ_STORAGE_WRT);
-            Toast.makeText(activity, "开始下载文件...", Toast.LENGTH_SHORT).show();
-            new Thread(() -> {
-                String[] gifInfo = getGifInfo(getGifOffset(downloadPosition));
-                File gif = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/gif/" + gifInfo[1]);
-                Log.w("download", "download:path:" + gif.getAbsolutePath());
-                try {
-                    if (!gif.exists()) {
-                        if (!gif.getParentFile().exists() && !gif.getParentFile().mkdirs()) {
-                            Log.w("doing", gif.getParentFile().getAbsolutePath());
-                            throw new Exception("create dir error");
-                        }
-                        if (!gif.createNewFile()) {
-                            throw new Exception("create file error");
-                        }
-                    }
-                    File cacheGif = new File(activity.getCacheDir(), artId + "-" + getGifOffset(downloadPosition) + ".gif");
-                    if (!cacheGif.exists())
-                        throw new Exception("未发现缓存文件");
-                    if (Build.VERSION.SDK_INT > 26) {
-                        Files.copy(cacheGif.toPath(), gif.toPath());
-                    } else {
-                        try {
-                            FileInputStream input = new FileInputStream(cacheGif);
-                            FileOutputStream output = new FileOutputStream(gif);
-                            byte[] buf = new byte[4096];
-                            int bytesRead;
-                            while ((bytesRead = input.read(buf)) > 0) {
-                                output.write(buf, 0, bytesRead);
+            PermissionUtil.req(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PermissionUtil.PER_REQ_STORAGE_WRT, () -> {
+                new Thread(() -> {
+                    String[] gifInfo = getGifInfo(getGifOffset(downloadPosition));
+                    File gif = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/gif/" + gifInfo[1]);
+                    Log.w("download", "download:path:" + gif.getAbsolutePath());
+                    try {
+                        if (!gif.exists()) {
+                            if (!gif.getParentFile().exists() && !gif.getParentFile().mkdirs()) {
+                                Log.w("doing", gif.getParentFile().getAbsolutePath());
+                                throw new Exception("create dir error");
                             }
-                            input.close();
-                            output.close();
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                            if (!gif.createNewFile()) {
+                                throw new Exception("create file error");
+                            }
                         }
+                        File cacheGif = new File(activity.getCacheDir(), artId + "-" + getGifOffset(downloadPosition) + ".gif");
+                        if (!cacheGif.exists())
+                            throw new Exception("未发现缓存文件");
+                        if (Build.VERSION.SDK_INT > 26) {
+                            Files.copy(cacheGif.toPath(), gif.toPath());
+                        } else {
+                            try {
+                                FileInputStream input = new FileInputStream(cacheGif);
+                                FileOutputStream output = new FileOutputStream(gif);
+                                byte[] buf = new byte[4096];
+                                int bytesRead;
+                                while ((bytesRead = input.read(buf)) > 0) {
+                                    output.write(buf, 0, bytesRead);
+                                }
+                                input.close();
+                                output.close();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        //发送广播
+                        Intent scanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                        scanIntent.setData(Uri.fromFile(gif));
+                        activity.sendBroadcast(scanIntent);
+                        handler.sendMessage(handler.obtainMessage(MSG_TYPE_DOWNLOADED, gif));
+                    } catch (Exception e) {
+                        handler.sendMessage(handler.obtainMessage(MSG_TYPE_DOWNLOAD_ERR, "下载失败"));
+                        e.printStackTrace();
                     }
-                    //发送广播
-                    Intent scanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                    scanIntent.setData(Uri.fromFile(gif));
-                    activity.sendBroadcast(scanIntent);
-                    handler.sendMessage(handler.obtainMessage(MSG_TYPE_DOWNLOADED, gif));
-                } catch (Exception e) {
-                    handler.sendMessage(handler.obtainMessage(MSG_TYPE_DOWNLOAD_ERR, "下载失败"));
-                    e.printStackTrace();
-                }
-            }).start();
-
+                }).start();
+                Toast.makeText(activity, "开始下载文件...", Toast.LENGTH_SHORT).show();
+            });
         }
 
         public void loadGif() {

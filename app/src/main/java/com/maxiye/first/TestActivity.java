@@ -1,13 +1,13 @@
 package com.maxiye.first;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.database.Cursor;
@@ -27,7 +27,6 @@ import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -41,12 +40,13 @@ import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
+import com.maxiye.first.util.PermissionUtil;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
@@ -55,9 +55,6 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     private final int INTENT_IMG_VIEW_REQCODE = 101;
     private final int INTENT_IMG_PICK_REQCODE = 102;
     private final int INTENT_IMG_CAPTURE_REQCODE = 103;
-
-    private final int PER_REQ_CALL = 200;
-    private final int PER_REQ_STORAGE_READ = 201;
 
     private Uri[] mFileUris = new Uri[10];
 
@@ -98,18 +95,7 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
 
     @Override
     public void onRequestPermissionsResult(int reqCode, @NonNull String[] pers, @NonNull int[] res) {
-        switch (reqCode) {
-            case PER_REQ_CALL: {
-                if (res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED) {
-                    alert("权限已获取");
-                } else {
-                    alert("权限被拒绝");
-                }
-            }
-            case PER_REQ_STORAGE_READ: {
-
-            }
-        }
+        PermissionUtil.res(this, reqCode, pers, res);
     }
 
     @Override
@@ -337,7 +323,9 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         } else {
             nfc = NfcAdapter.getDefaultAdapter(this);
             nfc.setBeamPushUrisCallback(new FileUrisCallBack(), this);
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PER_REQ_STORAGE_READ);
+            PermissionUtil.req(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PermissionUtil.PER_REQ_STORAGE_READ, () -> {
+
+            });
         }
 
     }
@@ -371,24 +359,17 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
 
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public boolean onMenuItemClick(MenuItem item) {
         int item_id = item.getItemId();
         Intent intent;
         switch (item_id) {
             case R.id.test_call:
-                Uri tel = Uri.parse("tel:10086");
-                intent = new Intent(Intent.ACTION_CALL, tel);
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-                    if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CALL_PHONE)) {
-                        alert("打电话当然要打电话的权限啊，扑街");
-                    } else {
-                        alert("Called failed,no permission");
-                    }
-                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE}, PER_REQ_CALL);
-                } else {
-                    startActivity(intent);
-                }
+                PermissionUtil.req(this, new String[]{Manifest.permission.CALL_PHONE}, PermissionUtil.PER_REQ_CALL, () -> {
+                    Uri tel = Uri.parse("tel:10086");
+                    startActivity(new Intent(Intent.ACTION_CALL, tel));
+                });
                 break;
             case R.id.test_contact:
                 intent = new Intent(Intent.ACTION_PICK,Uri.parse("content://contacts"));
@@ -402,9 +383,9 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 intent.putExtra(Intent.EXTRA_SUBJECT,"你好");
                 intent.putExtra(Intent.EXTRA_TEXT,"hahahaahahahahahaha");
                 intent.putExtra(Intent.EXTRA_STREAM,Uri.parse("content://path/to/email/attachment"));
-                PackageManager pm = getPackageManager();
+                /*PackageManager pm = getPackageManager();
                 List<ResolveInfo> acts = pm.queryIntentActivities(intent,PackageManager.MATCH_DEFAULT_ONLY);
-                acts.forEach(ri -> alert(ri.toString()));
+                acts.forEach(ri -> alert(ri.toString()));*/
                 startActivity(intent);
                 break;
             case R.id.test_map:
@@ -485,18 +466,20 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     }
 
     public void capture(View view) {
-        Intent cap = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (cap.resolveActivity(getPackageManager()) != null) {
-            File img_f;
-            try {
-                img_f = createTempFile();
-            } catch (IOException e) {
-                img_f = null;
+        PermissionUtil.req(this, new String[]{Manifest.permission.CAMERA}, PermissionUtil.PER_REQ_CAPTURE, () -> {
+            Intent cap = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            if (cap.resolveActivity(getPackageManager()) != null) {
+                File img_f;
+                try {
+                    img_f = createTempFile();
+                } catch (IOException e) {
+                    img_f = null;
+                }
+                if (img_f != null) {
+                    cap.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(this, "com.maxiye.first.fileprovider", img_f));
+                }
+                startActivityForResult(cap, INTENT_IMG_CAPTURE_REQCODE);
             }
-            if (img_f != null) {
-                cap.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(this, "com.maxiye.first.fileprovider", img_f));
-            }
-            startActivityForResult(cap, INTENT_IMG_CAPTURE_REQCODE);
-        }
+        });
     }
 }
