@@ -2,11 +2,13 @@ package com.maxiye.first;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -273,12 +275,21 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
             fragment.setArguments(args);
             fragment.handler = new Handler((Message msg) -> {
                 View rootView = fragment.getView();
+                if (rootView == null) return false;
                 TextView textView = rootView.findViewById(R.id.section_label);
                 textView.setText(title + "：" + fragment.getArguments().getInt(ARG_SECTION_NUMBER));
+                Drawable errShow = fragment.activity.getDrawable(android.R.drawable.ic_delete);
                 switch (msg.what) {
                     case MSG_TYPE_PRE:
                         TextView tv = rootView.findViewById(fragment.getResources().getIdentifier("gtxt_" + fragment.gifPosition, "id", fragment.activity.getPackageName()));
                         tv.setText(fragment.gufTitle);
+                        GifImageView iv1 = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + fragment.gifPosition, "id", fragment.activity.getPackageName()));
+                        Drawable initShow = fragment.activity.getDrawable(R.drawable.ic_sync_black_24dp);
+                        iv1.setImageDrawable(initShow);
+                        iv1.setMinimumHeight(24);
+                        iv1.setMinimumWidth(24);
+                        Animation anim = AnimationUtils.loadAnimation(fragment.activity, R.anim.load_rotate);
+                        iv1.setAnimation(anim);
                         fragment.gifPosition++;
                         if (fragment.gifPosition < 4) {
                             new Thread(fragment::loadGif).start();
@@ -289,7 +300,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                     case MSG_TYPE_LOAD:
                         GifImageView iv = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + msg.arg1, "id", fragment.activity.getPackageName()));
                         iv.clearAnimation();
-                        GifDrawable gifFromStream = (GifDrawable) msg.obj;
+                        Drawable gifFromStream = (GifDrawable) msg.obj;
                         iv.setImageDrawable(gifFromStream);
                         iv.setMinimumHeight((int)Math.round(gifFromStream.getIntrinsicHeight() * 2.5));
                         iv.setMinimumWidth((int)Math.round(gifFromStream.getIntrinsicWidth() * 2.5));
@@ -308,10 +319,12 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                                 }).show();
                         break;
                     case MSG_TYPE_EMPTY:
-                        Toast.makeText(fragment.activity, "资源获取失败", Toast.LENGTH_SHORT).show();
+                        GifImageView iv2 = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + msg.arg1, "id", fragment.activity.getPackageName()));
+                        iv2.clearAnimation();
+                        iv2.setImageDrawable(errShow);
                         break;
                 }
-                return false;
+                return true;
             });
             return fragment;
         }
@@ -442,10 +455,10 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
             String[] gifInfo = getGifInfo(startOffset);
             if (gifInfo == null)
                 return;
-            gifUrl = gifInfo[0];
-            gufTitle = gifInfo[1];
-            handler.sendMessage(handler.obtainMessage(MSG_TYPE_PRE, ""));
             try {
+                gifUrl = gifInfo[0];
+                gufTitle = gifInfo[1];
+                handler.sendMessage(handler.obtainMessage(MSG_TYPE_PRE, ""));
                 File cacheGif = new File(activity.getCacheDir(), artId + "-" + startOffset + ".gif");
                 if (cacheGif.exists()) {
                     Log.w("info", "loadGif(fromCache):" + gifInfo[1]);
@@ -457,13 +470,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                     okHttpClient.newCall(request).enqueue(new Callback() {
                         @Override
                         public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                            try {
-                                GifDrawable gifFromStream = new GifDrawable(getResources(), android.R.drawable.ic_delete);
-                                handler.sendMessage(handler.obtainMessage(MSG_TYPE_LOAD, nowPos, 0, gifFromStream));
-                            } catch (IOException e1) {
-                                handler.sendMessage(handler.obtainMessage(MSG_TYPE_EMPTY, ""));
-                                e1.printStackTrace();
-                            }
+                            handler.sendMessage(handler.obtainMessage(MSG_TYPE_EMPTY, nowPos, 0, ""));
                             e.printStackTrace();
                         }
 
@@ -481,11 +488,12 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                                     GifDrawable gifFromStream = new GifDrawable(b);//始终占用bis;
                                     handler.sendMessage(handler.obtainMessage(MSG_TYPE_LOAD, nowPos, 0, gifFromStream));
                                 } else {
-                                    handler.sendMessage(handler.obtainMessage(MSG_TYPE_EMPTY, ""));
+                                    handler.sendMessage(handler.obtainMessage(MSG_TYPE_EMPTY, nowPos, 0, ""));
                                     throw new Exception("图片资源获取失败");
                                 }
                             } catch (Exception e) {
                                 cacheGif.delete();
+                                handler.sendMessage(handler.obtainMessage(MSG_TYPE_EMPTY, nowPos, 0, ""));
                                 e.printStackTrace();
                             }
                         }
