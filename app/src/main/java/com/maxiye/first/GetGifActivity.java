@@ -5,7 +5,6 @@ import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
@@ -17,7 +16,6 @@ import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -84,7 +82,6 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
      * {@link android.support.v4.app.FragmentStatePagerAdapter}.
      */
     private SectionsPagerAdapter mSectionsPagerAdapter;
-    private static final int PER_REQ_STORAGE_WRT = 100;
     private static boolean getNewFlg = true;
     private static int artId = 1023742;
     private static String title = "动态图";
@@ -127,8 +124,8 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
         endFlg = false;
         okHttpClient = new OkHttpClient()
                 .newBuilder()
-                .connectTimeout(3, TimeUnit.SECONDS)
-                .readTimeout(10, TimeUnit.SECONDS)
+                .connectTimeout(2, TimeUnit.SECONDS)
+                .readTimeout(8, TimeUnit.SECONDS)
                 .build();
     }
 
@@ -461,7 +458,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                         @Override
                         public void onFailure(@NonNull Call call, @NonNull IOException e) {
                             try {
-                                GifDrawable gifFromStream = new GifDrawable(getResources(), R.drawable.ic_sync_black_24dp);
+                                GifDrawable gifFromStream = new GifDrawable(getResources(), android.R.drawable.ic_delete);
                                 handler.sendMessage(handler.obtainMessage(MSG_TYPE_LOAD, nowPos, 0, gifFromStream));
                             } catch (IOException e1) {
                                 handler.sendMessage(handler.obtainMessage(MSG_TYPE_EMPTY, ""));
@@ -662,6 +659,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
         }
 
         public void refresh() {
+            okHttpClient.dispatcher().cancelAll();
             this.gifPosition = 1;
             new Thread(this::loadGif).start();
         }
