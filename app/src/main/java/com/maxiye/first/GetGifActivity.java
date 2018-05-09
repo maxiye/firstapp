@@ -2,7 +2,6 @@ package com.maxiye.first;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -33,7 +32,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.PopupMenu;
@@ -284,12 +282,13 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                         TextView tv = rootView.findViewById(fragment.getResources().getIdentifier("gtxt_" + fragment.gifPosition, "id", fragment.activity.getPackageName()));
                         tv.setText(fragment.gufTitle);
                         GifImageView iv1 = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + fragment.gifPosition, "id", fragment.activity.getPackageName()));
-                        Drawable initShow = fragment.activity.getDrawable(R.drawable.ic_sync_black_24dp);
-                        iv1.setImageDrawable(initShow);
-                        iv1.setMinimumHeight(24);
-                        iv1.setMinimumWidth(24);
-                        Animation anim = AnimationUtils.loadAnimation(fragment.activity, R.anim.load_rotate);
-                        iv1.setAnimation(anim);
+                        if (!(iv1.getDrawable() instanceof  GifDrawable)) {
+                            Drawable initShow = fragment.activity.getDrawable(R.drawable.ic_sync_black_24dp);
+                            iv1.setImageDrawable(initShow);
+                            iv1.setMinimumHeight(24);
+                            iv1.setMinimumWidth(24);
+                            iv1.setAnimation(AnimationUtils.loadAnimation(fragment.activity, R.anim.load_rotate));
+                        }
                         fragment.gifPosition++;
                         if (fragment.gifPosition < 4) {
                             new Thread(fragment::loadGif).start();
@@ -350,23 +349,15 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
             TextView textView = rootView.findViewById(R.id.section_label);
             assert getArguments() != null;
             textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
-            GifImageView gif_1 = rootView.findViewById(R.id.gif_1);
-            GifImageView gif_2 = rootView.findViewById(R.id.gif_2);
-            GifImageView gif_3 = rootView.findViewById(R.id.gif_3);
-            Animation anim = AnimationUtils.loadAnimation(activity, R.anim.load_rotate);
-            gif_1.setAnimation(anim);
-            gif_2.setAnimation(anim);
-            gif_3.setAnimation(anim);
-            rootView.setLongClickable(true);
-            gif_1.setOnLongClickListener((View view) -> {
+            rootView.findViewById(R.id.gif_1).setOnLongClickListener((View view) -> {
                 longClickCb(1, view);
                 return true;
             });
-            gif_2.setOnLongClickListener((View view) -> {
+            rootView.findViewById(R.id.gif_2).setOnLongClickListener((View view) -> {
                 longClickCb(2, view);
                 return true;
             });
-            gif_3.setOnLongClickListener((View view) -> {
+            rootView.findViewById(R.id.gif_3).setOnLongClickListener((View view) -> {
                 longClickCb(3, view);
                 return true;
             });
@@ -516,7 +507,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                 return;
             Log.w("start", "loadGifList(lock):" + webPage);
             String baseUrl = "http://wap.gamersky.com/news/Content-" + artId;
-            String reg = "alt=\".+\"[^>]*?src=\"(http://[^\"]+\\.gif)\"[^>]*>.*?(<br>\\r\\n([^<]+))?</p>";
+            String reg = "src=\"(http://[^\"]+\\.gif)\"[^>]*>.*?(<br>\\r\\n([^<]+))?</p>";
             Pattern pt = Pattern.compile(reg);
             try {
                 String url = baseUrl + (webPage > 1 ? "_" + webPage : "") + ".html";

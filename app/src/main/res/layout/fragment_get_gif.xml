@@ -28,7 +28,7 @@
             android:layout_height="wrap_content">
             <pl.droidsonroids.gif.GifImageView
                 android:id="@+id/gif_1"
-                android:src="@drawable/ic_sync_black_24dp"
+                android:src="@android:drawable/ic_menu_gallery"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:contentDescription="@string/gif_desc"/>
@@ -43,7 +43,6 @@
             android:layout_height="wrap_content">
             <TextView
                 android:id="@+id/gtxt_1"
-                android:src="@drawable/ic_sync_black_24dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
         </LinearLayout>
@@ -58,7 +57,7 @@
             android:layout_height="wrap_content">
             <pl.droidsonroids.gif.GifImageView
                 android:id="@+id/gif_2"
-                android:src="@drawable/ic_sync_black_24dp"
+                android:src="@android:drawable/ic_menu_gallery"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:contentDescription="@string/gif_desc"/>
@@ -85,7 +84,7 @@
             android:layout_height="wrap_content">
             <pl.droidsonroids.gif.GifImageView
                 android:id="@+id/gif_3"
-                android:src="@drawable/ic_sync_black_24dp"
+                android:src="@android:drawable/ic_menu_gallery"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:contentDescription="@string/gif_desc"/>
