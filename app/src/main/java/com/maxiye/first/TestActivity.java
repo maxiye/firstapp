@@ -50,7 +50,6 @@ import java.util.Date;
 import java.util.Locale;
 
 public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
-    public static final String GET_NEW_FLG = "Test.getNewFlg";
     private final int INTENT_CONTACT_PICK_REQCODE = 100;
     private final int INTENT_IMG_VIEW_REQCODE = 101;
     private final int INTENT_IMG_PICK_REQCODE = 102;

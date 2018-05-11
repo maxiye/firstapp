@@ -1,0 +1,32 @@
+{
+  "gamersky": {
+    "web_root": "http://www.gamersky.com",
+    "gif_web_reg": {
+      "reg": "<a href=\"(http://[^\"]+/([0-9]+)\\.shtml)\"[^>]*?title=\"([^\"]+动态图)\"",
+      "art_id_idx": 2,
+      "title_idx": 3
+    },
+    "gif_web": "http://wap.gamersky.com/news/Content-%1$d.html",
+    "gif_web_2nd": "http://wap.gamersky.com/news/Content-%1$d_%2$d.html",
+    "gif_reg": {
+      "reg": "src=\"(http://[^\"]+\\.gif)\"[^>]*?>.*?(<br>\\n([^<]+))?</p>",
+      "gif_url_idx": 1,
+      "git_title_idx": 3
+    }
+  },
+  "yxdown": {
+    "web_root": "http://www.yxdown.com",
+    "gif_web_reg": {
+      "reg": "<a href=\"(http://[^\"]+/([0-9]+)\\.html)\"[^>]*?>([^<]+动图[^<]+)<",
+      "art_id_idx": 2,
+      "title_idx": 3
+    },
+    "gif_web": "http://m.yxdown.com/news/%1$d.html",
+    "gif_web_2nd": "http://m.yxdown.com/news/%1$d_%2$d.html",
+    "gif_reg": {
+      "reg": "<img src=\"(http://[^\"]+\\.gif)[^\u4e00-\u9fa5]+([^<]+)</span>",
+      "gif_url_idx": 1,
+      "git_title_idx": 2
+    }
+  }
+}
