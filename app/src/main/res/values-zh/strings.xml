@@ -36,4 +36,5 @@
     <string name="download_gif">下载</string>
     <string name="action_skip_to">输入</string>
     <string name="action_change_url">修改文章id</string>
+    <string name="action_switch_web">切换网站</string>
 </resources>

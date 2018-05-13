@@ -417,6 +417,7 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
      */
     public void getGif(View view) {
         Intent getGifInt = new Intent(this, GetGifActivity.class);
+        getGifInt.putExtra(GetGifActivity.WEB_NAME, "yxdown");
         startActivity(getGifInt);
         /*AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("提示：");

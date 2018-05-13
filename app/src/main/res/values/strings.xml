@@ -35,4 +35,5 @@
     <string name="download_gif">Download Gif</string>
     <string name="action_skip_to">Go To</string>
     <string name="action_change_url">Change Url</string>
+    <string name="action_switch_web">Switch Web</string>
 </resources>

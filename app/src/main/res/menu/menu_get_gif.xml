@@ -20,4 +20,10 @@
         android:icon="@android:drawable/ic_media_next"
         android:title="@string/action_change_url"
         app:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/action_switch_web"
+        android:orderInCategory="100"
+        android:icon="@android:drawable/ic_menu_more"
+        android:title="@string/action_switch_web"
+        app:showAsAction="ifRoom"/>
 </menu>
