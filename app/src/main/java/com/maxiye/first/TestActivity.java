@@ -219,11 +219,11 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         SQLiteDatabase db = dbh.getWritableDatabase();//此时创建数据库,生成.db文件
         //增
         ContentValues ctv = new ContentValues();
-        ctv.put("author","zzz");
-        ctv.put("price",9.99f);
-        ctv.put("pages",180);
-        ctv.put("name","花儿与老年");
-        long newId = db.insert(DBHelper.TB_BOOK,null,ctv);
+        ctv.put("author", "zzz");
+        ctv.put("price", 9.99f);
+        ctv.put("pages", 180);
+        ctv.put("name", "花儿与老年");
+        long newId = db.insert(DBHelper.TB_BOOK, null, ctv);
         //删
         db.delete(DBHelper.TB_BOOK, "id = ?", new String[]{"2"});
         //改
@@ -304,9 +304,9 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
             // 设置关联程序
             Intent launcherIntent = new Intent(Settings.ACTION_DATA_ROAMING_SETTINGS);//设置网络页面intent
             // 设置关联程序
-    //        Intent launcherIntent = new Intent(Intent.ACTION_MAIN);
-    //        launcherIntent.setClass(MainActivity.this, MainActivity.class);
-    //        launcherIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+            //        Intent launcherIntent = new Intent(Intent.ACTION_MAIN);
+            //        launcherIntent.setClass(MainActivity.this, MainActivity.class);
+            //        launcherIntent.addCategory(Intent.CATEGORY_LAUNCHER);
             addShortcutIntent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, launcherIntent);
 
             // 发送广播
@@ -371,17 +371,17 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 });
                 break;
             case R.id.test_contact:
-                intent = new Intent(Intent.ACTION_PICK,Uri.parse("content://contacts"));
+                intent = new Intent(Intent.ACTION_PICK, Uri.parse("content://contacts"));
                 intent.setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE);
-                startActivityForResult(intent,INTENT_CONTACT_PICK_REQCODE);
+                startActivityForResult(intent, INTENT_CONTACT_PICK_REQCODE);
                 break;
             case R.id.test_email:
                 intent = new Intent(Intent.ACTION_SEND);
                 intent.setType("text/plain");
-                intent.putExtra(Intent.EXTRA_EMAIL,new String[]{"912877398@qq.com"});
-                intent.putExtra(Intent.EXTRA_SUBJECT,"你好");
-                intent.putExtra(Intent.EXTRA_TEXT,"hahahaahahahahahaha");
-                intent.putExtra(Intent.EXTRA_STREAM,Uri.parse("content://path/to/email/attachment"));
+                intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"912877398@qq.com"});
+                intent.putExtra(Intent.EXTRA_SUBJECT, "你好");
+                intent.putExtra(Intent.EXTRA_TEXT, "hahahaahahahahahaha");
+                intent.putExtra(Intent.EXTRA_STREAM, Uri.parse("content://path/to/email/attachment"));
                 /*PackageManager pm = getPackageManager();
                 List<ResolveInfo> acts = pm.queryIntentActivities(intent,PackageManager.MATCH_DEFAULT_ONLY);
                 acts.forEach(ri -> alert(ri.toString()));*/
@@ -389,7 +389,7 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 break;
             case R.id.test_map:
                 Uri location = Uri.parse("geo:0,0?q=1600+Amphitheatre+Parkway,+Mountain+View,+California");
-                intent = new Intent(Intent.ACTION_VIEW,location);
+                intent = new Intent(Intent.ACTION_VIEW, location);
                 startActivity(intent);
                 break;
             case R.id.test_pic:
@@ -402,7 +402,7 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 break;
             case R.id.test_web:
                 Uri url = Uri.parse("https://apkdownloader.com/");
-                intent = new Intent(Intent.ACTION_VIEW,url);
+                intent = new Intent(Intent.ACTION_VIEW, url);
                 startActivity(intent);
                 break;
             default:
@@ -413,32 +413,13 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
 
     /**
      * 获取动态图
+     *
      * @param view View
      */
     public void getGif(View view) {
         Intent getGifInt = new Intent(this, GetGifActivity.class);
-        getGifInt.putExtra(GetGifActivity.WEB_NAME, "yxdown");
+        getGifInt.putExtra(GetGifActivity.WEB_NAME, "gamersky");
         startActivity(getGifInt);
-        /*AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("提示：");
-        builder.setMessage("是否获取最新的动图?");
-        builder.setIcon(R.drawable.ic_info_black_24dp);
-        //设置正面按钮
-        builder.setPositiveButton("是的", (dialog, which) -> {
-            getGifInt.putExtra(GET_NEW_FLG, true);
-            dialog.dismiss();
-            startActivity(getGifInt);
-        });
-        //设置反面按钮
-        builder.setNegativeButton("否", (dialog, which) -> {
-            getGifInt.putExtra(GET_NEW_FLG, false);
-            dialog.dismiss();
-            startActivity(getGifInt);
-        });
-        //点击对话框以外的区域是否让对话框消失
-        builder.setCancelable(true);
-        AlertDialog dialog = builder.create();
-        dialog.show();*/
     }
 
     private class FileUrisCallBack implements NfcAdapter.CreateBeamUrisCallback {

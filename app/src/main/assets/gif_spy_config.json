@@ -2,6 +2,7 @@
   "gamersky": {
     "web_root": "http://www.gamersky.com",
     "icon": "http://www.gamersky.com/favicon.ico",
+    "local_icon": "gamersky.png",
     "gif_web_reg": {
       "reg": "<a href=\"(http://[^\"]+/([0-9]+)\\.shtml)\"[^>]*?title=\"([^\"]+动态图)\"",
       "art_id_idx": 2,
@@ -18,6 +19,7 @@
   "yxdown": {
     "web_root": "http://www.yxdown.com",
     "icon": "http://www.yxdown.com/favicon.ico",
+    "local_icon": "yxdown.ico",
     "gif_web_reg": {
       "reg": "<a href=\"(http://[^\"]+/([0-9]+)\\.html)\"[^>]*?>([^<]+动图[^<]+)<",
       "art_id_idx": 2,
@@ -29,6 +31,23 @@
       "reg": "<img src=\"(http://[^\"]+\\.gif)\" />[^\u4e00-\u9fa5]+([^<]+)</span>",
       "gif_url_idx": 1,
       "git_title_idx": 2
+    }
+  },
+  "duowan": {
+    "web_root": "http://tu.duowan.cn",
+    "icon": "http://tu.duowan.com/favicon.ico",
+    "local_icon": "duowan.ico",
+    "gif_web_reg": {
+      "reg": "<a href=\"(http://[^\"]+/([0-9]+)\\.html)\".*?<span class=\"ui-picContentItem__title\">(全球搞笑GIF图[^\\s]+)",
+      "art_id_idx": 2,
+      "title_idx": 3
+    },
+    "gif_web": "http://tu.duowan.com/gallery/%1$d.html",
+    "gif_web_2nd": "http://tu.duowan.com/gallery/%1$d_%2$d.html",
+    "gif_reg": {
+      "reg": "\"title\":\"([^\"]+)\".*?\"source\":\"([^\"]+)\"",
+      "gif_url_idx": 2,
+      "git_title_idx": 1
     }
   }
 }

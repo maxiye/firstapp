@@ -7,23 +7,35 @@
         android:orderInCategory="100"
         android:icon="@android:drawable/stat_notify_sync_noanim"
         android:title="@string/action_refresh"
-        app:showAsAction="always"/>
+        android:onClick="refresh"
+        app:showAsAction="always"
+        tools:ignore="AlwaysShowAction"/>
     <item
         android:id="@+id/action_skip_to"
         android:orderInCategory="100"
         android:icon="@android:drawable/ic_media_ff"
         android:title="@string/action_skip_to"
-        app:showAsAction="ifRoom"/>
+        android:onClick="skipTo"
+        app:showAsAction="always"/>
+    <item
+        android:id="@+id/action_switch_web"
+        android:orderInCategory="100"
+        android:icon="@android:drawable/btn_star_big_on"
+        android:title="@string/action_switch_web"
+        android:onClick="switchWeb"
+        app:showAsAction="always"/>
     <item
         android:id="@+id/action_change_url"
         android:orderInCategory="100"
         android:icon="@android:drawable/ic_media_next"
         android:title="@string/action_change_url"
-        app:showAsAction="ifRoom"/>
+        android:onClick="changeUrl"
+        app:showAsAction="always"/>
     <item
-        android:id="@+id/action_switch_web"
+        android:id="@+id/action_browser_open"
         android:orderInCategory="100"
-        android:icon="@android:drawable/ic_menu_more"
-        android:title="@string/action_switch_web"
+        android:icon="@android:drawable/ic_menu_set_as"
+        android:title="@string/action_browser_open"
+        android:onClick="browserOpen"
         app:showAsAction="ifRoom"/>
 </menu>

@@ -45,6 +45,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
             getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, frg).commit();
         }
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // 为ActionBar扩展菜单项
@@ -54,11 +55,13 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         setupSearchView();
         return super.onCreateOptionsMenu(menu);
     }
+
     private void setupSearchView() {
         mSearchView.setIconifiedByDefault(true);
         mSearchView.setOnQueryTextListener(this);
         mSearchView.setQueryHint(getString(R.string.edit_message));
     }
+
     @Override
     public boolean onQueryTextChange(String newText) {
         //implement the filterng techniques
@@ -152,9 +155,11 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     public void onListScroll(boolean flg) {
         if (flg) {
             //上滑
-            if (ab.isShowing()) ab.hide();
+            if (ab.isShowing())
+                ab.hide();
         } else {
-            if (!ab.isShowing()) ab.show();
+            if (!ab.isShowing())
+                ab.show();
         }
     }
 

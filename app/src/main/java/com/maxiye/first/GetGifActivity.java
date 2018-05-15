@@ -4,9 +4,11 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -37,7 +39,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
 import android.widget.TextView;
@@ -45,6 +46,7 @@ import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.maxiye.first.part.GifWebRvAdapter;
 import com.maxiye.first.util.CacheUtil;
 import com.maxiye.first.util.PermissionUtil;
 
@@ -59,8 +61,10 @@ import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -142,6 +146,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
         JsonObject webCfg = null;
         try {
             JsonObject cfgs = new Gson().fromJson(new InputStreamReader(getAssets().open("gif_spy_config.json")), JsonObject.class);
+            if (webName == null) return cfgs;
             webCfg = cfgs.getAsJsonObject(webName);
             Log.w("JSON", webCfg.toString());
         } catch (Exception e) {
@@ -179,147 +184,143 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
         return true;
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        switch (id) {
-            case R.id.action_refresh:
-                mSectionsPagerAdapter.currentFragment.refresh();
-                return true;
-            case R.id.action_skip_to:
-                //实例化布局
-                View view = LayoutInflater.from(this).inflate(R.layout.dialog_item_edittext, null);
-                //找到并对自定义布局中的控件进行操作的示例
-                EditText pageEdit = view.findViewById(R.id.gif_dialog_input);
-                //创建对话框
-                AlertDialog dialog = new AlertDialog.Builder(this).create();
-                dialog.setIcon(R.drawable.ic_info_black_24dp);//设置图标
-                dialog.setTitle("请输入页码");//设置标题
-                dialog.setView(view);//添加布局
-                //设置按键
-                dialog.setButton(AlertDialog.BUTTON_POSITIVE, "前往", (dialog1, which) -> {
-                    if (pageEdit.getText().toString().equals("")) {
-                        pageEdit.setText("1");
-                    }
-                    mViewPager.setCurrentItem(Integer.parseInt(pageEdit.getText().toString()) - 1, true);
-                });
-                dialog.setButton(AlertDialog.BUTTON_NEGATIVE, "取消", (dialog1, which) -> {
-                });
-                dialog.show();
-                dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-                break;
-            case R.id.action_change_url:
-                //实例化布局
-                View view2 = LayoutInflater.from(this).inflate(R.layout.dialog_item_edittext, null);
-                //找到并对自定义布局中的控件进行操作的示例
-                EditText articleId = view2.findViewById(R.id.gif_dialog_input);
-                //创建对话框
-                AlertDialog dialog2 = new AlertDialog.Builder(this).create();
-                dialog2.setIcon(R.drawable.ic_info_black_24dp);//设置图标
-                dialog2.setTitle("请输入文章id");//设置标题
-                dialog2.setView(view2);//添加布局
-                //设置按键
-                dialog2.setButton(AlertDialog.BUTTON_POSITIVE, "前往", (dialog1, which) -> {
-                    String txt = articleId.getText().toString();
-                    if (txt.equals("")) {
-                        alert("文章id不能为空");
-                    } else {
-                        artId = Integer.parseInt(txt);
-                        webPage = 1;
-                        endFlg = false;
-                        gifList.clear();
-                        mViewPager.setCurrentItem(0, true);
-                        mSectionsPagerAdapter.currentFragment.refresh();
-                    }
-
-                });
-                dialog2.setButton(AlertDialog.BUTTON_NEGATIVE, "取消", (dialog1, which) -> {});
-                dialog2.show();
-                dialog2.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-                break;
-            case R.id.action_switch_web:
-                PopupWindow popupWindow = new PopupWindow(400, 260);
-                popupWindow.setContentView(LayoutInflater.from(this).inflate(R.layout.popupwindow_view, null));
-                popupWindow.setOutsideTouchable(true);
-                RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
-                LinearLayoutManager manager = new LinearLayoutManager(this);
-                manager.setOrientation(LinearLayoutManager.VERTICAL);
-                rv.setLayoutManager(manager);
-                MyAdapter ma = new MyAdapter();
-                String[] mData = new String[]{"yxdown", "gamersky"};
-                ma.setData(mData);
-                ma.setOnItemClickListener(position -> {
-                    webName = mData[position];
-                    Log.w("rvClick", webName);
-                    getNewFlg = true;
-                    webPage = 1;
-                    endFlg = false;
-                    gifList.clear();
-                    webCfg = getWebCfg(webName);
-                    mViewPager.setCurrentItem(0, true);
-                    mSectionsPagerAdapter.currentFragment.refresh();
-                    popupWindow.dismiss();
-                });
-                rv.setAdapter(ma);
-                popupWindow.showAsDropDown(findViewById(R.id.appbar), 0, 0, Gravity.END);
-                break;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-    class MyAdapter extends RecyclerView.Adapter{
-        private String[] mData;
-        private OnItemClickListener clickListener;
-
-        public void setData(String[] data) {
-            mData = data;
-        }
-        public void setOnItemClickListener(OnItemClickListener onItemClickListener ){
-            this.clickListener = onItemClickListener;
-        }
-        @NonNull
-        @Override
-        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.popupwindow_listview,null));
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-            ViewHolder viewHolder = (ViewHolder) holder;
-            viewHolder.mTextView.setText(mData[position]);
-            viewHolder.mImageView.setImageDrawable(getDrawable(android.R.drawable.ic_menu_gallery));
-            if (clickListener != null) {
-                viewHolder.itemView.setOnClickListener(view -> clickListener.onClick(position));
+    private List<Map<String,Object>> getWebList() {
+        JsonObject all_web = getWebCfg(null);
+        List<Map<String,Object>> webList = new ArrayList<>();
+        for (String key: all_web.keySet()) {
+            HashMap<String,Object> item = new HashMap<>();
+            item.put("name", key);
+            try {
+                item.put("icon", BitmapFactory.decodeStream(getAssets().open(all_web.getAsJsonObject(key).get("local_icon").getAsString())));
+            } catch (Exception e) {
+                e.printStackTrace();
+                item.put("icon", BitmapFactory.decodeResource(getResources(), android.R.drawable.ic_menu_gallery));
             }
+            webList.add(item);
         }
-
-        @Override
-        public int getItemCount() {
-            return mData == null ? 0:mData.length;
-        }
-
+        return webList;
     }
-    interface OnItemClickListener{
-        void onClick( int position);
+
+    public void refresh(MenuItem item) {
+        mSectionsPagerAdapter.currentFragment.refresh();
     }
-    static class ViewHolder extends RecyclerView.ViewHolder{
-        TextView mTextView;
-        ImageView mImageView;
-        ViewHolder(View itemView) {
-            super(itemView);
-            mTextView = itemView.findViewById(R.id.pw_text_view);
-            mImageView = itemView.findViewById(R.id.pw_image_view);
-        }
+
+    @SuppressLint("InflateParams")
+    public void skipTo(MenuItem item) {
+        //实例化布局
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_item_edittext, null);
+        //找到并对自定义布局中的控件进行操作的示例
+        EditText pageEdit = view.findViewById(R.id.gif_dialog_input);
+        //创建对话框
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setIcon(R.drawable.ic_info_black_24dp)//设置图标
+                .setTitle("请输入文章id")//设置标题
+                .setView(view)//添加布局
+                .create();
+        //设置按键
+        dialog.setButton(AlertDialog.BUTTON_POSITIVE, "前往", (dialog1, which) -> {
+            if (pageEdit.getText().toString().equals("")) {
+                pageEdit.setText("1");
+            }
+            mViewPager.setCurrentItem(Integer.parseInt(pageEdit.getText().toString()) - 1, true);
+        });
+        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, "取消", (dialog1, which) -> {
+        });
+        dialog.show();
+        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+    }
+
+    @SuppressLint("InflateParams")
+    public void changeUrl(MenuItem item) {
+        //实例化布局
+        View view2 = LayoutInflater.from(this).inflate(R.layout.dialog_item_edittext, null);
+        //找到并对自定义布局中的控件进行操作的示例
+        EditText articleId = view2.findViewById(R.id.gif_dialog_input);
+        //创建对话框
+        AlertDialog dialog2 = new AlertDialog.Builder(this)
+                .setIcon(R.drawable.ic_info_black_24dp)//设置图标
+                .setTitle("请输入文章id")//设置标题
+                .setView(view2)//添加布局
+                .create();
+        //设置按键
+        dialog2.setButton(AlertDialog.BUTTON_POSITIVE, "前往", (dialog1, which) -> {
+            String txt = articleId.getText().toString();
+            if (txt.equals("")) {
+                alert("文章id不能为空");
+            } else {
+                okHttpClient.dispatcher().cancelAll();
+                artId = Integer.parseInt(txt);
+                webPage = 1;
+                endFlg = false;
+                gifList.clear();
+                mViewPager.setCurrentItem(0, true);
+                mSectionsPagerAdapter.currentFragment.refresh();
+            }
+        });
+        dialog2.setButton(AlertDialog.BUTTON_NEGATIVE, "取消", (dialog1, which) -> {});
+        dialog2.show();
+        dialog2.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+    }
+
+    @SuppressLint("InflateParams")
+    public void switchWeb(MenuItem item) {
+        PopupWindow popupWindow = new PopupWindow(400, 260);
+        popupWindow.setContentView(LayoutInflater.from(this).inflate(R.layout.popupwindow_view, null));
+        popupWindow.setOutsideTouchable(true);
+        RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
+        LinearLayoutManager manager = new LinearLayoutManager(this);
+        manager.setOrientation(LinearLayoutManager.VERTICAL);
+        rv.setLayoutManager(manager);
+        GifWebRvAdapter ma = new GifWebRvAdapter();
+        List<Map<String,Object>> webList = getWebList();
+        ma.setData(webList);
+        ma.setOnItemClickListener(position -> {
+            webName = (String) webList.get(position).get("name");
+            Log.w("rvClick", webName);
+            okHttpClient.dispatcher().cancelAll();
+            webCfg = getWebCfg(webName);
+            getNewFlg = true;
+            webPage = 1;
+            endFlg = false;
+            gifList.clear();
+            mViewPager.setCurrentItem(0, true);
+            mSectionsPagerAdapter.currentFragment.refresh();
+            popupWindow.dismiss();
+        });
+        rv.setAdapter(ma);
+        popupWindow.showAsDropDown(findViewById(R.id.appbar), 0, 0, Gravity.END);
+    }
+
+    public void browserOpen(MenuItem item) {
+        //设置反面按钮
+        //设置中立按钮
+        new AlertDialog.Builder(this)
+                .setTitle("提示：")
+                .setMessage("使用浏览器打开")
+                .setIcon(R.drawable.ic_public_orange_60dp)
+                //点击对话框以外的区域是否让对话框消失
+                .setCancelable(true)
+                //设置正面按钮
+                .setPositiveButton("首页", (dialog, which) -> {
+                    Uri url = Uri.parse(String.format(webCfg.get("gif_web").getAsString(), artId));
+                    startActivity(new Intent(Intent.ACTION_VIEW, url));
+                    dialog.dismiss();
+                })
+                .setNegativeButton("当前页", (dialog, which) -> {
+                    Uri url = Uri.parse(webPage > 1 ? String.format(webCfg.get("gif_web_2nd").getAsString(), artId, webPage - 1) : String.format(webCfg.get("gif_web").getAsString(), artId));
+                    startActivity(new Intent(Intent.ACTION_VIEW, url));
+                    dialog.dismiss();
+                })
+                .setNeutralButton("取消", (dialog, which) -> dialog.dismiss())
+                .create()
+                .show();
     }
 
     @Override
     public void checkPageEnd(int pages) {
         int nowPage = mViewPager.getCurrentItem() + 1;
         if (nowPage > pages) {
+            alert("没有更多内容了");
             mViewPager.setCurrentItem(pages - 1, true);
         }
     }
@@ -364,6 +365,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                 View rootView = fragment.getView();
                 if (rootView == null) return false;
                 TextView textView = rootView.findViewById(R.id.section_label);
+                assert fragment.getArguments() != null;
                 textView.setText(title + "：" + fragment.getArguments().getInt(ARG_SECTION_NUMBER));
                 Drawable errShow = fragment.activity.getDrawable(android.R.drawable.ic_delete);
                 switch (msg.what) {
@@ -612,7 +614,13 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                     String name = (mt.group(titleIdx) == null ? UUID.randomUUID().toString() : mt.group(titleIdx)) + ".gif";
                     System.out.println(name);
                     System.out.println(mt.group(urlIdx));
-                    String[] gifInfo = new String[]{mt.group(urlIdx), name};
+                    String gifUrl = "";
+                    if (webName == "duowan") {
+                        gifUrl = mt.group(urlIdx).replace("\", "");
+                    } else {
+                        gifUrl = mt.group(urlIdx);
+                    }
+                    String[] gifInfo = new String[]{gifUrl, name};
                     gifList.add(gifInfo);
                     setDbGifList(DBHelper.TB_GIF_WEB_ITEM, gifInfo);
                 }

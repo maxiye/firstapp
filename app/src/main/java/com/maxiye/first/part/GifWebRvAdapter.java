@@ -1,5 +1,8 @@
 package com.maxiye.first.part;
 
+import android.annotation.SuppressLint;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -10,15 +13,19 @@ import android.widget.TextView;
 
 import com.maxiye.first.R;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * 适配器
  * Created by due on 2018/5/14.
  */
-public class MyRVAdapter extends RecyclerView.Adapter {
-    private String[] mData;
+public class GifWebRvAdapter extends RecyclerView.Adapter {
+    private List<Map<String, Object>> mData;
     private OnItemClickListener clickListener;
 
-    public void setData(String[] data) {
+    public void setData(List<Map<String, Object>> data) {
         mData = data;
     }
 
@@ -26,6 +33,7 @@ public class MyRVAdapter extends RecyclerView.Adapter {
         this.clickListener = onItemClickListener;
     }
 
+    @SuppressLint("InflateParams")
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -35,8 +43,9 @@ public class MyRVAdapter extends RecyclerView.Adapter {
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ViewHolder viewHolder = (ViewHolder) holder;
-        viewHolder.mTextView.setText(mData[position]);
-        viewHolder.mImageView.setImageResource(android.R.drawable.ic_menu_gallery);
+        HashMap<String, Object> item = (HashMap<String, Object>) mData.get(position);
+        viewHolder.mTextView.setText((String) item.get("name"));
+        viewHolder.mImageView.setImageBitmap((Bitmap) item.get("icon"));
         if (clickListener != null) {
             viewHolder.itemView.setOnClickListener(view -> clickListener.onClick(position));
         }
@@ -44,7 +53,7 @@ public class MyRVAdapter extends RecyclerView.Adapter {
 
     @Override
     public int getItemCount() {
-        return mData == null ? 0 : mData.length;
+        return mData == null ? 0 : mData.size();
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

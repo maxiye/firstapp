@@ -5,26 +5,25 @@ import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Process;
-import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.widget.AbsListView;
-import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.maxiye.first.part.AppLvAdapter;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -104,7 +103,7 @@ public class BlankFragment extends Fragment {
                 case MSG_TYPE_LV:
                     @SuppressWarnings("unchecked")
                     List<Map<String, Object>> app_al = (List<Map<String, Object>>) msg.obj;
-                    lv.setAdapter(new MyAdapter(getActivity(), R.layout.listview_applist, app_al));
+                    lv.setAdapter(new AppLvAdapter(getActivity(), R.layout.listview_applist, app_al));
                     msg.obj = null;
                     break;
                 case MSG_TYPE_TV:
@@ -293,47 +292,5 @@ public class BlankFragment extends Fragment {
         void onItemClick(View view);
         void onItemLongClick(View view);
         void onListScroll(boolean flg);
-    }
-
-    private class MyAdapter extends ArrayAdapter {
-        private List<Map<String, Object>> data;
-        private int res;
-        private Context context;
-
-        @SuppressWarnings("unchecked")
-        MyAdapter(@NonNull Context context, @LayoutRes int resource, @NonNull List<Map<String, Object>> objects) {
-            super(context, resource, objects);
-            this.context = context;
-            this.res = resource;
-            this.data = objects;
-        }
-
-        @NonNull
-        @Override
-        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-            ViewHolder holder;
-            if (convertView == null) {
-                convertView = LayoutInflater.from(context).inflate(res, null);
-                holder = new ViewHolder();
-                holder.icon = convertView.findViewById(R.id.app_icon);
-                holder.name = convertView.findViewById(R.id.app_name);
-                holder.pkg = convertView.findViewById(R.id.package_name);
-            } else {
-                holder = (ViewHolder) convertView.getTag();
-            }
-            HashMap<String, Object> app_info = (HashMap<String, Object>) data.get(position);
-            holder.icon.setImageDrawable((Drawable) app_info.get("icon"));
-            holder.name.setText((String) app_info.get("name"));
-            holder.pkg.setText((String) app_info.get("pkg"));
-            convertView.setTag(holder);
-            return convertView;
-        }
-
-    }
-
-    private static class ViewHolder {
-        TextView name;
-        TextView pkg;
-        ImageView icon;
     }
 }
