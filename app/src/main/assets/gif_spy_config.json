@@ -1,6 +1,8 @@
 {
   "gamersky": {
     "web_root": "http://www.gamersky.com",
+    "spy_root": "http://www.gamersky.com",
+    "spy_gif_web_root": "http://wap.gamersky.com",
     "icon": "http://www.gamersky.com/favicon.ico",
     "local_icon": "gamersky.png",
     "gif_web_reg": {
@@ -14,16 +16,22 @@
       "reg": "src=\"(http://[^\"]+\\.gif)\"[^>]*?>.*?(<br>\\n([^<]+))?</p>",
       "gif_url_idx": 1,
       "git_title_idx": 3
+    },
+    "title_reg": {
+      "reg": "<title>([^|]+)|游民星空</title>",
+      "title_idx": 1
     }
   },
   "yxdown": {
     "web_root": "http://www.yxdown.com",
+    "spy_root": "http://www.yxdown.com/newstag/dongtu/",
+    "spy_gif_web_root": "http://m.yxdown.com",
     "icon": "http://www.yxdown.com/favicon.ico",
     "local_icon": "yxdown.ico",
     "gif_web_reg": {
-      "reg": "<a href=\"(http://[^\"]+/([0-9]+)\\.html)\"[^>]*?>([^<]+动图[^<]+)<",
+      "reg": "href=\"([^\"]+/([0-9]+)\\.html)\"[^>]*?>(最新一期内涵爆笑动图\\s([^<]+))<",
       "art_id_idx": 2,
-      "title_idx": 3
+      "title_idx": 4
     },
     "gif_web": "http://m.yxdown.com/news/%1$d.html",
     "gif_web_2nd": "http://m.yxdown.com/news/%1$d_%2$d.html",
@@ -31,23 +39,33 @@
       "reg": "<img src=\"(http://[^\"]+\\.gif)\" />[^\u4e00-\u9fa5]+([^<]+)</span>",
       "gif_url_idx": 1,
       "git_title_idx": 2
+    },
+    "title_reg": {
+      "reg": "<title>最新一期内涵爆笑动图\\s([^_]+)_游迅网</title>",
+      "title_idx": 1
     }
   },
   "duowan": {
     "web_root": "http://tu.duowan.cn",
+    "spy_root": "http://tu.duowan.cn",
+    "spy_gif_web_root": "http://tu.duowan.cn",
     "icon": "http://tu.duowan.com/favicon.ico",
     "local_icon": "duowan.ico",
     "gif_web_reg": {
-      "reg": "<a href=\"(http://[^\"]+/([0-9]+)\\.html)\".*?<span class=\"ui-picContentItem__title\">(全球搞笑GIF图[^\\s]+)",
+      "reg": "<a href=\"(http://[^\"]+/([0-9]+)\\.html)\"[^\u4e00-\u9fa5]+<span class=\"ui-picContentItem__title\">(全球搞笑GIF图\\S+)\\s+",
       "art_id_idx": 2,
       "title_idx": 3
     },
-    "gif_web": "http://tu.duowan.com/gallery/%1$d.html",
-    "gif_web_2nd": "http://tu.duowan.com/gallery/%1$d_%2$d.html",
+    "gif_web": "http://tu.duowan.cn/gallery/%1$d.html",
+    "gif_web_2nd": "http://www.duowan.com/s/404/404.html",
     "gif_reg": {
-      "reg": "\"title\":\"([^\"]+)\".*?\"source\":\"([^\"]+)\"",
+      "reg": "\"title\":\"([^\"]+)\".*?\"source\":\"([^\"]+)\".*?\"add_intro\":\"([^\"]+)\"",
       "gif_url_idx": 2,
-      "git_title_idx": 1
+      "git_title_idx": 3
+    },
+    "title_reg": {
+      "reg": "<title>([^-]+)-多玩图库</title>",
+      "title_idx": 1
     }
   }
 }

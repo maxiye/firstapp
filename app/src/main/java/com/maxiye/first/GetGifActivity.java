@@ -4,7 +4,6 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -29,6 +28,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.Layout;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -49,6 +49,7 @@ import com.google.gson.JsonObject;
 import com.maxiye.first.part.GifWebRvAdapter;
 import com.maxiye.first.util.CacheUtil;
 import com.maxiye.first.util.PermissionUtil;
+import com.maxiye.first.util.Util;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -250,6 +251,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
             } else {
                 okHttpClient.dispatcher().cancelAll();
                 artId = Integer.parseInt(txt);
+                title = "动态图";
                 webPage = 1;
                 endFlg = false;
                 gifList.clear();
@@ -264,7 +266,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
 
     @SuppressLint("InflateParams")
     public void switchWeb(MenuItem item) {
-        PopupWindow popupWindow = new PopupWindow(400, 260);
+        PopupWindow popupWindow = new PopupWindow(400, 600);
         popupWindow.setContentView(LayoutInflater.from(this).inflate(R.layout.popupwindow_view, null));
         popupWindow.setOutsideTouchable(true);
         RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
@@ -316,9 +318,47 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                 .show();
     }
 
+    public void listHistory(MenuItem item) {
+        PopupWindow popupWindow = new PopupWindow(ViewGroup.LayoutParams.MATCH_PARENT, 1000);
+        popupWindow.setContentView(LayoutInflater.from(this).inflate(R.layout.popupwindow_view, null));
+        popupWindow.setOutsideTouchable(true);
+        RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
+        LinearLayoutManager manager = new LinearLayoutManager(this);
+        manager.setOrientation(LinearLayoutManager.VERTICAL);
+        rv.setLayoutManager(manager);
+        GifWebRvAdapter ma = new GifWebRvAdapter();
+        List<Map<String,Object>> historyList = getHistoryList();
+        ma.setData(historyList);
+        ma.setOnItemClickListener(position -> {
+            webName = (String) historyList.get(position).get("web_name");
+            Log.w("rvClick", webName);
+            okHttpClient.dispatcher().cancelAll();
+            webCfg = getWebCfg(webName);
+            artId = Integer.parseInt((String) historyList.get(position).get("art_id"));
+            webPage = 1;
+            endFlg = false;
+            gifList.clear();
+            mViewPager.setCurrentItem(0, true);
+            mSectionsPagerAdapter.currentFragment.refresh();
+            popupWindow.dismiss();
+        });
+        rv.setAdapter(ma);
+        popupWindow.showAsDropDown(findViewById(R.id.appbar), 0, 0, Gravity.END);
+    }
+
+    private List<Map<String,Object>> getHistoryList() {
+        Cursor cus = db.query(DBHelper.TB_GIF_WEB, new String[]{"*"}, "art_id != 0", new String[]{}, null, null, "id desc");
+        Log.w("db_web", cus.getCount() + "");
+        if (cus.getCount() > 0) {
+            cus.moveToFirst();
+            title = cus.getString(cus.getColumnIndex("title"));
+        }
+    }
+
     @Override
-    public void checkPageEnd(int pages) {
+    public void checkPageEnd() {
         int nowPage = mViewPager.getCurrentItem() + 1;
+        int pages = gifList.size() % 3 == 0 ? gifList.size() / 3 : gifList.size() / 3 + 1;
         if (nowPage > pages) {
             alert("没有更多内容了");
             mViewPager.setCurrentItem(pages - 1, true);
@@ -395,7 +435,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                         iv.setMinimumWidth((int)Math.round(gifFromStream.getIntrinsicWidth() * 2.5));
                         break;
                     case MSG_TYPE_OVER:
-                        fragment.mListener.checkPageEnd(webPage - 1);
+                        fragment.mListener.checkPageEnd();
                         break;
                     case MSG_TYPE_DOWNLOADED:
                         File gif = (File) msg.obj;
@@ -614,9 +654,10 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                     String name = (mt.group(titleIdx) == null ? UUID.randomUUID().toString() : mt.group(titleIdx)) + ".gif";
                     System.out.println(name);
                     System.out.println(mt.group(urlIdx));
-                    String gifUrl = "";
-                    if (webName == "duowan") {
-                        gifUrl = mt.group(urlIdx).replace("\", "");
+                    String gifUrl;
+                    if (webName.equals("duowan")) {
+                        name = Util.unicode2Chinese(name);
+                        gifUrl = mt.group(urlIdx).replace("\\", "");
                     } else {
                         gifUrl = mt.group(urlIdx);
                     }
@@ -624,14 +665,15 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                     gifList.add(gifInfo);
                     setDbGifList(DBHelper.TB_GIF_WEB_ITEM, gifInfo);
                 }
-                if (webPage == 1) {
+                if (webPage == 1 && gifList.size() > 0) {
+                    if (title.equals("动态图")) getNewTitle(content);
                     setDbGifList(DBHelper.TB_GIF_WEB, new String[]{url, title});
                 }
                 webPage++;
             } catch (Exception e) {//java.net.ProtocolException: Too many follow-up requests: 21
                 if (e instanceof ProtocolException) {
                     endFlg = true;
-                    updateDbPages(webPage - 1);
+                    if (gifList.size() > 0) updateDbPages(webPage - 1);
                     handler.obtainMessage(MSG_TYPE_OVER, "").sendToTarget();
                 }
                 e.printStackTrace();
@@ -642,7 +684,8 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
         }
 
         private void getNewArtId() {
-            String url = webCfg.get("web_root").getAsString();
+            Toast.makeText(getActivity(), "获取最新内容...", Toast.LENGTH_SHORT).show();
+            String url = webCfg.get("spy_root").getAsString();
             JsonObject regObj = webCfg.getAsJsonObject("gif_web_reg");
             int artIdIdx = regObj.get("art_id_idx").getAsInt();
             int titleIdx = regObj.get("title_idx").getAsInt();
@@ -651,6 +694,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                 Request req = new Request.Builder().url(url).build();
                 String content = new String(okHttpClient.newCall(req).execute().body().bytes(), "utf-8");
                 Matcher mt = pt.matcher(content);
+//                System.out.println(content);
                 if (mt.find()) {
                     title = mt.group(titleIdx);
                     artId = Integer.parseInt(mt.group(artIdIdx));
@@ -660,7 +704,22 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                 e.printStackTrace();
             } finally {
                 getNewFlg = false;
+                Toast.makeText(getActivity(), title, Toast.LENGTH_SHORT).show();
                 System.out.println(title);
+            }
+        }
+
+        private void getNewTitle(String content) {
+            Toast.makeText(getActivity(), "获取标题...", Toast.LENGTH_SHORT).show();
+            JsonObject regObj = webCfg.getAsJsonObject("title_reg");
+            int titleIdx = regObj.get("title_idx").getAsInt();
+            Pattern pt = Pattern.compile(regObj.get("reg").getAsString());
+            Matcher mt = pt.matcher(content);
+//                System.out.println(content);
+            if (mt.find()) {
+                title = mt.group(titleIdx);
+                Log.w("getNewTitle", title);
+                Toast.makeText(getActivity(), title, Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -787,5 +846,5 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
 }
 
 interface OnPFListener {
-    void checkPageEnd(int pages);
+    void checkPageEnd();
 }

@@ -32,6 +32,13 @@
         android:onClick="changeUrl"
         app:showAsAction="always"/>
     <item
+        android:id="@+id/action_history"
+        android:orderInCategory="100"
+        android:icon="@android:drawable/ic_menu_recent_history"
+        android:title="@string/action_history"
+        android:onClick="listHistory"
+        app:showAsAction="always"/>
+    <item
         android:id="@+id/action_browser_open"
         android:orderInCategory="100"
         android:icon="@android:drawable/ic_menu_set_as"

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -63,11 +64,11 @@ class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        update1to2(db);
+        if (oldVersion == 1) update1to2(db);
         Toast.makeText(mCont, "Update succeeded", Toast.LENGTH_SHORT).show();
     }
 
-    private void update1to2(SQLiteDatabase db) {
+    private void update1to2(@NonNull SQLiteDatabase db) {
         Cursor cur1 = db.rawQuery("select * from gif_web where art_id > 1000000", new String[]{});
         Cursor cur2 = db.rawQuery("select * from gif_web_item where art_id > 1000000", new String[]{});
         Log.w("dd", cur1.getCount() + "");
