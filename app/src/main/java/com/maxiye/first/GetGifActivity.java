@@ -28,7 +28,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.text.Layout;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -224,6 +223,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                 pageEdit.setText("1");
             }
             mViewPager.setCurrentItem(Integer.parseInt(pageEdit.getText().toString()) - 1, true);
+            if (endFlg) checkPageEnd();
         });
         dialog.setButton(AlertDialog.BUTTON_NEGATIVE, "取消", (dialog1, which) -> {
         });
@@ -257,11 +257,23 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                 gifList.clear();
                 mViewPager.setCurrentItem(0, true);
                 mSectionsPagerAdapter.currentFragment.refresh();
+                initGif();
             }
         });
         dialog2.setButton(AlertDialog.BUTTON_NEGATIVE, "取消", (dialog1, which) -> {});
         dialog2.show();
         dialog2.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+    }
+
+    private void initGif() {
+        Drawable initShow = getDrawable(android.R.drawable.ic_menu_gallery);
+        for (int i = 1;i<4;i++) {
+            GifImageView iv1 = findViewById(getResources().getIdentifier("gif_" + i, "id", getPackageName()));
+            iv1.clearAnimation();
+            iv1.setImageDrawable(initShow);
+            iv1.setMinimumHeight(24);
+            iv1.setMinimumWidth(24);
+        }
     }
 
     @SuppressLint("InflateParams")
@@ -287,6 +299,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
             gifList.clear();
             mViewPager.setCurrentItem(0, true);
             mSectionsPagerAdapter.currentFragment.refresh();
+            initGif();
             popupWindow.dismiss();
         });
         rv.setAdapter(ma);
@@ -318,6 +331,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                 .show();
     }
 
+    @SuppressLint("InflateParams")
     public void listHistory(MenuItem item) {
         PopupWindow popupWindow = new PopupWindow(ViewGroup.LayoutParams.MATCH_PARENT, 1000);
         popupWindow.setContentView(LayoutInflater.from(this).inflate(R.layout.popupwindow_view, null));
@@ -334,7 +348,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
             Log.w("rvClick", webName);
             okHttpClient.dispatcher().cancelAll();
             webCfg = getWebCfg(webName);
-            artId = Integer.parseInt((String) historyList.get(position).get("art_id"));
+            artId = (int) historyList.get(position).get("art_id");
             webPage = 1;
             endFlg = false;
             gifList.clear();
@@ -343,16 +357,35 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
             popupWindow.dismiss();
         });
         rv.setAdapter(ma);
-        popupWindow.showAsDropDown(findViewById(R.id.appbar), 0, 0, Gravity.END);
+        popupWindow.showAtLocation(findViewById(R.id.fab), Gravity.BOTTOM, 0, 0);
     }
 
     private List<Map<String,Object>> getHistoryList() {
+        JsonObject all_web = getWebCfg(null);
         Cursor cus = db.query(DBHelper.TB_GIF_WEB, new String[]{"*"}, "art_id != 0", new String[]{}, null, null, "id desc");
-        Log.w("db_web", cus.getCount() + "");
-        if (cus.getCount() > 0) {
+        Log.w("getHistoryList：", cus.getCount() + "");
+        List<Map<String,Object>> historyList = new ArrayList<>();
+        int count = cus.getCount();
+        if (count > 0) {
             cus.moveToFirst();
-            title = cus.getString(cus.getColumnIndex("title"));
+            for (int i = 0; i < count; i++) {
+                HashMap<String,Object> item = new HashMap<>();
+                item.put("web_name", cus.getString(cus.getColumnIndex("web_name")));
+                item.put("name", cus.getString(cus.getColumnIndex("title")));
+                item.put("web_url", cus.getString(cus.getColumnIndex("web_url")));
+                item.put("art_id", cus.getInt(cus.getColumnIndex("art_id")));
+                try {
+                    item.put("icon", BitmapFactory.decodeStream(getAssets().open(all_web.getAsJsonObject((String) item.get("web_name")).get("local_icon").getAsString())));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    item.put("icon", BitmapFactory.decodeResource(getResources(), android.R.drawable.ic_menu_gallery));
+                }
+                historyList.add(item);
+                cus.moveToNext();
+            }
         }
+        cus.close();
+        return historyList;
     }
 
     @Override
@@ -360,7 +393,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
         int nowPage = mViewPager.getCurrentItem() + 1;
         int pages = gifList.size() % 3 == 0 ? gifList.size() / 3 : gifList.size() / 3 + 1;
         if (nowPage > pages) {
-            alert("没有更多内容了");
+            alert("已自动跳回最后一页...");
             mViewPager.setCurrentItem(pages - 1, true);
         }
     }
@@ -666,6 +699,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                     setDbGifList(DBHelper.TB_GIF_WEB_ITEM, gifInfo);
                 }
                 if (webPage == 1 && gifList.size() > 0) {
+                    Log.w("titleGet", title);
                     if (title.equals("动态图")) getNewTitle(content);
                     setDbGifList(DBHelper.TB_GIF_WEB, new String[]{url, title});
                 }
@@ -673,7 +707,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
             } catch (Exception e) {//java.net.ProtocolException: Too many follow-up requests: 21
                 if (e instanceof ProtocolException) {
                     endFlg = true;
-                    if (gifList.size() > 0) updateDbPages(webPage - 1);
+                    if (gifList.size() > 0) updateDbField("pages", String.valueOf(webPage - 1));
                     handler.obtainMessage(MSG_TYPE_OVER, "").sendToTarget();
                 }
                 e.printStackTrace();
@@ -684,7 +718,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
         }
 
         private void getNewArtId() {
-            Toast.makeText(getActivity(), "获取最新内容...", Toast.LENGTH_SHORT).show();
+            Log.w("getNewArtId", "获取最新内容...");
             String url = webCfg.get("spy_root").getAsString();
             JsonObject regObj = webCfg.getAsJsonObject("gif_web_reg");
             int artIdIdx = regObj.get("art_id_idx").getAsInt();
@@ -704,22 +738,31 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                 e.printStackTrace();
             } finally {
                 getNewFlg = false;
-                Toast.makeText(getActivity(), title, Toast.LENGTH_SHORT).show();
+                Log.w("getNewArtId", title);
                 System.out.println(title);
             }
         }
 
         private void getNewTitle(String content) {
-            Toast.makeText(getActivity(), "获取标题...", Toast.LENGTH_SHORT).show();
+            Log.w("getNewTitle", "获取标题...");
             JsonObject regObj = webCfg.getAsJsonObject("title_reg");
             int titleIdx = regObj.get("title_idx").getAsInt();
             Pattern pt = Pattern.compile(regObj.get("reg").getAsString());
+            if (content == null) {
+                content = "";
+                Request req = new Request.Builder().url(String.format(webCfg.get("gif_web").getAsString(), artId)).build();
+                try {
+                    content = new String(okHttpClient.newCall(req).execute().body().bytes(), "utf-8");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
             Matcher mt = pt.matcher(content);
 //                System.out.println(content);
             if (mt.find()) {
                 title = mt.group(titleIdx);
+                updateDbField("title", title);//fixme 待删
                 Log.w("getNewTitle", title);
-                Toast.makeText(getActivity(), title, Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -729,6 +772,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
             if (cus.getCount() > 0) {
                 cus.moveToFirst();
                 title = cus.getString(cus.getColumnIndex("title"));
+                getNewTitle(null);//fixme 删
                 int totalPage = cus.getInt(cus.getColumnIndex("pages"));
                 Cursor cus2 = db.query(DBHelper.TB_GIF_WEB_ITEM, new String[]{"page,title,url"}, "art_id = ? and web_name = ?", new String[]{artId + "", webName}, null, null, "id asc");
                 int count = cus2.getCount();
@@ -755,10 +799,10 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
         }
 
 
-        private void updateDbPages(int webPage) {
+        private void updateDbField(String field, String val) {
             ContentValues ctv = new ContentValues();
-            ctv.put("pages", webPage);
-            int rows = db.update(DBHelper.TB_GIF_WEB, ctv, "art_id = ?", new String[]{artId + ""});
+            ctv.put(field, val);
+            int rows = db.update(DBHelper.TB_GIF_WEB, ctv, "art_id = ? and web_name = ?", new String[]{artId + "",webName});
             Log.w("db_web_update: ", rows + "");
         }
 
@@ -785,7 +829,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
         }
 
         public String[] getGifInfo(int offset) {
-            Log.w("start", "getGifInfo:" + offset);
+            Log.w("start", "getGifInfo:" + offset + "-" + webPage + "-" + gifList.size() + "-" + endFlg);
             if (gifList.size() <= offset) {
                 if (endFlg)
                     return null;

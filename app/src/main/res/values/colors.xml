@@ -7,4 +7,5 @@
     <color name="actionBarMenuColor">#FFF</color>
     <color name="actionBarTitleColor">#000</color>
     <color name="colorTransparent">#00FFFFFF</color>
+    <color name="colorGray">#EEE</color>
 </resources>
