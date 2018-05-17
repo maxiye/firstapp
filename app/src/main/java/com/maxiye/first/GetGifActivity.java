@@ -111,7 +111,6 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_get_gif);
-
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         // Create the adapter that will return a fragment
@@ -122,7 +121,6 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(view -> Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show());
-        Log.w("end", "onCreateOver");
         db = new DBHelper(this).getWritableDatabase();//此时创建数据库,生成.db文件
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
@@ -132,14 +130,34 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
         }
         //网站配置信息
         webCfg = getWebCfg(webName);
-        gifList.clear();
+        if (okHttpClient == null) {
+            okHttpClient = new OkHttpClient()
+                    .newBuilder()
+                    .connectTimeout(2, TimeUnit.SECONDS)
+                    .readTimeout(8, TimeUnit.SECONDS)
+                    .build();
+        }
+        initPage();
+        Log.w("end", "onCreateOver");
+    }
+
+    private void initPage() {
+        mViewPager.setCurrentItem(0, true);
+        okHttpClient.dispatcher().cancelAll();
+        title = "动态图";
         webPage = 1;
         endFlg = false;
-        okHttpClient = new OkHttpClient()
-                .newBuilder()
-                .connectTimeout(2, TimeUnit.SECONDS)
-                .readTimeout(8, TimeUnit.SECONDS)
-                .build();
+        gifList.clear();
+        if (mSectionsPagerAdapter.currentFragment != null) {
+            Drawable initShow = getDrawable(android.R.drawable.ic_menu_gallery);
+            for (int i = 1;i<4;i++) {
+                GifImageView giv = findViewById(getResources().getIdentifier("gif_" + i, "id", getPackageName()));
+                giv.clearAnimation();
+                giv.setImageDrawable(initShow);
+                giv.setMinimumHeight(24);
+                giv.setMinimumWidth(24);
+            }
+        }
     }
 
     private JsonObject getWebCfg(String webName) {
@@ -249,31 +267,14 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
             if (txt.equals("")) {
                 alert("文章id不能为空");
             } else {
-                okHttpClient.dispatcher().cancelAll();
                 artId = Integer.parseInt(txt);
-                title = "动态图";
-                webPage = 1;
-                endFlg = false;
-                gifList.clear();
-                mViewPager.setCurrentItem(0, true);
+                initPage();
                 mSectionsPagerAdapter.currentFragment.refresh();
-                initGif();
             }
         });
         dialog2.setButton(AlertDialog.BUTTON_NEGATIVE, "取消", (dialog1, which) -> {});
         dialog2.show();
         dialog2.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-    }
-
-    private void initGif() {
-        Drawable initShow = getDrawable(android.R.drawable.ic_menu_gallery);
-        for (int i = 1;i<4;i++) {
-            GifImageView iv1 = findViewById(getResources().getIdentifier("gif_" + i, "id", getPackageName()));
-            iv1.clearAnimation();
-            iv1.setImageDrawable(initShow);
-            iv1.setMinimumHeight(24);
-            iv1.setMinimumWidth(24);
-        }
     }
 
     @SuppressLint("InflateParams")
@@ -291,15 +292,10 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
         ma.setOnItemClickListener(position -> {
             webName = (String) webList.get(position).get("name");
             Log.w("rvClick", webName);
-            okHttpClient.dispatcher().cancelAll();
             webCfg = getWebCfg(webName);
             getNewFlg = true;
-            webPage = 1;
-            endFlg = false;
-            gifList.clear();
-            mViewPager.setCurrentItem(0, true);
+            initPage();
             mSectionsPagerAdapter.currentFragment.refresh();
-            initGif();
             popupWindow.dismiss();
         });
         rv.setAdapter(ma);
@@ -346,15 +342,24 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
         ma.setOnItemClickListener(position -> {
             webName = (String) historyList.get(position).get("web_name");
             Log.w("rvClick", webName);
-            okHttpClient.dispatcher().cancelAll();
             webCfg = getWebCfg(webName);
             artId = (int) historyList.get(position).get("art_id");
-            webPage = 1;
-            endFlg = false;
-            gifList.clear();
-            mViewPager.setCurrentItem(0, true);
+            initPage();
             mSectionsPagerAdapter.currentFragment.refresh();
             popupWindow.dismiss();
+        });
+        ma.setOnItemLongClickListener(position -> {
+            PopupMenu pMenu = new PopupMenu(this, rv.getChildAt(position));
+            pMenu.getMenuInflater().inflate(R.menu.gif_activity_popupmenu, pMenu.getMenu());
+            pMenu.setOnMenuItemClickListener(item1 -> {
+                switch (item1.getItemId()) {
+                    case 1:
+                        break;
+                }
+                return false;
+            });
+            pMenu.show();
+            return true;
         });
         rv.setAdapter(ma);
         popupWindow.showAtLocation(findViewById(R.id.fab), Gravity.BOTTOM, 0, 0);
@@ -758,10 +763,9 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                 }
             }
             Matcher mt = pt.matcher(content);
-//                System.out.println(content);
             if (mt.find()) {
                 title = mt.group(titleIdx);
-                updateDbField("title", title);//fixme 待删
+                //updateDbField("title", title);//fixme 待删
                 Log.w("getNewTitle", title);
             }
         }
@@ -772,7 +776,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
             if (cus.getCount() > 0) {
                 cus.moveToFirst();
                 title = cus.getString(cus.getColumnIndex("title"));
-                getNewTitle(null);//fixme 删
+                //getNewTitle(null);//fixme 删
                 int totalPage = cus.getInt(cus.getColumnIndex("pages"));
                 Cursor cus2 = db.query(DBHelper.TB_GIF_WEB_ITEM, new String[]{"page,title,url"}, "art_id = ? and web_name = ?", new String[]{artId + "", webName}, null, null, "id asc");
                 int count = cus2.getCount();

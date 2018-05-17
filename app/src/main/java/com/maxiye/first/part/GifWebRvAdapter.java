@@ -24,6 +24,7 @@ import java.util.Map;
 public class GifWebRvAdapter extends RecyclerView.Adapter {
     private List<Map<String, Object>> mData;
     private OnItemClickListener clickListener;
+    private OnItemLongClickListener longClickListener;
 
     public void setData(List<Map<String, Object>> data) {
         mData = data;
@@ -31,6 +32,10 @@ public class GifWebRvAdapter extends RecyclerView.Adapter {
 
     public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
         this.clickListener = onItemClickListener;
+    }
+
+    public void setOnItemLongClickListener(OnItemLongClickListener onItemLongClickListener) {
+        this.longClickListener = onItemLongClickListener;
     }
 
     @SuppressLint("InflateParams")
@@ -46,9 +51,10 @@ public class GifWebRvAdapter extends RecyclerView.Adapter {
         HashMap<String, Object> item = (HashMap<String, Object>) mData.get(position);
         viewHolder.mTextView.setText((String) item.get("name"));
         viewHolder.mImageView.setImageBitmap((Bitmap) item.get("icon"));
-        if (clickListener != null) {
+        if (clickListener != null)
             viewHolder.itemView.setOnClickListener(view -> clickListener.onClick(position));
-        }
+        if (longClickListener != null)
+            viewHolder.itemView.setOnLongClickListener(view -> longClickListener.onLongClick(position));
     }
 
     @Override
@@ -69,6 +75,9 @@ public class GifWebRvAdapter extends RecyclerView.Adapter {
 
     public interface OnItemClickListener {
         void onClick(int position);
+    }
+    public interface OnItemLongClickListener {
+        boolean onLongClick(int position);
     }
 
 }
