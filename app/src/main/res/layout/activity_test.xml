@@ -17,7 +17,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:onClick="createDB"
-            android:text="@string/button_create_db"/>
+            android:text="@string/create_db"/>
 
         <Button
             style="?android:attr/buttonBarButtonStyle"
@@ -25,7 +25,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:onClick="sentIntent"
-            android:text="@string/button_send_intent"/>
+            android:text="@string/send_intent"/>
 
         <Button
             style="?android:attr/buttonBarButtonStyle"
@@ -33,7 +33,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:onClick="testNFC"
-            android:text="@string/button_test_nfc"/>
+            android:text="@string/test_nfc"/>
 
         <Button
             style="?android:attr/buttonBarButtonStyle"
@@ -41,7 +41,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:onClick="testAudio"
-            android:text="@string/button_test_audio"/>
+            android:text="@string/test_audio"/>
     </LinearLayout>
 
     <LinearLayout
@@ -56,7 +56,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:onClick="capture"
-            android:text="@string/button_test_camera"/>
+            android:text="@string/test_camera"/>
 
         <Button
             style="?android:attr/buttonBarButtonStyle"
@@ -64,6 +64,6 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:onClick="getGif"
-            android:text="@string/button_get_gif"/>
+            android:text="@string/get_gif"/>
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>

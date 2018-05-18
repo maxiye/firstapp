@@ -1,4 +1,4 @@
-package com.maxiye.first;
+package com.maxiye.first.util;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -13,12 +13,12 @@ import android.widget.Toast;
  * Created by Administrator on 2017-05-25.
  */
 
-class DBHelper extends SQLiteOpenHelper {
+public class DBHelper extends SQLiteOpenHelper {
     private final static String DB_NAME = "first.db";
     private final static int DB_VERSION = 2;
-    final static String TB_BOOK = "book";
-    final static String TB_GIF_WEB = "gif_web";
-    final static String TB_GIF_WEB_ITEM = "gif_web_item";
+    public final static String TB_BOOK = "book";
+    public final static String TB_GIF_WEB = "gif_web";
+    public final static String TB_GIF_WEB_ITEM = "gif_web_item";
     private final static String CREATE_BOOK = "create table " + TB_BOOK + "("
             + "id integer primary key autoincrement,"
             + "author text, "
@@ -47,9 +47,9 @@ class DBHelper extends SQLiteOpenHelper {
     private static final String DROP_BOOK = "DROP TABLE IF EXISTS " + TB_BOOK;
     private static final String DROP_GIF_WEB = "DROP TABLE IF EXISTS " + TB_GIF_WEB;
     private static final String DROP_GIF_WEB_ITEM = "DROP TABLE IF EXISTS " + TB_GIF_WEB_ITEM;
-    private Context mCont;
+    private final Context mCont;
 
-    DBHelper(Context context) {
+    public DBHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
         mCont = context;
     }

@@ -22,7 +22,6 @@ public class CacheUtil {
     /**
      * @param context Activity
      * @return string String
-     * @throws Exception
      *             获取当前缓存
      */
     public static String getTotalCacheSize(Context context) {

@@ -57,7 +57,7 @@
         <activity
             android:name=".SettingActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
-            android:label="@string/title_setting_activity"
+            android:label="@string/setting"
             android:logo="@drawable/ic_settings_black_24dp"
             android:parentActivityName=".MainActivity">
         </activity>
@@ -98,8 +98,8 @@
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout">
         </activity>
         <activity
-            android:name=".GetGifActivity"
-            android:label="@string/title_activity_get_gif"
+            android:name=".GifActivity"
+            android:label="@string/get_gif"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:theme="@style/CustomActBarThe.NoActionBar">
             <intent-filter>

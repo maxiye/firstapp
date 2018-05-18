@@ -30,7 +30,7 @@ public class SettingActivity extends AppCompatActivity {
     }
 
     private void initSetting() {
-        Switch show_system_apps = findViewById(R.id.show_system_apps);
+        Switch show_system_apps = findViewById(R.id.setting_show_system);
         show_system_apps.setOnCheckedChangeListener((buttonView, isChecked) -> {
             SharedPreferences.Editor editor = sp.edit();
             editor.putBoolean(SHOW_SYSTEM, isChecked).apply();

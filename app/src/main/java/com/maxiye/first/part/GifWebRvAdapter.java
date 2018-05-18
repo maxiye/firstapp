@@ -2,7 +2,6 @@ package com.maxiye.first.part;
 
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -63,8 +62,8 @@ public class GifWebRvAdapter extends RecyclerView.Adapter {
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView mTextView;
-        ImageView mImageView;
+        final TextView mTextView;
+        final ImageView mImageView;
 
         ViewHolder(View itemView) {
             super(itemView);

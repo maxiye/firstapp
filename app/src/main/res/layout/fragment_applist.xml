@@ -1,19 +1,19 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
              xmlns:app="http://schemas.android.com/apk/res-auto"
              xmlns:tools="http://schemas.android.com/tools"
-             android:id="@+id/frg_blk"
+             android:id="@+id/applist_frg"
              android:layout_width="match_parent"
              android:layout_height="match_parent"
              android:orientation="vertical"
-             tools:context="com.maxiye.first.BlankFragment">
+             tools:context="com.maxiye.first.ApplistFragment">
 
     <TextView
-        android:id="@+id/frgtxt"
+        android:id="@+id/applist_frgtxt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
 
     <ImageView
-        android:id="@+id/loading_bfg"
+        android:id="@+id/applist_loading_bfg"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
@@ -22,7 +22,7 @@
         app:srcCompat="@drawable/ic_public_orange_60dp"/>
 
     <ListView
-        android:id="@+id/lv_bfg"
+        android:id="@+id/applist_frg_lv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
     </ListView>

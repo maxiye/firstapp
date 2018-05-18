@@ -38,25 +38,25 @@ import java.util.stream.Collectors;
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
- * {@link BlankFragment.OnFrgActionListener} interface
+ * {@link ApplistFragment.OnFrgActionListener} interface
  * to handle interaction events.
  */
-public class BlankFragment extends Fragment {
-    public static final String ARG_1 = "arg_1";
+public class ApplistFragment extends Fragment {
+    private static final String ARG_1 = "arg_1";
     private final int MSG_TYPE_START = 0;
     private final int MSG_TYPE_LV = 1;
     private final int MSG_TYPE_TV = 2;
 
-    protected String keyword;
+    String keyword;
 
     private OnFrgActionListener mListener;
     private Handler handler;
-    protected Thread thread;
+    Thread thread;
     private SharedPreferences sp;
     private PackageManager pm;
-    protected ArrayList<ApplicationInfo> ai_al;
+    private ArrayList<ApplicationInfo> ai_al;
 
-    public BlankFragment() {
+    public ApplistFragment() {
         // Required empty public constructor
     }
 
@@ -87,9 +87,9 @@ public class BlankFragment extends Fragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        final ListView lv = getActivity().findViewById(R.id.lv_bfg);
-        final ImageView im = getActivity().findViewById(R.id.loading_bfg);
-        final TextView tv = getActivity().findViewById(R.id.frgtxt);
+        final ListView lv = getActivity().findViewById(R.id.applist_frg_lv);
+        final ImageView im = getActivity().findViewById(R.id.applist_loading_bfg);
+        final TextView tv = getActivity().findViewById(R.id.applist_frgtxt);
         handler = new Handler(msg -> {
             tv.setText("");
             im.clearAnimation();//清除动画后才能设为不可见
@@ -224,7 +224,7 @@ public class BlankFragment extends Fragment {
     }
 
     /* Checks if external storage is available for read and write */
-    public static boolean isExternalStorageWritable() {
+    private static boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
         return Environment.MEDIA_MOUNTED.equals(state);
     }

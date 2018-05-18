@@ -4,7 +4,7 @@
               android:layout_height="wrap_content">
 
     <ImageView
-        android:id="@+id/app_icon"
+        android:id="@+id/applist_app_icon"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:contentDescription="@string/app_icon"
@@ -19,7 +19,7 @@
         android:paddingTop="4dp">
 
         <TextView
-            android:id="@+id/app_name"
+            android:id="@+id/applist_app_name"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1.0"
@@ -27,7 +27,7 @@
             android:textColor="#333"/>
 
         <TextView
-            android:id="@+id/package_name"
+            android:id="@+id/applist_package_name"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1.0"

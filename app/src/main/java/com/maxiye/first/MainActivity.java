@@ -20,13 +20,13 @@ import android.widget.Toast;
 import java.util.Date;
 
 
-public class MainActivity extends AppCompatActivity implements BlankFragment.OnFrgActionListener, ActivityCompat.OnRequestPermissionsResultCallback, SearchView.OnQueryTextListener {
+public class MainActivity extends AppCompatActivity implements ApplistFragment.OnFrgActionListener, ActivityCompat.OnRequestPermissionsResultCallback, SearchView.OnQueryTextListener {
     public final static String EXTRA_MESSAGE = "com.maxiye.first.MESSAGE";
     public static final String EXTRA_URL = "com.maxiye.first.URL";
     private final static int INTERVAL = 600;
     private long last_press_time = 0;
 
-    private BlankFragment frg;
+    private ApplistFragment frg;
     private SearchView mSearchView;
     private ActionBar ab;
 
@@ -36,13 +36,13 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         setContentView(R.layout.activity_main);
         ab = getSupportActionBar();
         assert ab != null;
-        frg = new BlankFragment();
-        if (findViewById(R.id.fragment_container) != null) {
+        frg = new ApplistFragment();
+        if (findViewById(R.id.applist_fragment) != null) {
             if (savedInstanceState != null) {
                 return;
             }
             frg.setArguments(getIntent().getExtras());
-            getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, frg).commit();
+            getSupportFragmentManager().beginTransaction().add(R.id.applist_fragment, frg).commit();
         }
     }
 
@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
         // 为ActionBar扩展菜单项
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main_activity_actions, menu);
-        mSearchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+        mSearchView = (SearchView) menu.findItem(R.id.main_action_search).getActionView();
         setupSearchView();
         return super.onCreateOptionsMenu(menu);
     }
@@ -77,10 +77,10 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_setting:
-                setting(new View(this));
+            case R.id.main_action_setting:
+                setting();
                 return true;
-            case R.id.action_test:
+            case R.id.main_action_test:
                 Intent intent = new Intent(this, TestActivity.class);
                 startActivity(intent);
                 return true;
@@ -111,7 +111,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     }
 
     //设置
-    public void setting(View view) {
+    private void setting() {
         Intent intent = new Intent(this, SettingActivity.class);
         String msg = "helloworld";
         intent.putExtra(EXTRA_MESSAGE, msg);
@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     @Override
     //ListView项目点击事件，实现OnFrgActionListener接口
     public void onItemClick(View view) {
-        TextView tv = view.findViewById(R.id.package_name);
+        TextView tv = view.findViewById(R.id.applist_package_name);
         String str = tv.getText().toString();
         ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         assert clm != null;
@@ -164,7 +164,7 @@ public class MainActivity extends AppCompatActivity implements BlankFragment.OnF
     }
 
     //查询应用
-    public void search(String search) {
+    private void search(String search) {
         if (!frg.thread.isAlive()) {
             frg.keyword = search;
             new Thread(frg.thread).start();

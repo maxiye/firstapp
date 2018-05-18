@@ -37,6 +37,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
@@ -47,6 +48,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.maxiye.first.part.GifWebRvAdapter;
 import com.maxiye.first.util.CacheUtil;
+import com.maxiye.first.util.DBHelper;
 import com.maxiye.first.util.PermissionUtil;
 import com.maxiye.first.util.Util;
 
@@ -78,7 +80,7 @@ import okhttp3.Response;
 import pl.droidsonroids.gif.GifDrawable;
 import pl.droidsonroids.gif.GifImageView;
 
-public class GetGifActivity extends AppCompatActivity implements OnPFListener {
+public class GifActivity extends AppCompatActivity implements OnPFListener {
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -88,8 +90,8 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
      * may be best to switch to a
      * {@link android.support.v4.app.FragmentStatePagerAdapter}.
      */
-    public static final String GET_NEW_FLG = "GetGifActivity.getNewFlg";
-    public static final String WEB_NAME = "GetGifActivity.webName";
+    public static final String GET_NEW_FLG = "GifActivity.getNewFlg";
+    public static final String WEB_NAME = "GifActivity.webName";
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private static String webName = "gamersky";
     private static JsonObject webCfg;
@@ -98,8 +100,9 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
     private static String title = "动态图";
     private static int webPage = 1;
     private static boolean endFlg = false;
-    protected static ArrayList<String[]> gifList = new ArrayList<>();
-    static SQLiteDatabase db;
+    private static final ArrayList<String[]> gifList = new ArrayList<>();
+    private final int HISTORY_PAGE_SIZE = 10;
+    private static SQLiteDatabase db;
     private static OkHttpClient okHttpClient;
 
     /**
@@ -111,17 +114,17 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_get_gif);
-        Toolbar toolbar = findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.gif_activity_toolbar);
         setSupportActionBar(toolbar);
         // Create the adapter that will return a fragment
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
         // Set up the ViewPager with the sections adapter.
-        mViewPager = findViewById(R.id.container);
+        mViewPager = findViewById(R.id.gif_activity_viewpager);
         mViewPager.setAdapter(mSectionsPagerAdapter);
-        FloatingActionButton fab = findViewById(R.id.fab);
+        FloatingActionButton fab = findViewById(R.id.gif_activity_fab);
         fab.setOnClickListener(view -> Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show());
-        db = new DBHelper(this).getWritableDatabase();//此时创建数据库,生成.db文件
+        db = new DBHelper(this).getWritableDatabase();//没有则此时创建数据库,生成.db文件
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             getNewFlg = bundle.getBoolean(GET_NEW_FLG, true);
@@ -198,7 +201,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_get_gif, menu);
+        getMenuInflater().inflate(R.menu.gif_activity_actions, menu);
         return true;
     }
 
@@ -299,7 +302,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
             popupWindow.dismiss();
         });
         rv.setAdapter(ma);
-        popupWindow.showAsDropDown(findViewById(R.id.appbar), 0, 0, Gravity.END);
+        popupWindow.showAsDropDown(findViewById(R.id.gif_activity_appbar), 0, 0, Gravity.END);
     }
 
     public void browserOpen(MenuItem item) {
@@ -327,17 +330,46 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                 .show();
     }
 
-    @SuppressLint("InflateParams")
+    @SuppressLint({"InflateParams", "SetTextI18n"})
     public void listHistory(MenuItem item) {
-        PopupWindow popupWindow = new PopupWindow(ViewGroup.LayoutParams.MATCH_PARENT, 1000);
-        popupWindow.setContentView(LayoutInflater.from(this).inflate(R.layout.popupwindow_view, null));
+        PopupWindow popupWindow = new PopupWindow(ViewGroup.LayoutParams.MATCH_PARENT, 1400);
+        View root = LayoutInflater.from(this).inflate(R.layout.popupwindow_view, null);
+        popupWindow.setContentView(root);
         popupWindow.setOutsideTouchable(true);
         RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
         LinearLayoutManager manager = new LinearLayoutManager(this);
         manager.setOrientation(LinearLayoutManager.VERTICAL);
         rv.setLayoutManager(manager);
         GifWebRvAdapter ma = new GifWebRvAdapter();
-        List<Map<String,Object>> historyList = getHistoryList();
+        int historyCount = getHistoryCount();
+        List<Map<String,Object>> historyList = getHistoryList(1);
+        //设置页面相关
+        if (historyCount > HISTORY_PAGE_SIZE) {
+            EditText page = root.findViewById(R.id.popup_page);
+            Button prev = root.findViewById(R.id.popup_prev_page);
+            Button next = root.findViewById(R.id.popup_next_page);
+            prev.setOnClickListener(v -> {
+                int nowPage = Integer.parseInt(page.getText().toString());
+                if (nowPage > 1) {
+                    int pre = nowPage - 1;
+                    ma.setData(getHistoryList(pre));
+                    page.setText(pre + "");
+                    next.setVisibility(View.VISIBLE);
+                    prev.setVisibility(pre == 1 ? View.GONE : View.VISIBLE);
+                }
+            });
+            next.setOnClickListener(v -> {
+                int nowPage = Integer.parseInt(page.getText().toString());
+                int nxt = nowPage + 1;
+                ma.setData(getHistoryList(nxt));
+                page.setText(nxt + "");
+                prev.setVisibility(View.VISIBLE);
+                next.setVisibility(nxt * HISTORY_PAGE_SIZE < historyCount ? View.VISIBLE : View.GONE);
+            });
+            page.setText("1");
+            page.setVisibility(View.VISIBLE);
+            next.setVisibility(View.VISIBLE);
+        }
         ma.setData(historyList);
         ma.setOnItemClickListener(position -> {
             webName = (String) historyList.get(position).get("web_name");
@@ -350,10 +382,17 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
         });
         ma.setOnItemLongClickListener(position -> {
             PopupMenu pMenu = new PopupMenu(this, rv.getChildAt(position));
-            pMenu.getMenuInflater().inflate(R.menu.gif_activity_popupmenu, pMenu.getMenu());
+            pMenu.getMenuInflater().inflate(R.menu.gif_history_popupmenu, pMenu.getMenu());
             pMenu.setOnMenuItemClickListener(item1 -> {
                 switch (item1.getItemId()) {
-                    case 1:
+                    case R.id.delete_gif_record:
+                        //删除记录
+                        int delArtId = (int) historyList.get(position).get("art_id");
+                        String delWebName = (String) historyList.get(position).get("web_name");
+                        deleteHistory(delArtId, delWebName);
+                        EditText page = root.findViewById(R.id.popup_page);
+                        ma.setData(getHistoryList(Integer.parseInt(page.getText().toString())));
+                        ma.notifyItemRemoved(position);
                         break;
                 }
                 return false;
@@ -362,12 +401,29 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
             return true;
         });
         rv.setAdapter(ma);
-        popupWindow.showAtLocation(findViewById(R.id.fab), Gravity.BOTTOM, 0, 0);
+        popupWindow.showAtLocation(findViewById(R.id.gif_activity_fab), Gravity.BOTTOM, 0, 0);
     }
 
-    private List<Map<String,Object>> getHistoryList() {
+    private int getHistoryCount() {
+        Cursor cus = db.query(DBHelper.TB_GIF_WEB, new String[]{"count(*) as count"}, "art_id != 0", new String[]{}, null, null, null);
+        cus.moveToFirst();
+        int count = cus.getInt(cus.getColumnIndex("count"));
+        cus.close();
+        return count;
+    }
+
+    private void deleteHistory(int delArtId, String delWebName) {
+        Log.w("deleteHistory", "art_id：" + delArtId + "，web_name：" + delWebName);
+        db.delete(DBHelper.TB_GIF_WEB, "art_id = ? and web_name = ?", new String[]{delArtId + "", delWebName});
+        db.delete(DBHelper.TB_GIF_WEB_ITEM, "art_id = ? and web_name = ?", new String[]{delArtId + "", delWebName});
+    }
+
+    private List<Map<String,Object>> getHistoryList(int page) {
+        int offset = (page - 1) * HISTORY_PAGE_SIZE;
         JsonObject all_web = getWebCfg(null);
-        Cursor cus = db.query(DBHelper.TB_GIF_WEB, new String[]{"*"}, "art_id != 0", new String[]{}, null, null, "id desc");
+        String sql = "select * from " + DBHelper.TB_GIF_WEB + " where art_id != 0 order by id desc limit " + HISTORY_PAGE_SIZE + " offset " + offset;
+//        Cursor cus = db.query(DBHelper.TB_GIF_WEB, new String[]{"*"}, "art_id != 0", new String[]{}, null, null, "id desc", HISTORY_PAGE_SIZE + " OFFSET " + offset);
+        Cursor cus = db.rawQuery(sql, null);
         Log.w("getHistoryList：", cus.getCount() + "");
         List<Map<String,Object>> historyList = new ArrayList<>();
         int count = cus.getCount();
@@ -434,7 +490,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
          * number.
          */
         @SuppressLint("SetTextI18n")
-        public static PlaceholderFragment newInstance(int sectionNumber) {
+        static PlaceholderFragment newInstance(int sectionNumber) {
             PlaceholderFragment fragment = new PlaceholderFragment();
             Bundle args = new Bundle();
             args.putInt(ARG_SECTION_NUMBER, sectionNumber);
@@ -468,9 +524,9 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
                         GifImageView iv = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + msg.arg1, "id", fragment.activity.getPackageName()));
                         iv.clearAnimation();
                         Drawable gifFromStream = (GifDrawable) msg.obj;
-                        iv.setImageDrawable(gifFromStream);
+                        /*iv.setImageDrawable(gifFromStream);//fixme 删除
                         iv.setMinimumHeight((int)Math.round(gifFromStream.getIntrinsicHeight() * 2.5));
-                        iv.setMinimumWidth((int)Math.round(gifFromStream.getIntrinsicWidth() * 2.5));
+                        iv.setMinimumWidth((int)Math.round(gifFromStream.getIntrinsicWidth() * 2.5));*/
                         break;
                     case MSG_TYPE_OVER:
                         fragment.mListener.checkPageEnd();
@@ -551,7 +607,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
         private void longClickCb(int position, View view) {
             downloadPosition = position;
             PopupMenu pMenu = new PopupMenu(activity, view);
-            pMenu.getMenuInflater().inflate(R.menu.gif_activity_popupmenu, pMenu.getMenu());
+            pMenu.getMenuInflater().inflate(R.menu.gif_image_popupmenu, pMenu.getMenu());
             pMenu.setOnMenuItemClickListener(this);
             pMenu.show();
         }
@@ -607,7 +663,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
             });
         }
 
-        public void loadGif() {
+        void loadGif() {
             int nowPos = gifPosition;
             int startOffset = getGifOffset(nowPos);
             Log.w("info", "loadGif:" + startOffset);
@@ -832,7 +888,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
 
         }
 
-        public String[] getGifInfo(int offset) {
+        String[] getGifInfo(int offset) {
             Log.w("start", "getGifInfo:" + offset + "-" + webPage + "-" + gifList.size() + "-" + endFlg);
             if (gifList.size() <= offset) {
                 if (endFlg)
@@ -844,7 +900,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
             }
         }
 
-        public void refresh() {
+        void refresh() {
             okHttpClient.dispatcher().cancelAll();
             this.gifPosition = 1;
             new Thread(this::loadGif).start();
@@ -865,7 +921,7 @@ public class GetGifActivity extends AppCompatActivity implements OnPFListener {
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
      */
-    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+    class SectionsPagerAdapter extends FragmentPagerAdapter {
         PlaceholderFragment currentFragment;
 
         SectionsPagerAdapter(FragmentManager fm) {

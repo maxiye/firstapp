@@ -32,8 +32,8 @@ public class WebViewActivity extends AppCompatActivity {
         ab.hide();
         Intent intent = getIntent();
         String url = intent.getStringExtra(MainActivity.EXTRA_URL);
-        webview = findViewById(R.id.webView1);
-        web_progress = findViewById(R.id.web_progress);
+        webview = findViewById(R.id.webView);
+        web_progress = findViewById(R.id.webview_progress);
         WebSettings webSettings = webview.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webview.setWebViewClient(new WebViewClient() {

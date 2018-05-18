@@ -19,13 +19,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 数据库助手
+ * app列表适配器
  * Created by due on 2018/5/15.
  */
 public class AppLvAdapter extends ArrayAdapter {
-    private List<Map<String, Object>> data;
-    private int res;
-    private Context context;
+    private final List<Map<String, Object>> data;
+    private final int res;
+    private final Context context;
 
     @SuppressWarnings("unchecked")
     public AppLvAdapter(@NonNull Context context, @LayoutRes int resource, @NonNull List<Map<String, Object>> objects) {
@@ -42,9 +42,9 @@ public class AppLvAdapter extends ArrayAdapter {
         if (convertView == null) {
             convertView = LayoutInflater.from(context).inflate(res, null);
             holder = new ViewHolder();
-            holder.icon = convertView.findViewById(R.id.app_icon);
-            holder.name = convertView.findViewById(R.id.app_name);
-            holder.pkg = convertView.findViewById(R.id.package_name);
+            holder.icon = convertView.findViewById(R.id.applist_app_icon);
+            holder.name = convertView.findViewById(R.id.applist_app_name);
+            holder.pkg = convertView.findViewById(R.id.applist_package_name);
         } else {
             holder = (ViewHolder) convertView.getTag();
         }

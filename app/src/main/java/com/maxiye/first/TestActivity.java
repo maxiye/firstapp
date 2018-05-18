@@ -40,6 +40,7 @@ import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
+import com.maxiye.first.util.DBHelper;
 import com.maxiye.first.util.PermissionUtil;
 
 import java.io.File;
@@ -55,7 +56,7 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     private final int INTENT_IMG_PICK_REQCODE = 102;
     private final int INTENT_IMG_CAPTURE_REQCODE = 103;
 
-    private Uri[] mFileUris = new Uri[10];
+    private final Uri[] mFileUris = new Uri[10];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,10 +82,10 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_share:
+            case R.id.test_action_share:
                 share();
                 return true;
-            case R.id.action_net_set:
+            case R.id.test_action_net_set:
                 addShortcut();
                 return true;
             default:
@@ -236,7 +237,7 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         cus.close();
     }
 
-    public void share() {
+    private void share() {
         //分享文本
         /*Intent itt = new Intent(Intent.ACTION_SEND);
         itt.setType("text/plain");
@@ -251,7 +252,7 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         itt.putExtra(Intent.EXTRA_STREAM, baos.toByteArray());
         startActivity(itt);*/
         //分享文件
-        if (BlankFragment.isExternalStorageReadable()) {
+        if (ApplistFragment.isExternalStorageReadable()) {
             File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "1.jpg");
             try {
                 Uri fileUri = FileProvider.getUriForFile(this, "com.maxiye.first.fileprovider", file);
@@ -417,8 +418,8 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
      * @param view View
      */
     public void getGif(View view) {
-        Intent getGifInt = new Intent(this, GetGifActivity.class);
-        getGifInt.putExtra(GetGifActivity.WEB_NAME, "gamersky");
+        Intent getGifInt = new Intent(this, GifActivity.class);
+        getGifInt.putExtra(GifActivity.WEB_NAME, "gamersky");
         startActivity(getGifInt);
     }
 

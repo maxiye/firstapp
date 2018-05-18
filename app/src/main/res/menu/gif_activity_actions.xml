@@ -1,48 +1,42 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto"
       xmlns:tools="http://schemas.android.com/tools"
-      tools:context="com.maxiye.first.GetGifActivity">
+      tools:context="com.maxiye.first.GifActivity">
     <item
-        android:id="@+id/action_refresh"
         android:orderInCategory="100"
         android:icon="@android:drawable/stat_notify_sync_noanim"
-        android:title="@string/action_refresh"
+        android:title="@string/refresh"
         android:onClick="refresh"
         app:showAsAction="always"
         tools:ignore="AlwaysShowAction"/>
     <item
-        android:id="@+id/action_skip_to"
         android:orderInCategory="100"
         android:icon="@android:drawable/ic_media_ff"
-        android:title="@string/action_skip_to"
+        android:title="@string/skip_to"
         android:onClick="skipTo"
         app:showAsAction="always"/>
     <item
-        android:id="@+id/action_switch_web"
         android:orderInCategory="100"
         android:icon="@android:drawable/btn_star_big_on"
-        android:title="@string/action_switch_web"
+        android:title="@string/switch_web"
         android:onClick="switchWeb"
         app:showAsAction="always"/>
     <item
-        android:id="@+id/action_change_url"
         android:orderInCategory="100"
         android:icon="@android:drawable/ic_media_next"
-        android:title="@string/action_change_url"
+        android:title="@string/change_url"
         android:onClick="changeUrl"
         app:showAsAction="always"/>
     <item
-        android:id="@+id/action_history"
         android:orderInCategory="100"
         android:icon="@android:drawable/ic_menu_recent_history"
-        android:title="@string/action_history"
+        android:title="@string/history"
         android:onClick="listHistory"
         app:showAsAction="always"/>
     <item
-        android:id="@+id/action_browser_open"
         android:orderInCategory="100"
         android:icon="@android:drawable/ic_menu_set_as"
-        android:title="@string/action_browser_open"
+        android:title="@string/browser_open"
         android:onClick="browserOpen"
         app:showAsAction="ifRoom"/>
 </menu>
