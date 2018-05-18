@@ -30,7 +30,7 @@
     <string name="refresh">刷新</string>
     <string name="download">下载</string>
     <string name="skip_to">输入</string>
-    <string name="change_url">修改文章id</string>
+    <string name="change_art_id">修改文章id</string>
     <string name="switch_web">切换网站</string>
     <string name="browser_open">使用浏览器打开</string>
     <string name="history">历史记录</string>

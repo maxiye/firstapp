@@ -17,15 +17,9 @@
         app:showAsAction="always"/>
     <item
         android:orderInCategory="100"
-        android:icon="@android:drawable/btn_star_big_on"
+        android:icon="@android:drawable/ic_menu_compass"
         android:title="@string/switch_web"
         android:onClick="switchWeb"
-        app:showAsAction="always"/>
-    <item
-        android:orderInCategory="100"
-        android:icon="@android:drawable/ic_media_next"
-        android:title="@string/change_url"
-        android:onClick="changeUrl"
         app:showAsAction="always"/>
     <item
         android:orderInCategory="100"
@@ -33,6 +27,12 @@
         android:title="@string/history"
         android:onClick="listHistory"
         app:showAsAction="always"/>
+    <item
+        android:orderInCategory="100"
+        android:icon="@android:drawable/ic_media_next"
+        android:title="@string/change_art_id"
+        android:onClick="changeUrl"
+        app:showAsAction="ifRoom"/>
     <item
         android:orderInCategory="100"
         android:icon="@android:drawable/ic_menu_set_as"

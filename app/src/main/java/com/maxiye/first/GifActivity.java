@@ -282,7 +282,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
 
     @SuppressLint("InflateParams")
     public void switchWeb(MenuItem item) {
-        PopupWindow popupWindow = new PopupWindow(400, 600);
+        PopupWindow popupWindow = new PopupWindow(400, 400);
         popupWindow.setContentView(LayoutInflater.from(this).inflate(R.layout.popupwindow_view, null));
         popupWindow.setOutsideTouchable(true);
         RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
@@ -332,20 +332,23 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
 
     @SuppressLint({"InflateParams", "SetTextI18n"})
     public void listHistory(MenuItem item) {
-        PopupWindow popupWindow = new PopupWindow(ViewGroup.LayoutParams.MATCH_PARENT, 1400);
+        PopupWindow popupWindow = new PopupWindow(ViewGroup.LayoutParams.MATCH_PARENT, 1200);
         View root = LayoutInflater.from(this).inflate(R.layout.popupwindow_view, null);
+        popupWindow.setFocusable(true);
         popupWindow.setContentView(root);
         popupWindow.setOutsideTouchable(true);
         RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
         LinearLayoutManager manager = new LinearLayoutManager(this);
         manager.setOrientation(LinearLayoutManager.VERTICAL);
         rv.setLayoutManager(manager);
+//        rv.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         GifWebRvAdapter ma = new GifWebRvAdapter();
         int historyCount = getHistoryCount();
         List<Map<String,Object>> historyList = getHistoryList(1);
         //设置页面相关
+        EditText page = root.findViewById(R.id.popup_page);
+        page.setText("1");
         if (historyCount > HISTORY_PAGE_SIZE) {
-            EditText page = root.findViewById(R.id.popup_page);
             Button prev = root.findViewById(R.id.popup_prev_page);
             Button next = root.findViewById(R.id.popup_next_page);
             prev.setOnClickListener(v -> {
@@ -353,6 +356,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 if (nowPage > 1) {
                     int pre = nowPage - 1;
                     ma.setData(getHistoryList(pre));
+                    ma.notifyDataSetChanged();
                     page.setText(pre + "");
                     next.setVisibility(View.VISIBLE);
                     prev.setVisibility(pre == 1 ? View.GONE : View.VISIBLE);
@@ -362,11 +366,28 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 int nowPage = Integer.parseInt(page.getText().toString());
                 int nxt = nowPage + 1;
                 ma.setData(getHistoryList(nxt));
+                ma.notifyDataSetChanged();
                 page.setText(nxt + "");
                 prev.setVisibility(View.VISIBLE);
                 next.setVisibility(nxt * HISTORY_PAGE_SIZE < historyCount ? View.VISIBLE : View.GONE);
             });
-            page.setText("1");
+            page.setOnEditorActionListener((textView, i, keyEvent) -> {
+                int nowPage = Integer.parseInt(page.getText().toString());
+                Log.w("HistoryGoPage", "page:" + nowPage);
+                if (nowPage > 0) {
+                    if ((nowPage - 1) * HISTORY_PAGE_SIZE >= historyCount) {
+                        nowPage = historyCount % HISTORY_PAGE_SIZE == 0 ? historyCount / HISTORY_PAGE_SIZE : historyCount / HISTORY_PAGE_SIZE + 1;
+                    }
+                } else {
+                    nowPage = 1;
+                }
+                page.setText(nowPage + "");
+                ma.setData(getHistoryList(nowPage));
+                ma.notifyDataSetChanged();
+                prev.setVisibility(nowPage > 1 ? View.VISIBLE : View.GONE);
+                next.setVisibility(nowPage * HISTORY_PAGE_SIZE < historyCount ? View.VISIBLE : View.GONE);
+                return false;
+            });
             page.setVisibility(View.VISIBLE);
             next.setVisibility(View.VISIBLE);
         }
@@ -390,7 +411,6 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                         int delArtId = (int) historyList.get(position).get("art_id");
                         String delWebName = (String) historyList.get(position).get("web_name");
                         deleteHistory(delArtId, delWebName);
-                        EditText page = root.findViewById(R.id.popup_page);
                         ma.setData(getHistoryList(Integer.parseInt(page.getText().toString())));
                         ma.notifyItemRemoved(position);
                         break;
@@ -524,9 +544,9 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                         GifImageView iv = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + msg.arg1, "id", fragment.activity.getPackageName()));
                         iv.clearAnimation();
                         Drawable gifFromStream = (GifDrawable) msg.obj;
-                        /*iv.setImageDrawable(gifFromStream);//fixme 删除
+                        iv.setImageDrawable(gifFromStream);//fixme 删除
                         iv.setMinimumHeight((int)Math.round(gifFromStream.getIntrinsicHeight() * 2.5));
-                        iv.setMinimumWidth((int)Math.round(gifFromStream.getIntrinsicWidth() * 2.5));*/
+                        iv.setMinimumWidth((int)Math.round(gifFromStream.getIntrinsicWidth() * 2.5));
                         break;
                     case MSG_TYPE_OVER:
                         fragment.mListener.checkPageEnd();

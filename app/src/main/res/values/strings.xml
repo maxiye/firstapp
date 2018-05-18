@@ -29,7 +29,7 @@
     <string name="section_format">Hello World from Section: %1$d</string>
     <string name="download">Download Gif</string>
     <string name="skip_to">Go to</string>
-    <string name="change_url">Change Url</string>
+    <string name="change_art_id">Change Art Id</string>
     <string name="switch_web">Switch Web</string>
     <string name="browser_open">Open by Browser</string>
     <string name="history">History</string>

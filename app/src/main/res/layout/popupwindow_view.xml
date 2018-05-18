@@ -6,6 +6,8 @@
     <LinearLayout
         android:id="@+id/popupwindow_view_ll"
         android:orientation="horizontal"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <Button
@@ -24,6 +26,7 @@
             android:layout_height="match_parent"
             android:gravity="center"
             android:visibility="gone"
+            android:imeOptions="actionGo"
             android:inputType="number"/>
         <Button
             android:id="@+id/popup_next_page"
