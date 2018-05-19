@@ -14,7 +14,7 @@
             android:id="@+id/popup_prev_page"
             style="?attr/buttonBarButtonStyle"
             android:text="@string/prev_page"
-            android:layout_weight="3"
+            android:layout_weight="4"
             android:visibility="gone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
@@ -24,15 +24,23 @@
             android:layout_weight="1"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
+            android:maxLines="1"
             android:gravity="center"
             android:visibility="gone"
             android:imeOptions="actionGo"
             android:inputType="number"/>
+        <TextView
+            android:id="@+id/popup_total_page"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"/>
         <Button
             android:id="@+id/popup_next_page"
             style="?attr/buttonBarButtonStyle"
             android:text="@string/next_page"
-            android:layout_weight="3"
+            android:layout_weight="4"
             android:visibility="gone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>

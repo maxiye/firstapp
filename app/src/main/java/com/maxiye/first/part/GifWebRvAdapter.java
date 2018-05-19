@@ -29,6 +29,14 @@ public class GifWebRvAdapter extends RecyclerView.Adapter {
         mData = data;
     }
 
+    public List<Map<String, Object>> getData() {
+        return mData;
+    }
+
+    public Map<String, Object> getItemData(int position) {
+        return mData.get(position);
+    }
+
     public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
         this.clickListener = onItemClickListener;
     }

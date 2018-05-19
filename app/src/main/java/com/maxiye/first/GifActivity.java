@@ -37,6 +37,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.PopupMenu;
@@ -349,8 +350,10 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         EditText page = root.findViewById(R.id.popup_page);
         page.setText("1");
         if (historyCount > HISTORY_PAGE_SIZE) {
+            TextView totalPage = root.findViewById(R.id.popup_total_page);
             Button prev = root.findViewById(R.id.popup_prev_page);
             Button next = root.findViewById(R.id.popup_next_page);
+            int total = historyCount % HISTORY_PAGE_SIZE == 0 ? historyCount / HISTORY_PAGE_SIZE : historyCount / HISTORY_PAGE_SIZE + 1;
             prev.setOnClickListener(v -> {
                 int nowPage = Integer.parseInt(page.getText().toString());
                 if (nowPage > 1) {
@@ -369,15 +372,18 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 ma.notifyDataSetChanged();
                 page.setText(nxt + "");
                 prev.setVisibility(View.VISIBLE);
-                next.setVisibility(nxt * HISTORY_PAGE_SIZE < historyCount ? View.VISIBLE : View.GONE);
+                next.setVisibility(nxt == total ? View.GONE : View.VISIBLE);
             });
             page.setOnEditorActionListener((textView, i, keyEvent) -> {
-                int nowPage = Integer.parseInt(page.getText().toString());
+                int nowPage = 1;
+                try {
+                    nowPage = Integer.parseInt(page.getText().toString());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 Log.w("HistoryGoPage", "page:" + nowPage);
                 if (nowPage > 0) {
-                    if ((nowPage - 1) * HISTORY_PAGE_SIZE >= historyCount) {
-                        nowPage = historyCount % HISTORY_PAGE_SIZE == 0 ? historyCount / HISTORY_PAGE_SIZE : historyCount / HISTORY_PAGE_SIZE + 1;
-                    }
+                    nowPage = nowPage > total ? total : nowPage;
                 } else {
                     nowPage = 1;
                 }
@@ -386,17 +392,22 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 ma.notifyDataSetChanged();
                 prev.setVisibility(nowPage > 1 ? View.VISIBLE : View.GONE);
                 next.setVisibility(nowPage * HISTORY_PAGE_SIZE < historyCount ? View.VISIBLE : View.GONE);
-                return false;
+                InputMethodManager imm = ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE));
+                if (imm != null) imm.toggleSoftInput(InputMethodManager.RESULT_UNCHANGED_SHOWN, InputMethodManager.HIDE_NOT_ALWAYS);
+                page.clearFocus();
+                return true;
             });
             page.setVisibility(View.VISIBLE);
+            totalPage.setVisibility(View.VISIBLE);
+            totalPage.setText(" / " + total);
             next.setVisibility(View.VISIBLE);
         }
         ma.setData(historyList);
         ma.setOnItemClickListener(position -> {
-            webName = (String) historyList.get(position).get("web_name");
+            webName = (String) ma.getItemData(position).get("web_name");
             Log.w("rvClick", webName);
             webCfg = getWebCfg(webName);
-            artId = (int) historyList.get(position).get("art_id");
+            artId = (int) ma.getItemData(position).get("art_id");
             initPage();
             mSectionsPagerAdapter.currentFragment.refresh();
             popupWindow.dismiss();
@@ -408,8 +419,8 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 switch (item1.getItemId()) {
                     case R.id.delete_gif_record:
                         //删除记录
-                        int delArtId = (int) historyList.get(position).get("art_id");
-                        String delWebName = (String) historyList.get(position).get("web_name");
+                        int delArtId = (int) ma.getItemData(position).get("art_id");
+                        String delWebName = (String) ma.getItemData(position).get("web_name");
                         deleteHistory(delArtId, delWebName);
                         ma.setData(getHistoryList(Integer.parseInt(page.getText().toString())));
                         ma.notifyItemRemoved(position);
@@ -442,7 +453,6 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         int offset = (page - 1) * HISTORY_PAGE_SIZE;
         JsonObject all_web = getWebCfg(null);
         String sql = "select * from " + DBHelper.TB_GIF_WEB + " where art_id != 0 order by id desc limit " + HISTORY_PAGE_SIZE + " offset " + offset;
-//        Cursor cus = db.query(DBHelper.TB_GIF_WEB, new String[]{"*"}, "art_id != 0", new String[]{}, null, null, "id desc", HISTORY_PAGE_SIZE + " OFFSET " + offset);
         Cursor cus = db.rawQuery(sql, null);
         Log.w("getHistoryList：", cus.getCount() + "");
         List<Map<String,Object>> historyList = new ArrayList<>();
@@ -544,7 +554,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                         GifImageView iv = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + msg.arg1, "id", fragment.activity.getPackageName()));
                         iv.clearAnimation();
                         Drawable gifFromStream = (GifDrawable) msg.obj;
-                        iv.setImageDrawable(gifFromStream);//fixme 删除
+                        iv.setImageDrawable(gifFromStream);
                         iv.setMinimumHeight((int)Math.round(gifFromStream.getIntrinsicHeight() * 2.5));
                         iv.setMinimumWidth((int)Math.round(gifFromStream.getIntrinsicWidth() * 2.5));
                         break;
