@@ -15,14 +15,14 @@ public class PermissionUtil {
     public static final int PER_REQ_CAPTURE = 202;
     public static final int PER_REQ_STORAGE_WRT = 203;
     private static CB cb;
-    public static void res(Activity activity, int reqCode, @NonNull String[] pers, @NonNull int[] res) {
+    public static void res(@NonNull Activity activity, int reqCode, @NonNull String[] pers, @NonNull int[] res) {
         if (res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED) {
             cb.callback();
         } else {
             Toast.makeText(activity, "权限被拒绝", Toast.LENGTH_SHORT).show();
         }
     }
-    public static void req(Activity activity, @NonNull String[] permissions, int requestCode, CB callback) {
+    public static void req(@NonNull Activity activity, @NonNull String[] permissions, int requestCode, CB callback) {
         cb = callback;
         activity.requestPermissions(permissions, requestCode);
     }

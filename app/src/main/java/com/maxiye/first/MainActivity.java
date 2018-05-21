@@ -59,6 +59,10 @@ public class MainActivity extends AppCompatActivity implements ApplistFragment.O
     private void setupSearchView() {
         mSearchView.setIconifiedByDefault(true);
         mSearchView.setOnQueryTextListener(this);
+        mSearchView.setOnCloseListener(() -> {
+            search("");
+            return false;
+        });
         mSearchView.setQueryHint(getString(R.string.edit_message));
     }
 
@@ -146,9 +150,6 @@ public class MainActivity extends AppCompatActivity implements ApplistFragment.O
         Intent intent = new Intent(this, WebViewActivity.class);
         intent.putExtra(EXTRA_URL, url);
         startActivity(intent);
-        /*Uri uri = Uri.parse(url);
-        Intent itt = new Intent(Intent.ACTION_VIEW, uri);
-        startActivity(itt);*/
     }
 
     @Override
