@@ -2,6 +2,7 @@ package com.maxiye.first.part;
 
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -57,7 +58,7 @@ public class GifWebRvAdapter extends RecyclerView.Adapter {
         ViewHolder viewHolder = (ViewHolder) holder;
         HashMap<String, Object> item = (HashMap<String, Object>) mData.get(position);
         viewHolder.mTextView.setText((String) item.get("name"));
-        viewHolder.mImageView.setImageBitmap((Bitmap) item.get("icon"));
+        viewHolder.mImageView.setImageDrawable((Drawable) item.get("icon"));
         if (clickListener != null)
             viewHolder.itemView.setOnClickListener(view -> clickListener.onClick(position));
         if (longClickListener != null)

@@ -8,4 +8,5 @@
     <color name="actionBarTitleColor">#000</color>
     <color name="colorTransparent">#00FFFFFF</color>
     <color name="colorGray">#EEE</color>
+    <color name="colorDeepGray">#E0E0E0</color>
 </resources>

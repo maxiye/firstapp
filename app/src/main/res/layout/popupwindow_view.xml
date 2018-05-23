@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:background="@color/colorGray"
+             android:background="@color/colorDeepGray"
              android:layout_width="match_parent"
              android:layout_height="match_parent">
     <LinearLayout
@@ -13,6 +13,7 @@
         <Button
             android:id="@+id/popup_prev_page"
             style="?attr/buttonBarButtonStyle"
+            android:textColor="@color/colorMyActionBar"
             android:text="@string/prev_page"
             android:layout_weight="4"
             android:visibility="gone"
@@ -20,6 +21,7 @@
             android:layout_height="wrap_content"/>
         <EditText
             android:id="@+id/popup_page"
+            android:textColor="@color/colorMyActionBar"
             android:hint="@string/page"
             android:layout_weight="1"
             android:layout_width="wrap_content"
@@ -39,6 +41,7 @@
         <Button
             android:id="@+id/popup_next_page"
             style="?attr/buttonBarButtonStyle"
+            android:textColor="@color/colorMyActionBar"
             android:text="@string/next_page"
             android:layout_weight="4"
             android:visibility="gone"

@@ -1,0 +1,150 @@
+{
+  "gif": {
+    "gamersky": {
+      "web_root": "http://www.gamersky.com",
+      "spy_root": "http://wap.gamersky.com/news/ent/",
+      "spy_img_web_root": "http://wap.gamersky.com",
+      "icon": "http://www.gamersky.com/favicon.ico",
+      "local_icon": "gamersky.png",
+      "img_web_reg": {
+        "reg": "<h5[^>]+>([^<]+动态图)[\\s\\S]*?<a href=\"([^\"]+/Content-([0-9]+)\\.html)\"",
+        "art_id_idx": 3,
+        "title_idx": 1
+      },
+      "img_web": "http://wap.gamersky.com/news/Content-%1$d.html",
+      "img_web_2nd": "http://wap.gamersky.com/news/Content-%1$d_%2$d.html",
+      "img_reg": {
+        "reg": "src=\"(http://[^\"]+(\\.gif))\"[^>]*?>.*?(<br>\\n([^<]+))?</p>",
+        "img_url_idx": 1,
+        "img_ext_idx": 2,
+        "img_title_idx": 4
+      },
+      "title_reg": {
+        "reg": "<title>([^|]+)|游民星空</title>",
+        "title_idx": 1
+      }
+    },
+    "yxdown": {
+      "web_root": "http://www.yxdown.com",
+      "spy_root": "http://www.yxdown.com/newstag/dongtu/",
+      "spy_img_web_root": "http://m.yxdown.com",
+      "icon": "http://www.yxdown.com/favicon.ico",
+      "local_icon": "yxdown.ico",
+      "img_web_reg": {
+        "reg": "href=\"([^\"]+/([0-9]+)\\.html)\"[^>]*?>(最新一期内涵爆笑动图\\s([^<]+))<",
+        "art_id_idx": 2,
+        "title_idx": 4
+      },
+      "img_web": "http://m.yxdown.com/news/%1$d.html",
+      "img_web_2nd": "http://m.yxdown.com/news/%1$d_%2$d.html",
+      "img_reg": {
+        "reg": "<img src=\"(http://[^\"]+(\\.gif))\" />.*?[\r\n]+(<p[^>]+><span[^>]+>([^<]+)</span>)?",
+        "img_url_idx": 1,
+        "img_ext_idx": 2,
+        "img_title_idx": 4
+      },
+      "title_reg": {
+        "reg": "<title>最新一期内涵爆笑动图\\s([^_]+)_游迅网</title>",
+        "title_idx": 1
+      }
+    },
+    "duowan": {
+      "web_root": "http://tu.duowan.cn",
+      "spy_root": "http://tu.duowan.cn",
+      "spy_img_web_root": "http://tu.duowan.cn",
+      "icon": "http://tu.duowan.com/favicon.ico",
+      "local_icon": "duowan.ico",
+      "img_web_reg": {
+        "reg": "<a href=\"(http://[^\"]+/([0-9]+)\\.html)\"[^\u4e00-\u9fa5]+<span class=\"ui-picContentItem__title\">(全球搞笑GIF图\\S+)\\s+",
+        "art_id_idx": 2,
+        "title_idx": 3
+      },
+      "img_web": "http://tu.duowan.cn/gallery/%1$d.html",
+      "img_web_2nd": "http://www.duowan.com/s/404/404.html",
+      "img_reg": {
+        "reg": "\"title\":\"([^\"]+)\".*?\"source\":\"([^\"]+(\\.gif))\".*?\"add_intro\":\"([^\"]+)\"",
+        "img_url_idx": 2,
+        "img_ext_idx": 3,
+        "img_title_idx": 4
+      },
+      "title_reg": {
+        "reg": "<title>([^-]+)-多玩图库</title>",
+        "title_idx": 1
+      }
+    }
+  },
+  "bitmap": {
+    "gamersky": {
+      "web_root": "http://www.gamersky.com",
+      "spy_root": "http://wap.gamersky.com/news/ent/",
+      "spy_img_web_root": "http://wap.gamersky.com",
+      "icon": "http://www.gamersky.com/favicon.ico",
+      "local_icon": "gamersky.png",
+      "img_web_reg": {
+        "reg": "<h5[^>]+>([^<]+囧图)[\\s\\S]*?<a href=\"([^\"]+/Content-([0-9]+)\\.html)\"",
+        "art_id_idx": 3,
+        "title_idx": 1
+      },
+      "img_web": "http://wap.gamersky.com/news/Content-%1$d.html",
+      "img_web_2nd": "http://wap.gamersky.com/news/Content-%1$d_%2$d.html",
+      "img_reg": {
+        "reg": "src=\"(http://[^\"]+(\\.(jpg|jpeg|png|bmp)))\"[^>]*?>.*?(<br>\\n([^<]+))?</p>",
+        "img_url_idx": 1,
+        "img_ext_idx": 2,
+        "img_title_idx": 5
+      },
+      "title_reg": {
+        "reg": "<title>([^|]+)|游民星空</title>",
+        "title_idx": 1
+      }
+    },
+    "yxdown": {
+      "web_root": "http://www.yxdown.com",
+      "spy_root": "http://www.yxdown.com/newstag/jiongtu/",
+      "spy_img_web_root": "http://m.yxdown.com",
+      "icon": "http://www.yxdown.com/favicon.ico",
+      "local_icon": "yxdown.ico",
+      "img_web_reg": {
+        "reg": "href=\"([^\"]+/([0-9]+)\\.html)\"[^>]*?>(([^>]+)爆笑内涵囧图[^<]+)<",
+        "art_id_idx": 2,
+        "title_idx": 3
+      },
+      "img_web": "http://m.yxdown.com/news/%1$d.html",
+      "img_web_2nd": "http://m.yxdown.com/news/%1$d_%2$d.html",
+      "img_reg": {
+        "reg": "<img src=\"(http://[^\"]+(\\.(jpg|jpeg|png|bmp)))\" />.*?[\r\n]+(<p[^>]+>(<span[^>]+>)?([^<]+)</)?",
+        "img_url_idx": 1,
+        "img_ext_idx": 2,
+        "img_title_idx": 6
+      },
+      "title_reg": {
+        "reg": "<title>([^_]+)_游迅网</title>",
+        "title_idx": 1
+      }
+    },
+    "duowan": {
+      "web_root": "http://tu.duowan.cn",
+      "spy_root": "http://tu.duowan.cn",
+      "spy_img_web_root": "http://tu.duowan.cn",
+      "icon": "http://tu.duowan.com/favicon.ico",
+      "local_icon": "duowan.ico",
+      "img_web_reg": {
+        "reg": "<a href=\"(http://[^\"]+/([0-9]+)\\.html)\"[^\u4e00-\u9fa5]+<span class=\"ui-picContentItem__title\">(今日囧图\\S+)\\s+",
+        "art_id_idx": 2,
+        "title_idx": 3
+      },
+      "img_web": "http://tu.duowan.cn/gallery/%1$d.html",
+      "img_web_2nd": "http://www.duowan.com/s/404/404.html",
+      "img_reg": {
+        "reg": "\"title\":\"([^\"]+)\".*?\"source\":\"([^\"]+(\\.(jpg|jpeg|png|bmp)))\".*?\"add_intro\":\"([^\"]+)\"",
+        "img_url_idx": 2,
+        "img_ext_idx": 3,
+        "img_title_idx": 5
+      },
+      "title_reg": {
+        "reg": "<title>([^-]+)-多玩图库</title>",
+        "title_idx": 1
+      }
+    }
+  }
+}

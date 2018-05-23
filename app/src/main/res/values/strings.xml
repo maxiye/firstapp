@@ -37,4 +37,5 @@
     <string name="prev_page">Pre Page</string>
     <string name="next_page">Next Page</string>
     <string name="page">Page</string>
+    <string name="switch_type">Switch Type</string>
 </resources>

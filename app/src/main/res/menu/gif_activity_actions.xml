@@ -39,4 +39,10 @@
         android:title="@string/browser_open"
         android:onClick="browserOpen"
         app:showAsAction="ifRoom"/>
+    <item
+        android:orderInCategory="100"
+        android:icon="@android:drawable/ic_menu_slideshow"
+        android:title="@string/switch_type"
+        android:onClick="switchType"
+        app:showAsAction="ifRoom"/>
 </menu>

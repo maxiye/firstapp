@@ -38,4 +38,5 @@
     <string name="prev_page">上一页</string>
     <string name="next_page">下一页</string>
     <string name="page">页码</string>
+    <string name="switch_type">更改类型</string>
 </resources>
