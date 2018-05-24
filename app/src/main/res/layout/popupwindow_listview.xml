@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:background="?android:attr/selectableItemBackground"
+              android:clickable="true"
+              android:focusable="true"
               android:layout_width="match_parent"
               android:layout_height="wrap_content">
-
     <ImageView
         android:id="@+id/pw_image_view"
         android:layout_width="50dp"
@@ -10,16 +12,11 @@
         android:contentDescription="@string/app_icon"
         android:focusable="false"
         android:padding="6dp"/>
-    <LinearLayout
+    <TextView
+        android:id="@+id/pw_text_view"
+        android:width="99999dp"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-        <TextView
-            android:id="@+id/pw_text_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:textColor="#333"/>
-    </LinearLayout>
-
-
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:textColor="#333"/>
 </LinearLayout>

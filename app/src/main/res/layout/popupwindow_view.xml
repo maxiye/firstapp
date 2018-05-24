@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:background="@color/colorDeepGray"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:background="@color/actionBarMenuColor"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
     <LinearLayout
         android:id="@+id/popupwindow_view_ll"
         android:orientation="horizontal"
@@ -50,7 +51,6 @@
     </LinearLayout>
     <android.support.v7.widget.RecyclerView
         android:id="@+id/popupwindow_rv"
-        android:layout_below="@+id/popupwindow_view_ll"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
-</RelativeLayout>
+        android:layout_height="wrap_content"/>
+</LinearLayout>

@@ -344,9 +344,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         popupWindow.setContentView(root);
         popupWindow.setOutsideTouchable(true);
         RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
-        LinearLayoutManager manager = new LinearLayoutManager(this);
-        manager.setOrientation(LinearLayoutManager.VERTICAL);
-        rv.setLayoutManager(manager);
+        rv.setLayoutManager(new LinearLayoutManager(this));
         //rv.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));//分隔线
         GifWebRvAdapter ma = new GifWebRvAdapter();
         int historyCount = getHistoryCount();
@@ -550,7 +548,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         @Override
         public void onDestroy() {
             super.onDestroy();
-            myHandler.removeCallbacksAndMessages(null);
+            if (myHandler != null) myHandler.removeCallbacksAndMessages(null);
             myHandler = null;
             mListener = null;
             activity = null;
@@ -997,7 +995,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     TextView tv = rootView.findViewById(fragment.getResources().getIdentifier("gtxt_" + fragment.gifPosition, "id", context.getPackageName()));
                     tv.setText(fragment.gufTitle);
                     GifImageView iv1 = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + fragment.gifPosition, "id", context.getPackageName()));
-                    if (!(iv1.getDrawable() instanceof  GifDrawable)) {
+                    if (iv1.getWidth() < 50) {
                         Drawable initShow = context.getDrawable(R.drawable.ic_sync_black_24dp);
                         iv1.setImageDrawable(initShow);
                         iv1.setMinimumHeight(24);
@@ -1016,8 +1014,8 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     Drawable gifFromStream = (Drawable) msg.obj;
                     float zoom = type.equals("gif") ? 2.5f : 4.5f;
                     iv.setImageDrawable(gifFromStream);
-                    iv.setMinimumHeight((int)Math.round(gifFromStream.getIntrinsicHeight() * zoom));
-                    iv.setMinimumWidth((int)Math.round(gifFromStream.getIntrinsicWidth() * zoom));
+                    iv.setMinimumHeight(Math.round(gifFromStream.getIntrinsicHeight() * zoom));
+                    iv.setMinimumWidth(Math.round(gifFromStream.getIntrinsicWidth() * zoom));
                     break;
                 case PlaceholderFragment.MSG_TYPE_OVER:
                     fragment.mListener.checkPageEnd();
