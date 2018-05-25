@@ -994,8 +994,10 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 case PlaceholderFragment.MSG_TYPE_PRE:
                     TextView tv = rootView.findViewById(fragment.getResources().getIdentifier("gtxt_" + fragment.gifPosition, "id", context.getPackageName()));
                     tv.setText(fragment.gufTitle);
-                    GifImageView iv1 = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + fragment.gifPosition, "id", context.getPackageName()));
-                    if (iv1.getWidth() < 50) {
+                    int startOffset = fragment.getGifOffset(fragment.gifPosition);
+                    String ext = fragment.getGifInfo(startOffset)[2];
+                    if (!(new File(context.getCacheDir(), artId + "-" + startOffset + ext).exists())) {
+                        GifImageView iv1 = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + fragment.gifPosition, "id", context.getPackageName()));
                         Drawable initShow = context.getDrawable(R.drawable.ic_sync_black_24dp);
                         iv1.setImageDrawable(initShow);
                         iv1.setMinimumHeight(24);
