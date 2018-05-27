@@ -8,40 +8,42 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
     <!-- 应用于程序或者活动的主题 -->
-    <style name="CustomActBarThe" parent="Theme.AppCompat.Light">
+    <style name="MyTheme" parent="Theme.AppCompat.Light">
         <item name="android:actionBarStyle">@style/MyActionStyle</item>
-        <item name="android:actionMenuTextColor">@color/actionBarMenuColor</item>
+        <item name="android:actionMenuTextColor">@color/darkBlue</item>
         <item name="android:windowActionBarOverlay">false</item>
         <item name="android:windowTranslucentStatus">false</item>
         <item name="android:windowTranslucentNavigation">false</item>
         <!--<item name="android:windowIsTranslucent">true</item>-->
-        <item name="android:statusBarColor">@color/colorMyActionBar</item>
-        <item name="android:navigationBarColor">@color/colorMyActionBar</item>
+        <item name="android:statusBarColor">@color/myPrimaryColor</item>
+        <item name="android:navigationBarColor">@color/myPrimaryColor</item>
+        <item name="android:colorControlActivated">@color/myPrimaryColor</item>
+        <item name="android:colorPrimary">@color/myPrimaryColor</item>
+        <item name="android:colorAccent">@color/actionTitle</item>
+        <item name="android:textColorPrimary">@color/actionTitle</item>
+        <item name="android:textColor">@color/actionTitle</item>
+        <item name="buttonStyle">@style/MyButtonStyle</item>
         <!-- 支持库兼容 -->
         <item name="actionBarStyle">@style/MyActionStyle</item>
-        <item name="actionMenuTextColor">@color/actionBarMenuColor</item>
+        <!--<item name="actionMenuTextColor">@color/darkBlue</item>-->
         <item name="windowActionBarOverlay">false</item>
     </style>
     <!-- ActionBar 样式 -->
     <style name="MyActionStyle" parent="Widget.AppCompat.Light.ActionBar.Solid.Inverse">
-        <item name="android:background">@color/colorMyActionBar</item>
+        <item name="android:background">@color/myPrimaryColor</item>
         <item name="android:titleTextStyle">@style/MyActionTitleStyle</item>
         <!-- 支持库兼容 -->
-        <item name="background">@color/colorMyActionBar</item>
+        <item name="background">@color/myPrimaryColor</item>
         <item name="titleTextStyle">@style/MyActionTitleStyle</item>
     </style>
     <!-- ActionBar 标题文本 -->
     <style name="MyActionTitleStyle" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
-        <item name="android:textColor">@color/actionBarTitleColor</item>
+        <item name="android:textColor">@color/actionTitle</item>
         <!-- 文本颜色属性textColor是可以配合支持库向后兼容的 -->
     </style>
 
-    <style name="CustomActBarThe.NoActionBar">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
+    <!--按钮-->
+    <style name="MyButtonStyle" parent="Widget.AppCompat.Button.Borderless">
+        <item name="android:textColor">@color/actionTitle</item>
     </style>
-
-    <style name="CustomActBarThe.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar"/>
-
-    <style name="CustomActBarThe.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
 </resources>

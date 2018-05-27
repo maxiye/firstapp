@@ -166,12 +166,13 @@ public class MainActivity extends AppCompatActivity implements ApplistFragment.O
 
     //查询应用
     private void search(String search) {
-        if (!frg.thread.isAlive()) {
-            frg.keyword = search;
-            new Thread(frg.thread).start();
-        } else {
-            alert(getString(R.string.loading));
+        if (frg.thread != null) {
+            if (!frg.thread.isAlive()) {
+                frg.keyword = search;
+                new Thread(frg.thread).start();
+            } else {
+                alert(getString(R.string.loading));
+            }
         }
     }
-
 }

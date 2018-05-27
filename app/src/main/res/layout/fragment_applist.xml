@@ -23,6 +23,8 @@
 
     <ListView
         android:id="@+id/applist_frg_lv"
+        android:divider="@drawable/listview_divider"
+        android:dividerHeight="0.5dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
     </ListView>

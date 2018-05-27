@@ -1,10 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
-<!--android:id="@+id/activity_setting"-->
-<!--android:layout_width="match_parent"-->
-<!--android:layout_height="match_parent"-->
-<!--android:orientation="vertical"-->
-<!--android:padding="15dp">-->
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:tools="http://schemas.android.com/tools"
@@ -12,19 +6,33 @@
                 android:layout_height="wrap_content"
                 android:padding="15dp">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:text="@string/system_app"
-        android:textColor="@color/colorPrimaryDark"
-        tools:ignore="RelativeOverlap"/>
+        tools:ignore="UselessParent">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:ignore="RelativeOverlap">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="17sp"
+                android:text="@string/system_app"
+                android:textColor="@color/actionTitle"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/show_system_apps"
+                android:textColor="@color/colorDeeperGray"/>
+        </LinearLayout>
 
-    <Switch
-        android:id="@+id/setting_show_system"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"/>
+        <Switch
+            android:id="@+id/setting_show_system"
+            android:layout_centerVertical="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"/>
+    </RelativeLayout>
 </RelativeLayout>
-
-    <!--</LinearLayout>-->

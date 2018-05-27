@@ -6,9 +6,9 @@
         android:toAlpha="1"/>
     <rotate
         android:duration="1000"
-        android:fromDegrees="0"
+        android:fromDegrees="-360"
         android:pivotX="50%"
         android:pivotY="50%"
         android:repeatCount="infinite"
-        android:toDegrees="-360"/>
+        android:toDegrees="0"/>
 </set>

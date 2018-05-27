@@ -12,7 +12,7 @@
         android:padding="8dp">
 
         <Button
-            style="?android:attr/buttonBarButtonStyle"
+            style="@style/MyButtonStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -20,7 +20,7 @@
             android:text="@string/create_db"/>
 
         <Button
-            style="?android:attr/buttonBarButtonStyle"
+            style="@style/MyButtonStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -28,7 +28,7 @@
             android:text="@string/send_intent"/>
 
         <Button
-            style="?android:attr/buttonBarButtonStyle"
+            style="@style/MyButtonStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -36,7 +36,7 @@
             android:text="@string/test_nfc"/>
 
         <Button
-            style="?android:attr/buttonBarButtonStyle"
+            style="@style/MyButtonStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -51,7 +51,7 @@
         android:padding="8dp">
 
         <Button
-            style="?android:attr/buttonBarButtonStyle"
+            style="@style/MyButtonStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -59,7 +59,7 @@
             android:text="@string/test_camera"/>
 
         <Button
-            style="?android:attr/buttonBarButtonStyle"
+            style="@style/MyButtonStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"

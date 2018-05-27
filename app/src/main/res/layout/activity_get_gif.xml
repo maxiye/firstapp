@@ -8,26 +8,6 @@
                                                  android:fitsSystemWindows="true"
                                                  tools:context=".GifActivity">
 
-    <android.support.design.widget.AppBarLayout
-        android:id="@+id/gif_activity_appbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:theme="@style/CustomActBarThe.AppBarOverlay">
-
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/gif_activity_toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:layout_weight="1"
-            android:background="@color/colorMyActionBar"
-            app:layout_scrollFlags="scroll|enterAlways"
-            app:popupTheme="@style/CustomActBarThe.PopupOverlay"
-            app:title="@string/app_name">
-
-        </android.support.v7.widget.Toolbar>
-
-    </android.support.design.widget.AppBarLayout>
-
     <android.support.v4.view.ViewPager
         android:id="@+id/gif_activity_viewpager"
         android:layout_width="match_parent"

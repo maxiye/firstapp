@@ -38,4 +38,5 @@
     <string name="next_page">Next Page</string>
     <string name="page">Page</string>
     <string name="switch_type">Switch Type</string>
+    <string name="show_system_apps">Show all applications,including system applications</string>
 </resources>

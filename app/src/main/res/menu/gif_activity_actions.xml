@@ -4,44 +4,44 @@
       tools:context="com.maxiye.first.GifActivity">
     <item
         android:orderInCategory="100"
-        android:icon="@android:drawable/stat_notify_sync_noanim"
+        android:icon="@drawable/ic_refresh_black_24dp"
         android:title="@string/refresh"
         android:onClick="refresh"
         app:showAsAction="always"
         tools:ignore="AlwaysShowAction"/>
     <item
         android:orderInCategory="100"
-        android:icon="@android:drawable/ic_media_ff"
+        android:icon="@drawable/ic_arrow_forward_black_24dp"
         android:title="@string/skip_to"
         android:onClick="skipTo"
         app:showAsAction="always"/>
     <item
         android:orderInCategory="100"
-        android:icon="@android:drawable/ic_menu_compass"
+        android:icon="@drawable/ic_star_border_black_24dp"
         android:title="@string/switch_web"
         android:onClick="switchWeb"
         app:showAsAction="always"/>
     <item
         android:orderInCategory="100"
-        android:icon="@android:drawable/ic_menu_recent_history"
+        android:icon="@drawable/ic_history_black_24dp"
         android:title="@string/history"
         android:onClick="listHistory"
         app:showAsAction="always"/>
     <item
         android:orderInCategory="100"
-        android:icon="@android:drawable/ic_media_next"
+        android:icon="@drawable/ic_skip_next_black_24dp"
         android:title="@string/change_art_id"
         android:onClick="changeUrl"
         app:showAsAction="ifRoom"/>
     <item
         android:orderInCategory="100"
-        android:icon="@android:drawable/ic_menu_set_as"
+        android:icon="@drawable/ic_open_in_browser_black_24dp"
         android:title="@string/browser_open"
         android:onClick="browserOpen"
         app:showAsAction="ifRoom"/>
     <item
         android:orderInCategory="100"
-        android:icon="@android:drawable/ic_menu_slideshow"
+        android:icon="@drawable/ic_broken_image_black_24dp"
         android:title="@string/switch_type"
         android:onClick="switchType"
         app:showAsAction="ifRoom"/>

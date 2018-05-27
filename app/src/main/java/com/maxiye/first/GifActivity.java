@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -25,9 +26,9 @@ import android.support.v4.content.FileProvider;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -47,6 +48,7 @@ import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.maxiye.first.part.CircleProgressDrawable;
 import com.maxiye.first.part.GifWebRvAdapter;
 import com.maxiye.first.util.CacheUtil;
 import com.maxiye.first.util.DBHelper;
@@ -57,6 +59,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
@@ -117,8 +120,8 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_get_gif);
-        Toolbar toolbar = findViewById(R.id.gif_activity_toolbar);
-        setSupportActionBar(toolbar);
+        /*Toolbar toolbar = findViewById(R.id.gif_activity_toolbar);
+        setSupportActionBar(toolbar);*/
         // Create the adapter that will return a fragment
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
         // Set up the ViewPager with the sections adapter.
@@ -158,7 +161,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 for (int i = 1;i<4;i++) {
                     GifImageView giv = findViewById(getResources().getIdentifier("gif_" + i, "id", getPackageName()));
                     giv.clearAnimation();
-                    giv.setImageResource(android.R.drawable.ic_menu_gallery);
+                    giv.setImageResource(R.drawable.ic_image_black_24dp);
                     giv.setMinimumHeight(24);
                     giv.setMinimumWidth(24);
                 }
@@ -222,7 +225,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 item.put("icon", BitmapDrawable.createFromStream(getAssets().open(all_web.getAsJsonObject(key).get("local_icon").getAsString()), null));
             } catch (Exception e) {
                 e.printStackTrace();
-                item.put("icon", getDrawable(android.R.drawable.ic_menu_gallery));
+                item.put("icon", getDrawable(R.drawable.ic_image_black_24dp));
             }
             webList.add(item);
         }
@@ -242,7 +245,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         //创建对话框
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setIcon(R.drawable.ic_info_black_24dp)//设置图标
-                .setTitle("请输入文章id")//设置标题
+                .setTitle("请输入页码")//设置标题
                 .setView(view)//添加布局
                 .create();
         //设置按键
@@ -289,13 +292,14 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
 
     @SuppressLint("InflateParams")
     public void switchWeb(MenuItem item) {
-        PopupWindow popupWindow = new PopupWindow(400, 400);
+        PopupWindow popupWindow = new PopupWindow(400, ViewGroup.LayoutParams.WRAP_CONTENT);
         popupWindow.setContentView(LayoutInflater.from(this).inflate(R.layout.popupwindow_view, null));
         popupWindow.setOutsideTouchable(true);
         RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
-        LinearLayoutManager manager = new LinearLayoutManager(this);
-        manager.setOrientation(LinearLayoutManager.VERTICAL);
-        rv.setLayoutManager(manager);
+        DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
+        divider.setDrawable(getDrawable(R.drawable.gif_rv_divider));
+        rv.addItemDecoration(divider);//分隔线
+        rv.setLayoutManager(new LinearLayoutManager(this));
         GifWebRvAdapter ma = new GifWebRvAdapter();
         List<Map<String,Object>> webList = getWebList();
         ma.setData(webList);
@@ -308,7 +312,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             popupWindow.dismiss();
         });
         rv.setAdapter(ma);
-        popupWindow.showAsDropDown(findViewById(R.id.gif_activity_appbar), 0, 0, Gravity.END);
+        popupWindow.showAsDropDown(findViewById(R.id.gif_activity_main_content), 0, 210, Gravity.END);
     }
 
     public void browserOpen(MenuItem item) {
@@ -345,7 +349,9 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         popupWindow.setOutsideTouchable(true);
         RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
         rv.setLayoutManager(new LinearLayoutManager(this));
-        //rv.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));//分隔线
+        DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
+        divider.setDrawable(getDrawable(R.drawable.gif_rv_divider));
+        rv.addItemDecoration(divider);//分隔线
         GifWebRvAdapter ma = new GifWebRvAdapter();
         int historyCount = getHistoryCount();
         List<Map<String,Object>> historyList = getHistoryList(1);
@@ -464,7 +470,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     item.put("icon", BitmapDrawable.createFromStream(getAssets().open(all_web.getAsJsonObject((String) item.get("web_name")).get("local_icon").getAsString()), null));
                 } catch (Exception e) {
                     e.printStackTrace();
-                    item.put("icon", getDrawable(android.R.drawable.ic_menu_gallery));
+                    item.put("icon", getDrawable(R.drawable.ic_image_black_24dp));
                 }
                 historyList.add(item);
                 cus.moveToNext();
@@ -476,13 +482,14 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
 
     @SuppressLint("InflateParams")
     public void switchType(MenuItem item) {
-        PopupWindow popupWindow = new PopupWindow(400, 250);
+        PopupWindow popupWindow = new PopupWindow(400, ViewGroup.LayoutParams.WRAP_CONTENT);
         popupWindow.setContentView(LayoutInflater.from(this).inflate(R.layout.popupwindow_view, null));
         popupWindow.setOutsideTouchable(true);
         RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
-        LinearLayoutManager manager = new LinearLayoutManager(this);
-        manager.setOrientation(LinearLayoutManager.VERTICAL);
-        rv.setLayoutManager(manager);
+        DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
+        divider.setDrawable(getDrawable(R.drawable.gif_rv_divider));
+        rv.addItemDecoration(divider);//分隔线
+        rv.setLayoutManager(new LinearLayoutManager(this));
         GifWebRvAdapter ma = new GifWebRvAdapter();
         List<Map<String,Object>> typeList = getTypeList();
         ma.setData(typeList);
@@ -495,7 +502,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             popupWindow.dismiss();
         });
         rv.setAdapter(ma);
-        popupWindow.showAsDropDown(findViewById(R.id.gif_activity_appbar), 0, 0, Gravity.END);
+        popupWindow.showAsDropDown(findViewById(R.id.gif_activity_main_content), 0, 210, Gravity.END);
     }
 
     private List<Map<String,Object>> getTypeList() {
@@ -504,7 +511,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         for (String type : types) {
             HashMap<String, Object> typeItem = new HashMap<>();
             typeItem.put("name", type);
-            typeItem.put("icon", getDrawable(android.R.drawable.ic_menu_gallery));
+            typeItem.put("icon", getDrawable(R.drawable.ic_image_black_24dp));
             typeList.add(typeItem);
         }
         return typeList;
@@ -531,14 +538,13 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         private static final String ARG_SECTION_NUMBER = "section_number";
         private int gifPosition = 1;
         private int downloadPosition = 1;
-        private String gifUrl;
-        private String gufTitle;
         private static final int MSG_TYPE_PRE = 100;
         private static final int MSG_TYPE_LOAD = 101;
         private static final int MSG_TYPE_DOWNLOADED = 102;
         private static final int MSG_TYPE_DOWNLOAD_ERR = 103;
         private static final int MSG_TYPE_EMPTY = 104;
         private static final int MSG_TYPE_OVER = 105;
+        private static final int MSG_TYPE_LOADING = 106;
         private Context activity;
         private OnPFListener mListener;
         private MyHandler myHandler;
@@ -590,11 +596,13 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
             for (int i = 1;i<4;i++) {
                 int pos = i;
-                rootView.findViewById(getResources().getIdentifier("gif_" + i, "id", activity.getPackageName()))
-                        .setOnLongClickListener(view -> {
-                            longClickCb(pos, view);
-                            return true;
-                        });
+                GifImageView giv = rootView.findViewById(getResources().getIdentifier("gif_" + i, "id", activity.getPackageName()));
+                giv.setMinimumHeight(90);
+                giv.setMinimumWidth(90);
+                giv.setOnLongClickListener(view -> {
+                    longClickCb(pos, rootView);
+                    return true;
+                });
             }
             return rootView;
         }
@@ -610,12 +618,15 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 }
             }
         }
-
-        private MyHandler getHandler() {
-            if (myHandler == null) {
-                myHandler = new MyHandler(this);
+        public void send(int what, Object obj) {
+            if (myHandler != null) {
+                myHandler.sendMessage(myHandler.obtainMessage(what, obj));
             }
-            return myHandler;
+        }
+        public void send(int what, int arg1, int arg2, Object obj) {
+            if (myHandler != null) {
+                myHandler.sendMessage(myHandler.obtainMessage(what, arg1, arg2, obj));
+            }
         }
 
         private int getGifOffset(int index) {
@@ -680,9 +691,9 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                         Intent scanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
                         scanIntent.setData(Uri.fromFile(gif));
                         activity.sendBroadcast(scanIntent);
-                        getHandler().send(MSG_TYPE_DOWNLOADED, gif);
+                        send(MSG_TYPE_DOWNLOADED, gif);
                     } catch (Exception e) {
-                        getHandler().send(MSG_TYPE_DOWNLOAD_ERR, "下载失败");
+                        send(MSG_TYPE_DOWNLOAD_ERR, "下载失败");
                         e.printStackTrace();
                     }
                 }).start();
@@ -697,39 +708,51 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             if (gifInfo == null)
                 return;
             try {
-                gifUrl = gifInfo[0];
-                gufTitle = gifInfo[1];
-                getHandler().send(MSG_TYPE_PRE, "");
+                send(MSG_TYPE_PRE, gifInfo[1]);
                 File cacheGif = new File(activity.getCacheDir(), artId + "-" + startOffset + gifInfo[2]);
                 if (cacheGif.exists()) {
                     Log.w("info", "loadGif(fromCache):" + gifInfo[1]);
                     Drawable gifFromStream = type.equals("gif") ? new GifDrawable(cacheGif) : BitmapDrawable.createFromPath(cacheGif.getAbsolutePath());
-                    getHandler().send(MSG_TYPE_LOAD, nowPos, 0, gifFromStream);
+                    send(MSG_TYPE_LOAD, nowPos, 0, gifFromStream);
                 } else {
                     Log.w("info", "loadGif:" + gifInfo[1]);
-                    Request request = new Request.Builder().url(gifUrl).build();
+                    Request request = new Request.Builder().url(gifInfo[0]).build();
                     okHttpClient.newCall(request).enqueue(new Callback() {
                         @Override
                         public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                            getHandler().send(MSG_TYPE_EMPTY, nowPos, 0, "");
+                            send(MSG_TYPE_EMPTY, nowPos, 0, "");
                             e.printStackTrace();
                         }
 
                         @Override
                         public void onResponse(@NonNull Call call, @NonNull Response response) {
                             try {
-                                Log.w("info", "loadGif(fromNet):" + gifInfo[1]);
-                                byte[] b = response.body().bytes();
+                                Log.w("info", "loadGif(fromNet):" + gifInfo[1] + ";url:" + gifInfo[0] + ";index:" + request.toString());
+                                int contentLength = (int) response.body().contentLength();
+                                byte[] bytes;
+                                if (contentLength > 0 && contentLength > 40960 * 2) {
+                                    send(MSG_TYPE_LOADING, nowPos, 0, contentLength);
+                                    InputStream is = response.body().byteStream();
+                                    bytes = new byte[contentLength];
+                                    int len;int sum = 0;int readLen = 40960;
+                                    while ((len = is.read(bytes, sum, readLen)) > 0) {
+                                        sum += len;
+                                        readLen = 40960 > bytes.length - sum ? bytes.length - sum : 40960;
+                                        send(MSG_TYPE_LOADING, nowPos, 0, sum);
+                                    }
+                                } else {
+                                    bytes = response.body().bytes();
+                                }
                                 if (cacheGif.createNewFile()) {
                                     RandomAccessFile raf = new RandomAccessFile(cacheGif, "rwd");
-                                    raf.write(b);
+                                    raf.write(bytes);
                                     raf.close();
                                 }
-                                Drawable gifFromStream = type.equals("gif") ? new GifDrawable(b) : BitmapDrawable.createFromPath(cacheGif.getAbsolutePath());
-                                getHandler().send(MSG_TYPE_LOAD, nowPos, 0, gifFromStream);
+                                Drawable gifFromStream = type.equals("gif") ? new GifDrawable(bytes) : BitmapDrawable.createFromPath(cacheGif.getAbsolutePath());
+                                send(MSG_TYPE_LOAD, nowPos, 0, gifFromStream);
                             } catch (Exception e) {
                                 if (cacheGif.delete()) Log.d("cacheDel", "cacheGif deleted");
-                                getHandler().send(MSG_TYPE_EMPTY, nowPos, 0, "");
+                                send(MSG_TYPE_EMPTY, nowPos, 0, "");
                                 e.printStackTrace();
                             }
                         }
@@ -762,6 +785,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 Request req = new Request.Builder().url(url).build();
                 String content = new String(okHttpClient.newCall(req).execute().body().bytes(), "utf-8");
                 Matcher mt = pt.matcher(content);
+                System.out.print(content);
                 if (!mt.find()) {
                     throw new ProtocolException("over");
                 }
@@ -793,7 +817,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 if (e instanceof ProtocolException) {
                     endFlg = true;
                     if (gifList.size() > 0) updateDbField("pages", String.valueOf(webPage - 1));
-                    getHandler().send(MSG_TYPE_OVER, "");
+                    send(MSG_TYPE_OVER, "");
                 }
                 e.printStackTrace();
             } finally {
@@ -929,6 +953,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         }
 
         void refresh() {
+            //CacheUtil.clearAllCache(activity);//fixme
             okHttpClient.dispatcher().cancelAll();
             this.gifPosition = 1;
             new Thread(this::loadGif).start();
@@ -972,13 +997,6 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             mFragment = new WeakReference<>(fragment);
         }
 
-        public void send(int what, Object obj) {
-            sendMessage(obtainMessage(what, obj));
-        }
-        public void send(int what, int arg1, int arg2, Object obj) {
-            sendMessage(obtainMessage(what, arg1, arg2, obj));
-        }
-
         @SuppressLint("SetTextI18n")
         @Override
         public void handleMessage(Message msg) {
@@ -989,19 +1007,19 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             TextView textView = rootView.findViewById(R.id.section_label);
             assert fragment.getArguments() != null;
             textView.setText(title + "：" + fragment.getArguments().getInt(PlaceholderFragment.ARG_SECTION_NUMBER));
-            Drawable errShow = context.getDrawable(android.R.drawable.ic_delete);
+            Drawable errShow = context.getDrawable(R.drawable.ic_close_black_24dp);
             switch (msg.what) {
                 case PlaceholderFragment.MSG_TYPE_PRE:
                     TextView tv = rootView.findViewById(fragment.getResources().getIdentifier("gtxt_" + fragment.gifPosition, "id", context.getPackageName()));
-                    tv.setText(fragment.gufTitle);
+                    tv.setText((String) msg.obj);
                     int startOffset = fragment.getGifOffset(fragment.gifPosition);
                     String ext = fragment.getGifInfo(startOffset)[2];
                     if (!(new File(context.getCacheDir(), artId + "-" + startOffset + ext).exists())) {
                         GifImageView iv1 = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + fragment.gifPosition, "id", context.getPackageName()));
-                        Drawable initShow = context.getDrawable(R.drawable.ic_sync_black_24dp);
+                        Drawable initShow = context.getDrawable(R.drawable.ic_autorenew_black_24dp);
                         iv1.setImageDrawable(initShow);
-                        iv1.setMinimumHeight(24);
-                        iv1.setMinimumWidth(24);
+                        iv1.setMinimumHeight(90);
+                        iv1.setMinimumWidth(90);
                         iv1.setAnimation(AnimationUtils.loadAnimation(context, R.anim.load_rotate));
                     }
                     if (++fragment.gifPosition < 4) {
@@ -1010,14 +1028,29 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                         fragment.gifPosition = 1;
                     }
                     break;
+                case PlaceholderFragment.MSG_TYPE_LOADING:
+                    GifImageView iv2 = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + msg.arg1, "id", context.getPackageName()));
+                    if (iv2.getDrawable() instanceof  CircleProgressDrawable) {
+                        CircleProgressDrawable circleProgress = (CircleProgressDrawable) iv2.getDrawable();
+                        circleProgress.setCurProgress((int) msg.obj);
+                    } else {
+                        CircleProgressDrawable circleProgress = new CircleProgressDrawable((int) msg.obj, context.getColor(R.color.actionTitle));
+                        iv2.clearAnimation();
+                        iv2.setImageDrawable(circleProgress);
+                    }
+                    break;
                 case PlaceholderFragment.MSG_TYPE_LOAD:
-                    GifImageView iv = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + msg.arg1, "id", context.getPackageName()));
-                    iv.clearAnimation();
+                    GifImageView iv3 = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + msg.arg1, "id", context.getPackageName()));
+                    iv3.clearAnimation();
                     Drawable gifFromStream = (Drawable) msg.obj;
                     float zoom = type.equals("gif") ? 2.5f : 4.5f;
-                    iv.setImageDrawable(gifFromStream);
-                    iv.setMinimumHeight(Math.round(gifFromStream.getIntrinsicHeight() * zoom));
-                    iv.setMinimumWidth(Math.round(gifFromStream.getIntrinsicWidth() * zoom));
+                    iv3.setImageDrawable(gifFromStream);
+                    int width = Math.round(gifFromStream.getIntrinsicWidth() * zoom);
+                    int height = Math.round(gifFromStream.getIntrinsicHeight() * zoom);
+                    int layoutWidth = fragment.getView().getWidth();
+                    height = width > layoutWidth ? height * layoutWidth / width : height;
+                    iv3.setMinimumHeight(height);
+                    iv3.setMinimumWidth(width);
                     break;
                 case PlaceholderFragment.MSG_TYPE_OVER:
                     fragment.mListener.checkPageEnd();
@@ -1033,9 +1066,9 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                             }).show();
                     break;
                 case PlaceholderFragment.MSG_TYPE_EMPTY:
-                    GifImageView iv2 = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + msg.arg1, "id", context.getPackageName()));
-                    iv2.clearAnimation();
-                    iv2.setImageDrawable(errShow);
+                    GifImageView iv4 = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + msg.arg1, "id", context.getPackageName()));
+                    iv4.clearAnimation();
+                    iv4.setImageDrawable(errShow);
                     break;
             }
         }
