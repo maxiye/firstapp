@@ -4,7 +4,7 @@
     <string name="setting">Setting</string>
     <string name="clip_toast">Copied to Clipboard</string>
     <string name="not_found">Not Found</string>
-    <string name="system_app">Show System Apps</string>
+    <string name="system_app">System Apps</string>
     <string name="create_db">Create DB</string>
     <string name="share">Share File</string>
     <string name="net_set">Network Shortcut</string>

@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -28,7 +27,9 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.ListPopupWindow;
 import android.support.v7.widget.RecyclerView;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -39,6 +40,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.PopupMenu;
@@ -636,17 +638,25 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
 
         private void longClickCb(int position, View view) {
             downloadPosition = position;
-            PopupMenu pMenu = new PopupMenu(activity, view);
-            pMenu.getMenuInflater().inflate(R.menu.gif_image_popupmenu, pMenu.getMenu());
-            pMenu.setOnMenuItemClickListener(item -> {
-                switch (item.getItemId()) {
-                    case R.id.download_gif:
+            ListPopupWindow listMenu = new ListPopupWindow(activity);
+            listMenu.setAdapter(new ArrayAdapter<>(activity, android.R.layout.simple_list_item_1, new
+                    String[]{getString(R.string.download)}));
+            DisplayMetrics  dm = new DisplayMetrics();
+            assert getActivity() != null;
+            getActivity().getWindowManager().getDefaultDisplay().getMetrics(dm);
+            listMenu.setAnchorView(view);
+            listMenu.setWidth(dm.widthPixels / 2);
+            listMenu.setHorizontalOffset(dm.widthPixels / 4);
+            listMenu.setVerticalOffset(dm.heightPixels / 2);
+            listMenu.setOnItemClickListener((parent, view1, position1, id) -> {
+                switch (position1) {
+                    case 0:
                         download();
                         break;
                 }
-                return false;
+                listMenu.dismiss();
             });
-            pMenu.show();
+            listMenu.show();
         }
 
         private void download() {
@@ -734,10 +744,10 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                                     send(MSG_TYPE_LOADING, nowPos, 0, contentLength);
                                     InputStream is = response.body().byteStream();
                                     bytes = new byte[contentLength];
-                                    int len;int sum = 0;int readLen = 40960;
+                                    int len;int sum = 0;int readLen = contentLength > 5 * 1024 * 1024 ? 102400 : 40960;
                                     while ((len = is.read(bytes, sum, readLen)) > 0) {
                                         sum += len;
-                                        readLen = 40960 > bytes.length - sum ? bytes.length - sum : 40960;
+                                        readLen = readLen > bytes.length - sum ? bytes.length - sum : readLen;
                                         send(MSG_TYPE_LOADING, nowPos, 0, sum);
                                     }
                                 } else {
@@ -869,7 +879,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             Matcher mt = pt.matcher(content);
             if (mt.find()) {
                 title = mt.group(titleIdx);
-                //updateDbField("title", title);//fixme 待删
+                //updateDbField("title", title);
                 Log.w("getNewTitle", title);
             }
         }
@@ -880,7 +890,6 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             if (cus.getCount() > 0) {
                 cus.moveToFirst();
                 title = cus.getString(cus.getColumnIndex("title"));
-                //getNewTitle(null);//fixme 删
                 int totalPage = cus.getInt(cus.getColumnIndex("pages"));
                 Cursor cus2 = db.query(DBHelper.TB_IMG_WEB_ITEM, new String[]{"page,title,url,ext"}, "art_id = ? and web_name = ?", new String[]{artId + "", webName}, null, null, "id asc");
                 int count = cus2.getCount();
@@ -953,7 +962,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         }
 
         void refresh() {
-            //CacheUtil.clearAllCache(activity);//fixme
+//            CacheUtil.clearAllCache(activity);
             okHttpClient.dispatcher().cancelAll();
             this.gifPosition = 1;
             new Thread(this::loadGif).start();
@@ -1016,8 +1025,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     String ext = fragment.getGifInfo(startOffset)[2];
                     if (!(new File(context.getCacheDir(), artId + "-" + startOffset + ext).exists())) {
                         GifImageView iv1 = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + fragment.gifPosition, "id", context.getPackageName()));
-                        Drawable initShow = context.getDrawable(R.drawable.ic_autorenew_black_24dp);
-                        iv1.setImageDrawable(initShow);
+                        iv1.setImageDrawable(context.getDrawable(R.drawable.ic_autorenew_black_24dp));
                         iv1.setMinimumHeight(90);
                         iv1.setMinimumWidth(90);
                         iv1.setAnimation(AnimationUtils.loadAnimation(context, R.anim.load_rotate));

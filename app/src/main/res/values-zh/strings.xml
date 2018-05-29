@@ -5,7 +5,7 @@
     <string name="setting">设置</string>
     <string name="clip_toast">包名已复制到剪贴板</string>
     <string name="not_found">未找到</string>
-    <string name="system_app">显示系统应用</string>
+    <string name="system_app">系统应用</string>
     <string name="create_db">创建数据库</string>
     <string name="share">分享文件</string>
     <string name="net_set">网络设置ShortCut</string>
