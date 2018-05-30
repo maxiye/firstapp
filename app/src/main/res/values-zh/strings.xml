@@ -24,7 +24,7 @@
     <string name="test_email">发邮件</string>
     <string name="test_contact">选择联系人</string>
     <string name="test_pic">选择图片</string>
-    <string name="get_gif">获取动态图</string>
+    <string name="get_gif">猎图</string>
     <string name="gif_desc">动态图描述</string>
     <string name="section_format">页面: %1$d</string>
     <string name="refresh">刷新</string>

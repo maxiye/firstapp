@@ -314,15 +314,14 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             popupWindow.dismiss();
         });
         rv.setAdapter(ma);
-        popupWindow.showAsDropDown(findViewById(R.id.gif_activity_main_content), 0, 210, Gravity.END);
+        popupWindow.showAtLocation(findViewById(R.id.get_img_ll), Gravity.TOP | Gravity.END, 0, 210);
     }
 
     public void browserOpen(MenuItem item) {
         //设置反面按钮
         //设置中立按钮
         new AlertDialog.Builder(this)
-                .setTitle("提示：")
-                .setMessage("使用浏览器打开")
+                .setTitle("使用浏览器打开")
                 .setIcon(R.drawable.ic_public_orange_60dp)
                 //点击对话框以外的区域是否让对话框消失
                 .setCancelable(true)
@@ -504,7 +503,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             popupWindow.dismiss();
         });
         rv.setAdapter(ma);
-        popupWindow.showAsDropDown(findViewById(R.id.gif_activity_main_content), 0, 210, Gravity.END);
+        popupWindow.showAtLocation(findViewById(R.id.get_img_ll), Gravity.TOP | Gravity.END, 0, 210);
     }
 
     private List<Map<String,Object>> getTypeList() {
@@ -642,11 +641,10 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             listMenu.setAdapter(new ArrayAdapter<>(activity, android.R.layout.simple_list_item_1, new
                     String[]{getString(R.string.download)}));
             DisplayMetrics  dm = new DisplayMetrics();
-            assert getActivity() != null;
             getActivity().getWindowManager().getDefaultDisplay().getMetrics(dm);
             listMenu.setAnchorView(view);
-            listMenu.setWidth(dm.widthPixels / 2);
-            listMenu.setHorizontalOffset(dm.widthPixels / 4);
+            listMenu.setWidth(dm.widthPixels * 2 / 3);
+            listMenu.setHorizontalOffset(dm.widthPixels / 6);
             listMenu.setVerticalOffset(dm.heightPixels / 2);
             listMenu.setOnItemClickListener((parent, view1, position1, id) -> {
                 switch (position1) {

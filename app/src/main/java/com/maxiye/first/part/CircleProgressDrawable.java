@@ -18,10 +18,10 @@ import android.support.annotation.Nullable;
 public class CircleProgressDrawable extends Drawable {
     private Paint mPaint;
     private boolean gradual_flg;
-    private String type = TYPE_SHADOW;
-    public final static String TYPE_BORDER = "border";
-    public final static String TYPE_SHADOW = "shadow";
-    public final static String TYPE_NONE = "none";
+    private String style = STYLE_SHADOW;
+    public final static String STYLE_BORDER = "border";
+    public final static String STYLE_SHADOW = "shadow";
+    public final static String STYLE_NONE = "none";
     private int maxProgress;
     private int curProgress;
     private int circleWidth;
@@ -31,11 +31,12 @@ public class CircleProgressDrawable extends Drawable {
     private int radius;
     private int pX;
     private int pY;
-    public CircleProgressDrawable(int maxProg, int cirColor, boolean gradual) {
+    public CircleProgressDrawable(int maxProg, int cirColor, String cirStyle, boolean gradual) {
         maxProgress = maxProg;
         curProgress = 0;
         percent = 0;
         circleColor = cirColor;
+        style = cirStyle;
         gradual_flg = gradual;
         setBounds(0, 0, 90, 90);
         circleWidth = Math.min(getBounds().width(), getBounds().height()) / 8;
@@ -50,31 +51,29 @@ public class CircleProgressDrawable extends Drawable {
         mPaint.setStrokeWidth(circleWidth);//往外侧增加一半，往内侧增加一半。
         // 设置圆角
         //mPaint.setStrokeCap(Paint.Cap.ROUND);
-        calc();
+        init();
     }
 
     public CircleProgressDrawable(int maxProg) {
-        this(maxProg, 0xFFF66725, true);
+        this(maxProg, 0xFFF66725, STYLE_SHADOW, true);
     }
 
     public CircleProgressDrawable(int maxProg, int cirColor) {
-        this(maxProg, cirColor, true);
+        this(maxProg, cirColor, STYLE_SHADOW, true);
     }
 
-    private void calc() {
+    private void init() {
         final Rect bounds = getBounds();
         int width = bounds.width();int height = bounds.height();
         radius = (Math.min(width, height) - circleWidth) / 2;
         // 1. 计算矩形位置.
-        final int offsetX = (width - radius * 2) / 2;
-        final int offsetY = (height - radius * 2) / 2;
-        rectF = new RectF(offsetX, offsetY,offsetX + radius * 2,offsetY + radius * 2);
         pX = width / 2;
         pY = height / 2;
+        rectF = new RectF(pX - radius, pY - radius,pX + radius,pY + radius);
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setStyle(String cirStyle) {
+        this.style = cirStyle;
     }
 
     public void setCurProgress(int cur) {
@@ -88,16 +87,17 @@ public class CircleProgressDrawable extends Drawable {
         canvas.drawColor(Color.TRANSPARENT);
         mPaint.setColor(circleColor);
         //paint type
-        switch (type) {
-            case TYPE_NONE:
+        switch (style) {
+            case STYLE_NONE:
                 break;
-            case TYPE_BORDER:
+            case STYLE_BORDER:
                 // 绘制圆环
                 mPaint.setStrokeWidth(0.6f);
                 canvas.drawCircle(pX, pY, radius + circleWidth / 2, mPaint);
                 canvas.drawCircle(pX, pY, radius - circleWidth / 2, mPaint);
+                mPaint.setStrokeWidth(circleWidth);
                 break;
-            case TYPE_SHADOW:
+            case STYLE_SHADOW:
                 // 绘制阴影
                 mPaint.setAlpha(0x20);
                 canvas.drawCircle(pX, pY, radius, mPaint);
@@ -112,7 +112,6 @@ public class CircleProgressDrawable extends Drawable {
         }
         // 计算角度.
         int angle = (int) (percent * 360);
-        mPaint.setStrokeWidth(circleWidth);
         // 2. 绘制进度条.
         canvas.drawArc(rectF, -90, angle, false, mPaint);
     }

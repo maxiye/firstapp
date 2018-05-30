@@ -29,6 +29,12 @@
         app:showAsAction="always"/>
     <item
         android:orderInCategory="100"
+        android:icon="@drawable/ic_broken_image_black_24dp"
+        android:title="@string/switch_type"
+        android:onClick="switchType"
+        app:showAsAction="always"/>
+    <item
+        android:orderInCategory="100"
         android:icon="@drawable/ic_skip_next_black_24dp"
         android:title="@string/change_art_id"
         android:onClick="changeUrl"
@@ -38,11 +44,5 @@
         android:icon="@drawable/ic_open_in_browser_black_24dp"
         android:title="@string/browser_open"
         android:onClick="browserOpen"
-        app:showAsAction="ifRoom"/>
-    <item
-        android:orderInCategory="100"
-        android:icon="@drawable/ic_broken_image_black_24dp"
-        android:title="@string/switch_type"
-        android:onClick="switchType"
         app:showAsAction="ifRoom"/>
 </menu>
