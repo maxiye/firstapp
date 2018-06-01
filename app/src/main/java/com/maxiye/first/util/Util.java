@@ -1,5 +1,7 @@
 package com.maxiye.first.util;
 
+import android.graphics.BitmapFactory;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -8,7 +10,11 @@ import java.util.regex.Pattern;
  * Created by due on 2018/5/16.
  */
 public class Util {
-
+    /**
+     * unicode字符串(\\uxxxx)转为中文
+     * @param unicode String
+     * @return String
+     */
     public static String unicode2Chinese(String unicode) {
         Pattern p = Pattern.compile("\\\\u([a-f0-9]{4})");
         Matcher mt = p.matcher(unicode);
@@ -16,10 +22,40 @@ public class Util {
         while (mt.find()){
             int byte1, byte2;
             String item = mt.group(1);
-            byte1 = Integer.parseInt(item.substring(0, 2), 16) << 8;//必须是小端在前
-            byte2 = Integer.parseInt(item.substring(2), 16);
+            byte1 = Integer.parseInt(item.substring(0, 2), 16) << 8;//第一个byte是高位，相当于‘十位’
+            byte2 = Integer.parseInt(item.substring(2), 16);//这是‘个位’
             result = result.replace(mt.group(0), String.valueOf((char) (byte1 + byte2)));
         }
         return result;
     }
+
+    /**
+     * 计算图片压缩倍率,降低内存消耗
+     * @param options Options
+     * @param reqWidth int
+     * @param reqHeight int
+     * @return int
+     */
+    public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
+
+            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
+            // height and width larger than the requested height and width.
+            while ((halfHeight / inSampleSize) > reqHeight
+                    && (halfWidth / inSampleSize) > reqWidth) {
+                inSampleSize <<= 1;
+            }
+        }
+
+        return inSampleSize;
+    }
+
 }

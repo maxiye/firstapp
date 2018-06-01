@@ -18,7 +18,7 @@ import android.support.annotation.Nullable;
 public class CircleProgressDrawable extends Drawable {
     private Paint mPaint;
     private boolean gradual_flg;
-    private String style = STYLE_SHADOW;
+    private String style;
     public final static String STYLE_BORDER = "border";
     public final static String STYLE_SHADOW = "shadow";
     public final static String STYLE_NONE = "none";

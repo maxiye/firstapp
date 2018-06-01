@@ -75,6 +75,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -112,6 +114,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     private final int HISTORY_PAGE_SIZE = 10;
     private static SQLiteDatabase db;
     private static OkHttpClient okHttpClient;
+    private static ThreadPoolExecutor threadPoolExecutor;
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -148,6 +151,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     .readTimeout(8, TimeUnit.SECONDS)
                     .build();
         }
+        threadPoolExecutor = new ThreadPoolExecutor(3, 7, 60, TimeUnit.SECONDS, new SynchronousQueue<>(), (r, executor) -> executor.shutdown());
         initPage();
         Log.w("end", "onCreateOver");
     }
@@ -164,8 +168,8 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     GifImageView giv = findViewById(getResources().getIdentifier("gif_" + i, "id", getPackageName()));
                     giv.clearAnimation();
                     giv.setImageResource(R.drawable.ic_image_black_24dp);
-                    giv.setMinimumHeight(24);
-                    giv.setMinimumWidth(24);
+                    giv.setMinimumHeight(90);
+                    giv.setMinimumWidth(90);
                 }
                 mSectionsPagerAdapter.currentFragment.refresh();
             }
@@ -235,7 +239,15 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     }
 
     public void refresh(MenuItem item) {
+        item.setEnabled(false);
         mSectionsPagerAdapter.currentFragment.refresh();
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            item.setEnabled(true);
+        }
     }
 
     @SuppressLint("InflateParams")
@@ -614,8 +626,12 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             okHttpClient.dispatcher().cancelAll();
             if (myHandler != null) myHandler.removeCallbacksAndMessages(null);
             if (isVisibleToUser) {
+                if (threadPoolExecutor.getActiveCount() == threadPoolExecutor.getMaximumPoolSize()) {
+                    threadPoolExecutor.shutdownNow();
+                    Log.w("threadPoolExcutor", "shutdownNow");
+                }
                 if (gifPosition == 1) {
-                    new Thread(this::loadGif).start();
+                    threadPoolExecutor.execute(this::loadGif);
                 }
             }
         }
@@ -661,7 +677,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             Log.w("download", "download:start");
             PermissionUtil.req(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PermissionUtil.PER_REQ_STORAGE_WRT, () -> {
                 Toast.makeText(activity, "开始下载文件...", Toast.LENGTH_SHORT).show();
-                new Thread(() -> {
+                threadPoolExecutor.execute(() -> {
                     String[] gifInfo = getGifInfo(getGifOffset(downloadPosition));
                     File gif = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type + "/" + gifInfo[1]);
                     Log.w("download", "download:path:" + gif.getAbsolutePath());
@@ -704,7 +720,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                         send(MSG_TYPE_DOWNLOAD_ERR, "下载失败");
                         e.printStackTrace();
                     }
-                }).start();
+                });
             });
         }
 
@@ -715,9 +731,9 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             String[] gifInfo = getGifInfo(startOffset);
             if (gifInfo == null)
                 return;
+            File cacheGif = new File(activity.getCacheDir(), artId + "-" + startOffset + gifInfo[2]);
             try {
-                send(MSG_TYPE_PRE, gifInfo[1]);
-                File cacheGif = new File(activity.getCacheDir(), artId + "-" + startOffset + gifInfo[2]);
+                send(MSG_TYPE_PRE, nowPos, 0, gifInfo[1]);
                 if (cacheGif.exists()) {
                     Log.w("info", "loadGif(fromCache):" + gifInfo[1]);
                     Drawable gifFromStream = type.equals("gif") ? new GifDrawable(cacheGif) : BitmapDrawable.createFromPath(cacheGif.getAbsolutePath());
@@ -793,7 +809,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 Request req = new Request.Builder().url(url).build();
                 String content = new String(okHttpClient.newCall(req).execute().body().bytes(), "utf-8");
                 Matcher mt = pt.matcher(content);
-                System.out.print(content);
+//                System.out.print(content);
                 if (!mt.find()) {
                     throw new ProtocolException("over");
                 }
@@ -824,7 +840,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             } catch (Exception e) {//java.net.ProtocolException: Too many follow-up requests: 21
                 if (e instanceof ProtocolException) {
                     endFlg = true;
-                    if (gifList.size() > 0) updateDbField("pages", String.valueOf(webPage - 1));
+                    if (gifList.size() > 0) updateDbField(String.valueOf(webPage - 1));
                     send(MSG_TYPE_OVER, "");
                 }
                 e.printStackTrace();
@@ -877,7 +893,6 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             Matcher mt = pt.matcher(content);
             if (mt.find()) {
                 title = mt.group(titleIdx);
-                //updateDbField("title", title);
                 Log.w("getNewTitle", title);
             }
         }
@@ -915,9 +930,9 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         }
 
 
-        private void updateDbField(String field, String val) {
+        private void updateDbField(String val) {
             ContentValues ctv = new ContentValues();
-            ctv.put(field, val);
+            ctv.put("pages", val);
             int rows = db.update(DBHelper.TB_IMG_WEB, ctv, "art_id = ? and web_name = ?", new String[]{artId + "",webName});
             Log.w("db_web_update: ", rows + "");
         }
@@ -963,7 +978,10 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
 //            CacheUtil.clearAllCache(activity);
             okHttpClient.dispatcher().cancelAll();
             this.gifPosition = 1;
-            new Thread(this::loadGif).start();
+            if (threadPoolExecutor.getActiveCount() == threadPoolExecutor.getPoolSize()) {
+                threadPoolExecutor.shutdownNow();
+            }
+            threadPoolExecutor.execute(this::loadGif);
         }
     }
 
@@ -1017,19 +1035,19 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             Drawable errShow = context.getDrawable(R.drawable.ic_close_black_24dp);
             switch (msg.what) {
                 case PlaceholderFragment.MSG_TYPE_PRE:
-                    TextView tv = rootView.findViewById(fragment.getResources().getIdentifier("gtxt_" + fragment.gifPosition, "id", context.getPackageName()));
+                    TextView tv = rootView.findViewById(fragment.getResources().getIdentifier("gtxt_" + msg.arg1, "id", context.getPackageName()));
                     tv.setText((String) msg.obj);
-                    int startOffset = fragment.getGifOffset(fragment.gifPosition);
+                    int startOffset = fragment.getGifOffset(msg.arg1);
                     String ext = fragment.getGifInfo(startOffset)[2];
                     if (!(new File(context.getCacheDir(), artId + "-" + startOffset + ext).exists())) {
-                        GifImageView iv1 = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + fragment.gifPosition, "id", context.getPackageName()));
+                        GifImageView iv1 = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + msg.arg1, "id", context.getPackageName()));
                         iv1.setImageDrawable(context.getDrawable(R.drawable.ic_autorenew_black_24dp));
                         iv1.setMinimumHeight(90);
                         iv1.setMinimumWidth(90);
                         iv1.setAnimation(AnimationUtils.loadAnimation(context, R.anim.load_rotate));
                     }
                     if (++fragment.gifPosition < 4) {
-                        new Thread(fragment::loadGif).start();
+                        threadPoolExecutor.execute(fragment::loadGif);
                     } else {
                         fragment.gifPosition = 1;
                     }
@@ -1053,7 +1071,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     iv3.setImageDrawable(gifFromStream);
                     int width = Math.round(gifFromStream.getIntrinsicWidth() * zoom);
                     int height = Math.round(gifFromStream.getIntrinsicHeight() * zoom);
-                    int layoutWidth = fragment.getView().getWidth();
+                    int layoutWidth = rootView.getWidth();
                     height = width > layoutWidth ? height * layoutWidth / width : height;
                     iv3.setMinimumHeight(height);
                     iv3.setMinimumWidth(width);

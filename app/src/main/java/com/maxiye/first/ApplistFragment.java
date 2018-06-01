@@ -1,15 +1,15 @@
 package com.maxiye.first;
 
+import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Message;
-import android.os.Process;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,22 +44,13 @@ import java.util.stream.Collectors;
  */
 public class ApplistFragment extends Fragment {
     private static final String ARG_1 = "arg_1";
-    private final int MSG_TYPE_START = 0;
-    private final int MSG_TYPE_LV = 1;
-    private final int MSG_TYPE_TV = 2;
 
     String keyword;
 
     private OnFrgActionListener mListener;
-    private Handler handler;
-    Thread thread;
     private SharedPreferences sp;
     private PackageManager pm;
     private ArrayList<ApplicationInfo> ai_al;
-
-    public ApplistFragment() {
-        // Required empty public constructor
-    }
 
     /**
      * 简写toast
@@ -87,32 +79,8 @@ public class ApplistFragment extends Fragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        final ListView lv = getActivity().findViewById(R.id.applist_frg_lv);
-        final ImageView im = getActivity().findViewById(R.id.applist_loading_bfg);
-        final TextView tv = getActivity().findViewById(R.id.applist_frgtxt);
-        handler = new Handler(msg -> {
-            tv.setText("");
-            im.clearAnimation();//清除动画后才能设为不可见
-            im.setVisibility(View.INVISIBLE);
-            switch (msg.what) {
-                case MSG_TYPE_START:
-                    lv.setAdapter(null);
-                    im.setVisibility(View.VISIBLE);
-                    im.startAnimation(AnimationUtils.loadAnimation(getActivity(), R.anim.load_rotate));
-                    break;
-                case MSG_TYPE_LV:
-                    @SuppressWarnings("unchecked")
-                    List<Map<String, Object>> app_al = (List<Map<String, Object>>) msg.obj;
-                    lv.setAdapter(new AppLvAdapter(getActivity(), R.layout.listview_applist, app_al));
-                    msg.obj = null;
-                    break;
-                case MSG_TYPE_TV:
-                    String tvtxt = (String) msg.obj;
-                    tv.setText(tvtxt);
-                    break;
-            }
-            return false;
-        });
+        assert getActivity() != null;
+        ListView lv = getActivity().findViewById(R.id.applist_frg_lv);
         //点按事件
         lv.setOnItemClickListener((parent, view, position, id) -> mListener.onItemClick(view));
         lv.setOnItemLongClickListener((parent, view, position, id) -> {
@@ -122,6 +90,7 @@ public class ApplistFragment extends Fragment {
         lv.setOnScrollListener(new AbsListView.OnScrollListener() {
             private int oldVisibleItem = 0;
             private boolean touchFlg = true;
+
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
                 touchFlg = true;
@@ -129,7 +98,7 @@ public class ApplistFragment extends Fragment {
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                if (firstVisibleItem > oldVisibleItem && touchFlg) {
+                if (firstVisibleItem > oldVisibleItem && touchFlg && lv.getCount() > 15) {
                     // 向上滑动
                     mListener.onListScroll(true);
                     touchFlg = false;
@@ -142,66 +111,94 @@ public class ApplistFragment extends Fragment {
                 oldVisibleItem = firstVisibleItem;
             }
         });
-        thread = new Thread(() -> {
-            android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-            getListData();
-        });
-        thread.start();
+        search();
     }
 
-    @Override
-    public void onDestroy() {
-        handler.removeCallbacksAndMessages(null);
-        super.onDestroy();
+    public void search() {
+        new GetAppsTask(this).execute(keyword);
     }
 
-    /**
-     * 获取Listview数据
-     */
-    private void getListData() {
-        handler.sendMessage(Message.obtain(handler, MSG_TYPE_START));
-        if (ai_al == null) {
-            sp = getActivity().getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
-            pm = getActivity().getPackageManager();
-            ai_al = new ArrayList<>(pm.getInstalledApplications(0));
+    static class GetAppsTask extends AsyncTask<String, Void, List<Map<String, Object>>> {
+        private WeakReference<ApplistFragment> frag;
+
+        GetAppsTask(ApplistFragment applistFragment) {
+            frag = new WeakReference<>(applistFragment);
         }
-        boolean show_system_apps = sp.getBoolean(SettingActivity.SHOW_SYSTEM, false);
-        //过滤
-        //String app_list = "";
-        List<ApplicationInfo> ai_al_c = ai_al.stream()
-                .filter(ai -> show_system_apps || ((ai.flags & ApplicationInfo.FLAG_SYSTEM) == 0))
-                .filter(ai -> {
-                    if (keyword != null && !keyword.isEmpty()) {
-                        String app_name = pm.getApplicationLabel(ai).toString();
-                        return (app_name + ai.packageName).toLowerCase().contains(keyword.toLowerCase());
-                    }
-                    return true;
-                })
-//                .forEach(ai -> app_list += (ai.flags & ApplicationInfo.FLAG_SYSTEM)+"??")
-                .collect(Collectors.toList());
-        //写入文件
-        //SaveAppListEx("app_list.txt", app_list);
-        Message msg;
-        try {
-            ApplicationInfo app_info = pm.getApplicationInfo(keyword, 0);
-            CharSequence appname = pm.getApplicationLabel(app_info) + "：" + app_info.packageName;
-            msg = handler.obtainMessage(MSG_TYPE_TV, appname);
-        } catch (PackageManager.NameNotFoundException e) {
-            List<Map<String, Object>> app_map_al = ai_al_c.stream().map(ai -> {
-                HashMap<String, Object> app_info = new HashMap<>();
-                try {
-                    PackageInfo pi = pm.getPackageInfo(ai.packageName, 0);
-                    app_info.put("name", pm.getApplicationLabel(ai) + " v" + pi.versionName + "(" + pi.versionCode + ")");
-                    app_info.put("pkg", ai.packageName);
-                    app_info.put("icon", pm.getApplicationIcon(ai));
-                } catch (PackageManager.NameNotFoundException e1) {
-                    e1.printStackTrace();
+
+        @Override
+        protected List<Map<String, Object>> doInBackground(String... strings) {
+            ApplistFragment fragment = frag.get();
+            if (fragment != null && fragment.getActivity() != null) {
+                Activity activity = fragment.getActivity();
+                if (fragment.ai_al == null) {
+                    fragment.sp = activity.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
+                    fragment.pm = activity.getPackageManager();
+                    fragment.ai_al = new ArrayList<>(fragment.pm.getInstalledApplications(0));
                 }
-                return app_info;
-            }).collect(Collectors.toList());
-            msg = app_map_al.isEmpty() ? handler.obtainMessage(MSG_TYPE_TV, getString(R.string.not_found)) : handler.obtainMessage(MSG_TYPE_LV, app_map_al);
+                boolean show_system_apps = fragment.sp.getBoolean(SettingActivity.SHOW_SYSTEM, false);
+                //过滤
+                //String app_list = "";
+                List<ApplicationInfo> ai_al_c = fragment.ai_al.stream()
+                        .filter(ai -> show_system_apps || ((ai.flags & ApplicationInfo.FLAG_SYSTEM) == 0))
+                        .filter(ai -> {
+                            if (strings[0] != null && !strings[0].isEmpty()) {
+                                String app_name = fragment.pm.getApplicationLabel(ai).toString();
+                                return (app_name + ai.packageName).toLowerCase().contains(strings[0].toLowerCase());
+                            }
+                            return true;
+                        })
+//                .forEach(ai -> app_list += (ai.flags & ApplicationInfo.FLAG_SYSTEM)+"??")
+                        .collect(Collectors.toList());
+                //写入文件
+                //SaveAppListEx("app_list.txt", app_list);
+                List<Map<String, Object>> ai_list = ai_al_c.stream().map(ai -> {
+                    HashMap<String, Object> app_info = new HashMap<>();
+                    try {
+                        PackageInfo pi = fragment.pm.getPackageInfo(ai.packageName, 0);
+                        app_info.put("name", fragment.pm.getApplicationLabel(ai) + " v" + pi.versionName + "(" + pi.versionCode + ")");
+                        app_info.put("pkg", ai.packageName);
+                        app_info.put("icon", fragment.pm.getApplicationIcon(ai));
+                    } catch (PackageManager.NameNotFoundException e1) {
+                        e1.printStackTrace();
+                    }
+                    return app_info;
+                }).collect(Collectors.toList());
+                return ai_list.size() > 0 ? ai_list : null;
+            }
+            return null;
         }
-        handler.sendMessage(msg);
+
+        @Override
+        protected void onPreExecute() {
+            Activity activity = frag.get().getActivity();
+            if (activity != null) {
+                TextView tv = activity.findViewById(R.id.applist_frgtxt);
+                ListView lv = activity.findViewById(R.id.applist_frg_lv);
+                ImageView im = activity.findViewById(R.id.applist_loading_bfg);
+                tv.setText("");
+                lv.setAdapter(null);
+                im.setVisibility(View.VISIBLE);
+                im.startAnimation(AnimationUtils.loadAnimation(activity, R.anim.load_rotate));
+            }
+        }
+
+        @SuppressLint("SetTextI18n")
+        @Override
+        protected void onPostExecute(List<Map<String, Object>> mapList) {
+            Activity activity = frag.get().getActivity();
+            if (activity != null) {
+                ImageView im = activity.findViewById(R.id.applist_loading_bfg);
+                TextView tv = activity.findViewById(R.id.applist_frgtxt);
+                im.clearAnimation();
+                im.setVisibility(View.GONE);
+                if (mapList != null) {
+                    ListView lv = activity.findViewById(R.id.applist_frg_lv);
+                    lv.setAdapter(new AppLvAdapter(activity, R.layout.listview_applist, mapList));
+                } else {
+                    tv.setText("NULL");
+                }
+            }
+        }
     }
 
     /**
@@ -290,7 +287,9 @@ public class ApplistFragment extends Fragment {
      */
     interface OnFrgActionListener {
         void onItemClick(View view);
+
         void onItemLongClick(View view);
+
         void onListScroll(boolean flg);
     }
 }

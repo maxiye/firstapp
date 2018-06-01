@@ -30,6 +30,7 @@
     </style>
     <!-- ActionBar 样式 -->
     <style name="MyActionStyle" parent="Widget.AppCompat.Light.ActionBar.Solid.Inverse">
+        <item name="android:windowActionBarOverlay">true</item>
         <item name="android:background">@color/myPrimaryColor</item>
         <item name="android:titleTextStyle">@style/MyActionTitleStyle</item>
         <!-- 支持库兼容 -->
