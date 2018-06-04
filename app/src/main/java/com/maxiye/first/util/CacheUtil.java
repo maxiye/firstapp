@@ -4,10 +4,12 @@ package com.maxiye.first.util;
   数据库助手
   Created by due on 2018/5/3.
  */
-import java.io.File;
-import java.math.BigDecimal;
 import android.content.Context;
 import android.os.Environment;
+
+import java.io.File;
+import java.math.BigDecimal;
+import java.util.Arrays;
 
 /**
  * 清除缓存
@@ -127,23 +129,56 @@ public class CacheUtil {
                 + "TB";
     }
 
-    public static double getSize(Context context, String unit) {
+    private static double getSize(Context context, String unit) {
         long cacheSize = getFolderSize(context.getCacheDir());
         if (Environment.getExternalStorageState().equals(
                 Environment.MEDIA_MOUNTED)) {
             cacheSize += getFolderSize(context.getExternalCacheDir());
         }
+        if (unit == null) return cacheSize;
         double kiloByte = cacheSize / 1024;
         if (unit.equals(UNIT_KB)) return fix2(kiloByte);
         double megaByte = kiloByte / 1024;
         if (unit.equals(UNIT_MB)) return fix2(megaByte);
         double gigaByte = megaByte / 1024;
-        if (unit.equals(UNIT_KB)) return fix2(gigaByte);
+        if (unit.equals(UNIT_GB)) return fix2(gigaByte);
         return fix2(megaByte);
     }
 
     private static double fix2(double size) {
         BigDecimal result = new BigDecimal(size);
         return result.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+    }
+
+    /**
+     * 清除部分缓存
+     * @param directory File
+     * @param size total size
+     */
+    private static void clearOld(File directory, double size) {
+        File[] fileList = directory.listFiles(File::isFile);
+        if (fileList == null) return;
+        Arrays.sort(fileList, (f1, f2) -> {
+            long diff = f1.lastModified() - f2.lastModified();
+            if (diff > 0)
+                return 1;
+            else if (diff == 0)
+                return 0;
+            else
+                return -1;//如果 if 中修改为 返回-1 同时此处修改为返回 1  排序就会是递减
+        });
+        for (File f : fileList) {
+            if (size > 0 && f.delete()) {
+                size -= fileList[0].length();
+            } else {
+                break;
+            }
+        }
+    }
+
+    public static void checkClear(Context context) {
+        double cacheSizeMB = CacheUtil.getSize(context, null);
+        if (cacheSizeMB > 400 * 1024 * 1024)
+            CacheUtil.clearOld(context.getCacheDir(), cacheSizeMB - 200 * 1024 * 1024);
     }
 }

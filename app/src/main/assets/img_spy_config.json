@@ -145,6 +145,30 @@
         "reg": "<title>([^-]+)-多玩图库</title>",
         "title_idx": 1
       }
+    },
+    "duowan2": {
+      "web_root": "http://tu.duowan.cn",
+      "spy_root": "http://tu.duowan.cn",
+      "spy_img_web_root": "http://tu.duowan.cn",
+      "icon": "http://tu.duowan.com/favicon.ico",
+      "local_icon": "duowan.ico",
+      "img_web_reg": {
+        "reg": "<a href=\"(http://[^\"]+/([0-9]+)\\.html)\"[^\u4e00-\u9fa5]+<span class=\"ui-picContentItem__title\">(吐槽囧图集\\S+)\\s+",
+        "art_id_idx": 2,
+        "title_idx": 3
+      },
+      "img_web": "http://tu.duowan.cn/gallery/%1$d.html",
+      "img_web_2nd": "http://www.duowan.com/s/404/404.html",
+      "img_reg": {
+        "reg": "\"title\":\"([^\"]+)\".*?\"source\":\"([^\"]+(\\.(jpg|jpeg|png|bmp)))\".*?\"add_intro\":\"([^\"]+)\"",
+        "img_url_idx": 2,
+        "img_ext_idx": 3,
+        "img_title_idx": 5
+      },
+      "title_reg": {
+        "reg": "<title>([^-]+)-多玩图库</title>",
+        "title_idx": 1
+      }
     }
     /*"3bnbn": {
       "web_root": "http://3bnbn.net/art/Zpic/",

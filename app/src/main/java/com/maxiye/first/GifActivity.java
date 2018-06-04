@@ -57,6 +57,7 @@ import com.maxiye.first.util.DBHelper;
 import com.maxiye.first.util.PermissionUtil;
 import com.maxiye.first.util.Util;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -151,7 +152,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     .readTimeout(8, TimeUnit.SECONDS)
                     .build();
         }
-        threadPoolExecutor = new ThreadPoolExecutor(3, 7, 60, TimeUnit.SECONDS, new SynchronousQueue<>(), (r, executor) -> executor.shutdown());
+        threadPoolExecutor = new ThreadPoolExecutor(3, 7, 30, TimeUnit.SECONDS, new SynchronousQueue<>(), (r, executor) -> executor.shutdown());
         initPage();
         Log.w("end", "onCreateOver");
     }
@@ -194,7 +195,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (CacheUtil.getSize(this, CacheUtil.UNIT_MB) > 400) CacheUtil.clearAllCache(this);
+        CacheUtil.checkClear(this);
         db.close();
         okHttpClient.dispatcher().cancelAll();
         okHttpClient = null;
@@ -269,8 +270,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             mViewPager.setCurrentItem(Integer.parseInt(itemIdxStr) - 1, true);
             if (endFlg) checkPageEnd();
         });
-        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, "取消", (dialog1, which) -> {
-        });
+        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, "取消", (dialog1, which) -> {});
         dialog.show();
         if (dialog.getWindow() != null)
             dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
@@ -772,7 +772,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                                     raf.write(bytes);
                                     raf.close();
                                 }
-                                Drawable gifFromStream = type.equals("gif") ? new GifDrawable(bytes) : BitmapDrawable.createFromPath(cacheGif.getAbsolutePath());
+                                Drawable gifFromStream = type.equals("gif") ? new GifDrawable(bytes) : BitmapDrawable.createFromStream(new ByteArrayInputStream(bytes), null);
                                 send(MSG_TYPE_LOAD, nowPos, 0, gifFromStream);
                             } catch (Exception e) {
                                 if (cacheGif.delete()) Log.d("cacheDel", "cacheGif deleted");
@@ -821,7 +821,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     System.out.println(mt.group(urlIdx));
                     System.out.println(ext);
                     String gifUrl;
-                    if (webName.equals("duowan")) {
+                    if (webName.contains("duowan")) {
                         name = Util.unicode2Chinese(name);
                         gifUrl = mt.group(urlIdx).replace("\\", "");
                     } else {
