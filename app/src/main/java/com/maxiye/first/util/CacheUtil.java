@@ -168,8 +168,9 @@ public class CacheUtil {
                 return -1;//如果 if 中修改为 返回-1 同时此处修改为返回 1  排序就会是递减
         });
         for (File f : fileList) {
+            long fLength = f.length();
             if (size > 0 && f.delete()) {
-                size -= fileList[0].length();
+                size -= fLength;
             } else {
                 break;
             }
@@ -177,8 +178,8 @@ public class CacheUtil {
     }
 
     public static void checkClear(Context context) {
-        double cacheSizeMB = CacheUtil.getSize(context, null);
-        if (cacheSizeMB > 400 * 1024 * 1024)
-            CacheUtil.clearOld(context.getCacheDir(), cacheSizeMB - 200 * 1024 * 1024);
+        double cacheSize = CacheUtil.getSize(context, null);
+        if (cacheSize > 400 * 1024 * 1024)
+            CacheUtil.clearOld(context.getCacheDir(), cacheSize - 250 * 1024 * 1024);
     }
 }

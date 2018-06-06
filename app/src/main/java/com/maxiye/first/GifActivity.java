@@ -510,6 +510,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             type = (String) typeList.get(position).get("name");
             Log.w("typeListRvClick", type);
             webCfg = getWebCfg(webName);
+            if (webCfg == null) webCfg = getWebCfg("gamersky");
             getNewFlg = true;
             initPage();
             popupWindow.dismiss();
@@ -691,7 +692,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                                 throw new Exception("create file error");
                             }
                         }
-                        File cacheGif = new File(activity.getCacheDir(), artId + "-" + getGifOffset(downloadPosition) + gifInfo[2]);
+                        File cacheGif = new File(activity.getCacheDir(), webName + "_" + artId + "-" + getGifOffset(downloadPosition) + gifInfo[2]);
                         if (!cacheGif.exists())
                             throw new Exception("未发现缓存文件");
                         if (Build.VERSION.SDK_INT > 26) {
@@ -731,7 +732,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             String[] gifInfo = getGifInfo(startOffset);
             if (gifInfo == null)
                 return;
-            File cacheGif = new File(activity.getCacheDir(), artId + "-" + startOffset + gifInfo[2]);
+            File cacheGif = new File(activity.getCacheDir(), webName + "_" + artId + "-" + startOffset + gifInfo[2]);
             try {
                 send(MSG_TYPE_PRE, nowPos, 0, gifInfo[1]);
                 if (cacheGif.exists()) {
@@ -1039,7 +1040,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     tv.setText((String) msg.obj);
                     int startOffset = fragment.getGifOffset(msg.arg1);
                     String ext = fragment.getGifInfo(startOffset)[2];
-                    if (!(new File(context.getCacheDir(), artId + "-" + startOffset + ext).exists())) {
+                    if (!(new File(context.getCacheDir(), webName + "_" + artId + "-" + startOffset + ext).exists())) {
                         GifImageView iv1 = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + msg.arg1, "id", context.getPackageName()));
                         iv1.setImageDrawable(context.getDrawable(R.drawable.ic_autorenew_black_24dp));
                         iv1.setMinimumHeight(90);
