@@ -24,7 +24,7 @@ import java.nio.file.Files;
 
 public class DBHelper extends SQLiteOpenHelper {
     public final static String DB_NAME = "first.db";
-    private final static int DB_VERSION = 3;
+    private final static int DB_VERSION = 4;
     public final static String TB_BOOK = "book";
     public final static String TB_IMG_WEB = "img_web";
     public final static String TB_IMG_WEB_ITEM = "img_web_item";
@@ -34,7 +34,7 @@ public class DBHelper extends SQLiteOpenHelper {
             + "price real, "
             + "pages integer, "
             + "name text)";
-    private final static String CREATE_GIF_WEB = "create table " + TB_IMG_WEB + "("
+    private final static String CREATE_IMG_WEB = "create table " + TB_IMG_WEB + "("
             + "id integer primary key autoincrement,"
             + "web_name text, "
             + "type text, "//gif|bitmap
@@ -42,10 +42,10 @@ public class DBHelper extends SQLiteOpenHelper {
             + "web_url text, "
             + "title text, "
             + "pages integer, "
-            + "time text);"
-            + "CREATE INDEX idx_art_id on " + TB_IMG_WEB
-            + " (art_id);";
-    private final static String CREATE_GIF_WEB_ITEM = "create table " + TB_IMG_WEB_ITEM + "("
+            + "time text)";
+    //索引名不能相同
+    private final static String INDEX_IMG_WEB = "CREATE INDEX IF NOT EXISTS web_idx_art_id on " + TB_IMG_WEB + " (art_id, web_name)";
+    private final static String CREATE_IMG_WEB_ITEM = "create table " + TB_IMG_WEB_ITEM + "("
             + "id integer primary key autoincrement,"
             + "web_name text, "
             + "type text, "
@@ -53,9 +53,8 @@ public class DBHelper extends SQLiteOpenHelper {
             + "page integer , "
             + "title text, "
             + "url text, "
-            + "ext text);"//gif|jpg|jpeg|bmp|png
-            + "CREATE INDEX idx_art_id on " + TB_IMG_WEB_ITEM
-            + " (art_id);";
+            + "ext text)";//gif|jpg|jpeg|bmp|png
+    private final static String INDEX_IMG_WEB_ITEM = "CREATE INDEX IF NOT EXISTS web_item_idx_art_id on " + TB_IMG_WEB_ITEM + " (art_id, web_name)";
     private static final String DROP_BOOK = "DROP TABLE IF EXISTS " + TB_BOOK;
     private static final String DROP_IMG_WEB = "DROP TABLE IF EXISTS " + TB_IMG_WEB;
     private static final String DROP_IMG_WEB_ITEM = "DROP TABLE IF EXISTS " + TB_IMG_WEB_ITEM;
@@ -69,8 +68,10 @@ public class DBHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {//只要没.db文件时才执行
         db.execSQL(CREATE_BOOK);
-        db.execSQL(CREATE_GIF_WEB);
-        db.execSQL(CREATE_GIF_WEB_ITEM);
+        db.execSQL(CREATE_IMG_WEB);
+        db.execSQL(INDEX_IMG_WEB);
+        db.execSQL(CREATE_IMG_WEB_ITEM);
+        db.execSQL(INDEX_IMG_WEB_ITEM);
         Toast.makeText(mCont, "Create succeeded", Toast.LENGTH_SHORT).show();
     }
 
@@ -78,6 +79,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         if (oldVersion == 1) update1to2(db);
         if (oldVersion == 2) update2to3(db);
+        if (oldVersion == 3) update3to4(db);
         Toast.makeText(mCont, "Update succeeded", Toast.LENGTH_SHORT).show();
     }
 
@@ -129,6 +131,10 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL("UPDATE img_web_item SET ext = '.gif' WHERE art_id > 0;");
     }
 
+    private void update3to4(@NonNull SQLiteDatabase db) {
+        db.execSQL(INDEX_IMG_WEB);
+        db.execSQL(INDEX_IMG_WEB_ITEM);
+    }
     public static void backup(TestActivity activity) {
         File db = activity.getDatabasePath(DB_NAME);
         File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
