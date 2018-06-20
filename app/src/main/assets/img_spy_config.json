@@ -14,7 +14,7 @@
       "img_web": "http://wap.gamersky.com/news/Content-%1$d.html",
       "img_web_2nd": "http://wap.gamersky.com/news/Content-%1$d_%2$d.html",
       "img_reg": {
-        "reg": "src=\"(http://[^\"]+(\\.gif))\"[^>]*?>.*?(<br>\\n([^<]+))?(</p>|<br>)",
+        "reg": "src=\"([^\"]+(\\.gif))\"[^>]*?>.*?(<br>\\n([^<]+))?(</p>|<br>)",
         "img_url_idx": 1,
         "img_ext_idx": 2,
         "img_title_idx": 4
@@ -38,7 +38,7 @@
       "img_web": "http://m.yxdown.com/news/%1$d.html",
       "img_web_2nd": "http://m.yxdown.com/news/%1$d_%2$d.html",
       "img_reg": {
-        "reg": "<img src=\"(http://[^\"]+(\\.gif))\" />.*?[\r\n]+(<p[^>]+><span[^>]+>([^<]+)</span>)?",
+        "reg": "<img src=\"([^\"]+(\\.gif))\" />.*?[\r\n]+(<p[^>]+><span[^>]+>([^<]+)</span>)?",
         "img_url_idx": 1,
         "img_ext_idx": 2,
         "img_title_idx": 4
@@ -55,7 +55,7 @@
       "icon": "http://tu.duowan.com/favicon.ico",
       "local_icon": "duowan.ico",
       "img_web_reg": {
-        "reg": "<a href=\"(http://[^\"]+/([0-9]+)\\.html)\"[^\u4e00-\u9fa5]+<span class=\"ui-picContentItem__title\">(全球搞笑GIF图\\S+)\\s+",
+        "reg": "<a href=\"([^\"]+/([0-9]+)\\.html)\"[^\u4e00-\u9fa5]+<span class=\"ui-picContentItem__title\">(全球搞笑GIF图\\S+)\\s+",
         "art_id_idx": 2,
         "title_idx": 3
       },
@@ -88,7 +88,7 @@
       "img_web": "http://wap.gamersky.com/news/Content-%1$d.html",
       "img_web_2nd": "http://wap.gamersky.com/news/Content-%1$d_%2$d.html",
       "img_reg": {
-        "reg": "src=\"(http://[^\"]+(\\.(jpg|jpeg|png|bmp)))\"[^>]*?>[^\r\n]*([\r\n]+(<span[^>]+>)?([^<]+))?(?=[\\s\\S]*?<div class=\"gs_bot_author\">)",
+        "reg": "src=\"([^\"]+(\\.(jpg|jpeg|png|bmp)))\"[^>]*?>[^\r\n]*([\r\n]+(<span[^>]+>)?([^<]+))?(?=[\\s\\S]*?<div class=\"gs_bot_author\">)",
         "img_url_idx": 1,
         "img_ext_idx": 2,
         "img_title_idx": 6
@@ -112,7 +112,7 @@
       "img_web": "http://m.yxdown.com/news/%1$d.html",
       "img_web_2nd": "http://m.yxdown.com/news/%1$d_%2$d.html",
       "img_reg": {
-        "reg": "<img src=\"(http://[^\"]+(\\.(jpg|jpeg|png|bmp)))\" />.*?[\r\n]+(<p[^>]+>(<span[^>]+>)?([^<\\s]+)</)?",
+        "reg": "<img src=\"([^\"]+(\\.(jpg|jpeg|png|bmp)))\" />.*?[\r\n]+(<p[^>]+>(<span[^>]+>)?([^<\\s]+)</)?",
         "img_url_idx": 1,
         "img_ext_idx": 2,
         "img_title_idx": 6
@@ -129,7 +129,7 @@
       "icon": "http://tu.duowan.com/favicon.ico",
       "local_icon": "duowan.ico",
       "img_web_reg": {
-        "reg": "<a href=\"(http://[^\"]+/([0-9]+)\\.html)\"[^\u4e00-\u9fa5]+<span class=\"ui-picContentItem__title\">((今日囧图|吐槽囧图集)\\S+)\\s+",
+        "reg": "<a href=\"([^\"]+/([0-9]+)\\.html)\"[^\u4e00-\u9fa5]+<span class=\"ui-picContentItem__title\">((今日囧图|吐槽囧图集)\\S+)\\s+",
         "art_id_idx": 2,
         "title_idx": 3
       },

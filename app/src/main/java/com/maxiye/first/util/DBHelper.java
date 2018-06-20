@@ -2,19 +2,28 @@ package com.maxiye.first.util;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Build;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.Toast;
+
+import com.maxiye.first.TestActivity;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 
 /**数据库助手
  * Created by Administrator on 2017-05-25.
  */
 
 public class DBHelper extends SQLiteOpenHelper {
-    private final static String DB_NAME = "first.db";
+    public final static String DB_NAME = "first.db";
     private final static int DB_VERSION = 3;
     public final static String TB_BOOK = "book";
     public final static String TB_IMG_WEB = "img_web";
@@ -118,5 +127,31 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL("ALTER TABLE img_web_item ADD COLUMN ext text;");
         db.execSQL("UPDATE img_web_item SET type = 'gif' WHERE art_id > 0;");
         db.execSQL("UPDATE img_web_item SET ext = '.gif' WHERE art_id > 0;");
+    }
+
+    public static void backup(TestActivity activity) {
+        File db = activity.getDatabasePath(DB_NAME);
+        File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        int i = 0;File bak;
+        do {
+            String fileName = DB_NAME + ".bak" + (i > 0 ? "_" + i : "");
+            i++;
+            bak = new File(downloadDir, fileName);
+        } while (bak.exists());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                Files.copy(db.toPath(), bak.toPath());
+                activity.alert("Success：" + bak.getPath());
+            } catch (IOException e) {
+                e.printStackTrace();
+                activity.alert("Error：" + e.getLocalizedMessage());
+            }
+        }
+    }
+
+    public static void restore(TestActivity activity) {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*");
+        activity.startActivityForResult(Intent.createChooser(intent,"选择备份文件"), TestActivity.INTENT_PICK_DB_BAK_REQCODE);
     }
 }

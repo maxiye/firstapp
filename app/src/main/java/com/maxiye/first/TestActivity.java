@@ -20,6 +20,7 @@ import android.net.Uri;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcEvent;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.provider.ContactsContract;
@@ -29,7 +30,6 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -42,10 +42,14 @@ import android.widget.Toast;
 
 import com.maxiye.first.util.DBHelper;
 import com.maxiye.first.util.PermissionUtil;
+import com.maxiye.first.util.Util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -55,6 +59,7 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     private final int INTENT_IMG_VIEW_REQCODE = 101;
     private final int INTENT_IMG_PICK_REQCODE = 102;
     private final int INTENT_IMG_CAPTURE_REQCODE = 103;
+    public static final int INTENT_PICK_DB_BAK_REQCODE = 104;
 
     private final Uri[] mFileUris = new Uri[10];
 
@@ -167,6 +172,22 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                     ll.addView(im);
                     toast.show();
                 }
+                break;
+            case INTENT_PICK_DB_BAK_REQCODE:
+                if (resCode == RESULT_OK) {
+                    Uri bak = data.getData();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        try {
+                            assert bak != null;//raw:/storage/emulated/0/Download/xxx.db.bak
+                            Files.copy(Paths.get(bak.getLastPathSegment().substring(4)), getDatabasePath(DBHelper.DB_NAME).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                            alert("Success");
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            alert("Error：" + e.getMessage());
+                        }
+                    }
+                }
+                break;
         }
     }
 
@@ -175,13 +196,13 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
      *
      * @param msg 消息
      */
-    private void alert(String msg) {
+    public void alert(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
     public void sentIntent(View view) {
         PopupMenu pMenu = new PopupMenu(this, view);
-        pMenu.getMenuInflater().inflate(R.menu.test_activity_popupmenu, pMenu.getMenu());
+        pMenu.getMenuInflater().inflate(R.menu.test_activity_intent_popupmenu, pMenu.getMenu());
         pMenu.setOnMenuItemClickListener(this);
         pMenu.show();
     }
@@ -252,7 +273,7 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         itt.putExtra(Intent.EXTRA_STREAM, baos.toByteArray());
         startActivity(itt);*/
         //分享文件
-        if (ApplistFragment.isExternalStorageReadable()) {
+        if (Util.isExternalStorageReadable()) {
             File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "1.jpg");
             try {
                 Uri fileUri = FileProvider.getUriForFile(this, "com.maxiye.first.fileprovider", file);
@@ -423,6 +444,27 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         startActivity(getGifInt);
     }
 
+    public void showDbPopup(View view) {
+        PopupMenu pMenu = new PopupMenu(this, view);
+        pMenu.getMenuInflater().inflate(R.menu.test_activity_db_popupmenu, pMenu.getMenu());
+        pMenu.setOnMenuItemClickListener(item -> {
+            int item_id = item.getItemId();
+            switch (item_id) {
+                case R.id.create_db:
+                    createDB(view);
+                    break;
+                case R.id.backup_db:
+                    DBHelper.backup(this);
+                    break;
+                case R.id.restore_db:
+                    DBHelper.restore(this);
+                    break;
+            }
+            return false;
+        });
+        pMenu.show();
+    }
+
     private class FileUrisCallBack implements NfcAdapter.CreateBeamUrisCallback {
 
         @Override
@@ -454,13 +496,11 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 File img_f;
                 try {
                     img_f = createTempFile();
-                } catch (IOException e) {
-                    img_f = null;
-                }
-                if (img_f != null) {
                     cap.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(this, "com.maxiye.first.fileprovider", img_f));
+                    startActivityForResult(cap, INTENT_IMG_CAPTURE_REQCODE);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                startActivityForResult(cap, INTENT_IMG_CAPTURE_REQCODE);
             }
         });
     }

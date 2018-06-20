@@ -39,4 +39,7 @@
     <string name="page">Page</string>
     <string name="switch_type">Switch Type</string>
     <string name="show_system_apps">Show all applications,including system applications</string>
+    <string name="db_action">DB Action</string>
+    <string name="backup_db">Backup DB</string>
+    <string name="restore_db">Restore DB</string>
 </resources>

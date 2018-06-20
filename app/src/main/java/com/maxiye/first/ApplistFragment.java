@@ -23,6 +23,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.maxiye.first.part.AppLvAdapter;
+import com.maxiye.first.util.Util;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -220,19 +221,6 @@ public class ApplistFragment extends Fragment {
         }
     }
 
-    /* Checks if external storage is available for read and write */
-    private static boolean isExternalStorageWritable() {
-        String state = Environment.getExternalStorageState();
-        return Environment.MEDIA_MOUNTED.equals(state);
-    }
-
-    /* Checks if external storage is available to at least read */
-    public static boolean isExternalStorageReadable() {
-        String state = Environment.getExternalStorageState();
-        return Environment.MEDIA_MOUNTED.equals(state) ||
-                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state);
-    }
-
     /**
      * 保存applist到外部存储
      *
@@ -241,7 +229,7 @@ public class ApplistFragment extends Fragment {
      */
     @SuppressWarnings("unused")
     private void SaveAppListEx(String fname, String content) {
-        if (isExternalStorageWritable()) {
+        if (Util.isExternalStorageWritable()) {
             File file = new File(getActivity().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fname);
             try {
                 if (!file.exists() && !file.createNewFile()) {

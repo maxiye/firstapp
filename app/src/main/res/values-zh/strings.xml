@@ -40,4 +40,7 @@
     <string name="page">页码</string>
     <string name="switch_type">更改类型</string>
     <string name="show_system_apps">显示所有的应用，包括系统应用</string>
+    <string name="db_action">DB操作</string>
+    <string name="backup_db">备份数据库</string>
+    <string name="restore_db">恢复数据库</string>
 </resources>

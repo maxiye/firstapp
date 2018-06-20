@@ -16,8 +16,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:onClick="createDB"
-            android:text="@string/create_db"/>
+            android:onClick="showDbPopup"
+            android:text="@string/db_action"/>
 
         <Button
             style="@style/MyButtonStyle"

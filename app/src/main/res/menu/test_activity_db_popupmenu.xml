@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:id="@+id/create_db" android:title="@string/create_db"/>
+    <item android:id="@+id/backup_db" android:title="@string/backup_db"/>
+    <item android:id="@+id/restore_db" android:title="@string/restore_db"/>
+</menu>
