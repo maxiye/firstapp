@@ -1,5 +1,6 @@
 package com.maxiye.first.util;
 
+import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -12,6 +13,7 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.maxiye.first.SettingActivity;
 import com.maxiye.first.TestActivity;
 
 import java.io.File;
@@ -135,7 +137,7 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL(INDEX_IMG_WEB);
         db.execSQL(INDEX_IMG_WEB_ITEM);
     }
-    public static void backup(TestActivity activity) {
+    public static void backup(Activity activity) {
         File db = activity.getDatabasePath(DB_NAME);
         File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         int i = 0;File bak;
@@ -147,10 +149,11 @@ public class DBHelper extends SQLiteOpenHelper {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
                 Files.copy(db.toPath(), bak.toPath());
-                activity.alert("Success：" + bak.getPath());
+                Toast.makeText(activity, "Success：" + bak.getPath(), Toast.LENGTH_SHORT).show();
+                activity.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE).edit().putLong(SettingActivity.BACKUP_TIME, System.currentTimeMillis()).apply();
             } catch (IOException e) {
                 e.printStackTrace();
-                activity.alert("Error：" + e.getLocalizedMessage());
+                Toast.makeText(activity, "Error：" + e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -159,5 +162,12 @@ public class DBHelper extends SQLiteOpenHelper {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*");
         activity.startActivityForResult(Intent.createChooser(intent,"选择备份文件"), TestActivity.INTENT_PICK_DB_BAK_REQCODE);
+    }
+
+    public static void checkBakup(Activity activity) {
+        long lastBackupTime = activity.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE).getLong(SettingActivity.BACKUP_TIME, 0);
+        if (System.currentTimeMillis() - lastBackupTime > 86400 * 5 * 1000) {
+            backup(activity);
+        }
     }
 }

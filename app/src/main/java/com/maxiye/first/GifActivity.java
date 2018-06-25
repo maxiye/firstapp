@@ -426,7 +426,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             popupWindow.dismiss();
         });
         ma.setOnItemLongClickListener(position -> {
-            PopupMenu pMenu = new PopupMenu(this, rv.getChildAt(position));
+            PopupMenu pMenu = new PopupMenu(this, rv.getLayoutManager().findViewByPosition(position));//使用rv.getChildAt只能获取可见的item，0表示当前屏幕可见第一个item
             pMenu.getMenuInflater().inflate(R.menu.gif_history_popupmenu, pMenu.getMenu());
             pMenu.setOnMenuItemClickListener(item1 -> {
                 switch (item1.getItemId()) {

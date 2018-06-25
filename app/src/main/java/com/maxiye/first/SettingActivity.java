@@ -11,6 +11,7 @@ public class SettingActivity extends AppCompatActivity {
     private SharedPreferences sp;
     public final static String SETTING = "com.maxiye.first.SETTING";
     public final static String SHOW_SYSTEM = "show_system_apps";
+    public final static String BACKUP_TIME = "backup_time";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
