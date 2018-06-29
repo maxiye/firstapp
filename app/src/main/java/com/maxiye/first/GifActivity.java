@@ -1059,7 +1059,10 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                         CircleProgressDrawable circleProgress = (CircleProgressDrawable) iv2.getDrawable();
                         circleProgress.setCurProgress((int) msg.obj);
                     } else {
-                        CircleProgressDrawable circleProgress = new CircleProgressDrawable((int) msg.obj, context.getColor(R.color.actionTitle));
+                        CircleProgressDrawable circleProgress = new CircleProgressDrawable.Builder()
+                                .capacity((int) msg.obj)
+                                .color(context.getColor(R.color.actionTitle))
+                                .build();
                         iv2.clearAnimation();
                         iv2.setImageDrawable(circleProgress);
                     }

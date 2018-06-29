@@ -15,31 +15,80 @@ import android.support.annotation.Nullable;
  * 自定义环形进度条
  * Created by 91287 on 2018/5/27.
  */
+@SuppressWarnings("unused")
 public class CircleProgressDrawable extends Drawable {
     private Paint mPaint;
-    private boolean gradual_flg;
-    private String style;
+    private boolean gradual_flg = true;
+    private String style = STYLE_SHADOW;
     public final static String STYLE_BORDER = "border";
     public final static String STYLE_SHADOW = "shadow";
     public final static String STYLE_NONE = "none";
-    private int maxProgress;
-    private int curProgress;
+    private int maxProgress = 100;
+    private int curProgress = 0;
     private int circleWidth;
-    private int circleColor;
+    private int circleColor = 0xFFF66725;
     private float percent;
     private RectF rectF;
     private int radius;
     private int pX;
     private int pY;
-    public CircleProgressDrawable(int maxProg, int cirColor, String cirStyle, boolean gradual) {
-        maxProgress = maxProg;
-        curProgress = 0;
-        percent = 0;
-        circleColor = cirColor;
-        style = cirStyle;
-        gradual_flg = gradual;
+
+    private CircleProgressDrawable () {
         setBounds(0, 0, 90, 90);
         circleWidth = Math.min(getBounds().width(), getBounds().height()) / 8;
+    }
+    //建造者模式
+    public static class Builder {
+        private final CircleProgressDrawable cpd;
+        public Builder () {
+            cpd = new CircleProgressDrawable();
+        }
+
+        public Builder color(int cirColor) {
+            cpd.circleColor = cirColor;
+            return this;
+        }
+
+        public Builder capacity(int maxProg) {
+            cpd.maxProgress = maxProg;
+            return this;
+        }
+
+        public Builder current(int curProg) {
+            cpd.curProgress = curProg;
+            return this;
+        }
+
+        public Builder gradual(boolean gradual) {
+            cpd.gradual_flg = gradual;
+            return this;
+        }
+
+        /**
+         * 宽度因子，越大越窄
+         * @param divide 宽度因子
+         * @return builder
+         */
+        public Builder width(int divide) {
+            if (divide < 2) {
+                divide = 2;
+            }
+            cpd.circleWidth = Math.min(cpd.getBounds().width(), cpd.getBounds().height()) / divide;
+            return this;
+        }
+
+        public Builder style(String cirStyle) {
+            cpd.style = cirStyle;
+            return this;
+        }
+
+        public CircleProgressDrawable build() {
+            cpd.init();
+            return cpd;
+        }
+    }
+
+    private void init() {
         mPaint = new Paint();
         // 描边
         mPaint.setStyle(Paint.Style.STROKE);
@@ -51,18 +100,7 @@ public class CircleProgressDrawable extends Drawable {
         mPaint.setStrokeWidth(circleWidth);//往外侧增加一半，往内侧增加一半。
         // 设置圆角
         //mPaint.setStrokeCap(Paint.Cap.ROUND);
-        init();
-    }
-
-    public CircleProgressDrawable(int maxProg) {
-        this(maxProg, 0xFFF66725, STYLE_SHADOW, true);
-    }
-
-    public CircleProgressDrawable(int maxProg, int cirColor) {
-        this(maxProg, cirColor, STYLE_SHADOW, true);
-    }
-
-    private void init() {
+        percent = curProgress * 1.0f / maxProgress;
         final Rect bounds = getBounds();
         int width = bounds.width();int height = bounds.height();
         radius = (Math.min(width, height) - circleWidth) / 2;
