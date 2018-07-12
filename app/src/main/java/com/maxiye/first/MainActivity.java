@@ -17,7 +17,9 @@ import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.maxiye.first.util.CacheUtil;
 import com.maxiye.first.util.DBHelper;
+import com.maxiye.first.util.DiskLRUCache;
 
 import java.util.Date;
 
@@ -36,8 +38,6 @@ public class MainActivity extends AppCompatActivity implements ApplistFragment.O
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //检测是否备份数据库
-        DBHelper.checkBakup(this);
         ab = getSupportActionBar();
         assert ab != null;
         frg = new ApplistFragment();
@@ -47,6 +47,14 @@ public class MainActivity extends AppCompatActivity implements ApplistFragment.O
             }
             frg.setArguments(getIntent().getExtras());
             getSupportFragmentManager().beginTransaction().add(R.id.applist_fragment, frg).commit();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (CacheUtil.getSize(this, CacheUtil.UNIT_MB) > 500) {
+            CacheUtil.clearAllCache(this);
         }
     }
 

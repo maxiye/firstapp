@@ -129,7 +129,7 @@ public class CacheUtil {
                 + "TB";
     }
 
-    private static double getSize(Context context, String unit) {
+    public static double getSize(Context context, String unit) {
         long cacheSize = getFolderSize(context.getCacheDir());
         if (Environment.getExternalStorageState().equals(
                 Environment.MEDIA_MOUNTED)) {

@@ -52,8 +52,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.maxiye.first.part.CircleProgressDrawable;
 import com.maxiye.first.part.GifWebRvAdapter;
-import com.maxiye.first.util.CacheUtil;
 import com.maxiye.first.util.DBHelper;
+import com.maxiye.first.util.DiskLRUCache;
 import com.maxiye.first.util.PermissionUtil;
 import com.maxiye.first.util.Util;
 
@@ -87,6 +87,7 @@ import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import pl.droidsonroids.gif.GifDrawable;
 import pl.droidsonroids.gif.GifImageView;
 
@@ -105,17 +106,18 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private static String webName = "gamersky";
     private static String type = "bitmap";
-    private static JsonObject webCfg;
+    private JsonObject webCfg;
     private static boolean getNewFlg = true;
     private static int artId = 1023742;
     private static String title = "动态图";
     private static int webPage = 1;
     private static boolean endFlg = false;
-    private static final ArrayList<String[]> gifList = new ArrayList<>();
+    private final ArrayList<String[]> gifList = new ArrayList<>();
     private final int HISTORY_PAGE_SIZE = 10;
-    private static SQLiteDatabase db;
-    private static OkHttpClient okHttpClient;
-    private static ThreadPoolExecutor threadPoolExecutor;
+    private SQLiteDatabase db;
+    private OkHttpClient okHttpClient;
+    private ThreadPoolExecutor threadPoolExecutor;
+    private DiskLRUCache diskLRUCache;
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -126,16 +128,16 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_get_gif);
-        /*Toolbar toolbar = findViewById(R.id.gif_activity_toolbar);
-        setSupportActionBar(toolbar);*/
         // Create the adapter that will return a fragment
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(), this);
         // Set up the ViewPager with the sections adapter.
         mViewPager = findViewById(R.id.gif_activity_viewpager);
         mViewPager.setAdapter(mSectionsPagerAdapter);
         FloatingActionButton fab = findViewById(R.id.gif_activity_fab);
         fab.setOnClickListener(view -> Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show());
+        //检测是否备份数据库
+        DBHelper.checkBakup(this);
         db = new DBHelper(this).getWritableDatabase();//没有则此时创建数据库,生成.db文件
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
@@ -153,6 +155,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     .build();
         }
         threadPoolExecutor = new ThreadPoolExecutor(3, 7, 30, TimeUnit.SECONDS, new SynchronousQueue<>(), (r, executor) -> executor.shutdown());
+        diskLRUCache = DiskLRUCache.getInstance(this, type);
         initPage();
         Log.w("end", "onCreateOver");
     }
@@ -195,7 +198,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        CacheUtil.checkClear(this);
+        diskLRUCache.serialize();
         db.close();
         okHttpClient.dispatcher().cancelAll();
         okHttpClient = null;
@@ -508,10 +511,12 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         ma.setData(typeList);
         ma.setOnItemClickListener(position -> {
             type = (String) typeList.get(position).get("name");
+            okHttpClient.dispatcher().cancelAll();
             Log.w("typeListRvClick", type);
             webCfg = getWebCfg(webName);
             if (webCfg == null) webCfg = getWebCfg("gamersky");
             getNewFlg = true;
+            diskLRUCache = DiskLRUCache.getInstance(this, type);
             initPage();
             popupWindow.dismiss();
         });
@@ -559,7 +564,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         private static final int MSG_TYPE_EMPTY = 104;
         private static final int MSG_TYPE_OVER = 105;
         private static final int MSG_TYPE_LOADING = 106;
-        private Context activity;
+        private GifActivity activity;
         private OnPFListener mListener;
         private MyHandler myHandler;
 
@@ -579,19 +584,19 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
          * number.
          */
         @SuppressLint("SetTextI18n")
-        static PlaceholderFragment newInstance(int sectionNumber) {
+        static PlaceholderFragment newInstance(int sectionNumber, GifActivity activity) {
             PlaceholderFragment fragment = new PlaceholderFragment();
             Bundle args = new Bundle();
             args.putInt(ARG_SECTION_NUMBER, sectionNumber);
             fragment.setArguments(args);
             fragment.myHandler = new MyHandler(fragment);
+            fragment.activity = activity;
             return fragment;
         }
 
         @Override
         public void onAttach(Context context) {
             super.onAttach(context);
-            activity = context;
             if (context instanceof OnPFListener) {
                 mListener = (OnPFListener) context;
             } else {
@@ -624,15 +629,15 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         @Override
         public void setUserVisibleHint(boolean isVisibleToUser) {
             super.setUserVisibleHint(isVisibleToUser);
-            okHttpClient.dispatcher().cancelAll();
+            activity.okHttpClient.dispatcher().cancelAll();
             if (myHandler != null) myHandler.removeCallbacksAndMessages(null);
             if (isVisibleToUser) {
-                if (threadPoolExecutor.getActiveCount() == threadPoolExecutor.getMaximumPoolSize()) {
-                    threadPoolExecutor.shutdownNow();
+                if (activity.threadPoolExecutor.getActiveCount() == activity.threadPoolExecutor.getMaximumPoolSize()) {
+                    activity.threadPoolExecutor.shutdownNow();
                     Log.w("threadPoolExcutor", "shutdownNow");
                 }
                 if (gifPosition == 1) {
-                    threadPoolExecutor.execute(this::loadGif);
+                    activity.threadPoolExecutor.execute(this::loadGif);
                 }
             }
         }
@@ -658,7 +663,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             listMenu.setAdapter(new ArrayAdapter<>(activity, android.R.layout.simple_list_item_1, new
                     String[]{getString(R.string.download)}));
             DisplayMetrics  dm = new DisplayMetrics();
-            getActivity().getWindowManager().getDefaultDisplay().getMetrics(dm);
+            activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
             listMenu.setAnchorView(view);
             listMenu.setWidth(dm.widthPixels * 2 / 3);
             listMenu.setHorizontalOffset(dm.widthPixels / 6);
@@ -676,9 +681,9 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
 
         private void download() {
             Log.w("download", "download:start");
-            PermissionUtil.req(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PermissionUtil.PER_REQ_STORAGE_WRT, () -> {
+            PermissionUtil.req(activity, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PermissionUtil.PER_REQ_STORAGE_WRT, () -> {
                 Toast.makeText(activity, "开始下载文件...", Toast.LENGTH_SHORT).show();
-                threadPoolExecutor.execute(() -> {
+                activity.threadPoolExecutor.execute(() -> {
                     String[] gifInfo = getGifInfo(getGifOffset(downloadPosition));
                     File gif = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type + "/" + gifInfo[1]);
                     Log.w("download", "download:path:" + gif.getAbsolutePath());
@@ -692,7 +697,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                                 throw new Exception("create file error");
                             }
                         }
-                        File cacheGif = new File(activity.getCacheDir(), webName + "_" + artId + "-" + getGifOffset(downloadPosition) + gifInfo[2]);
+                        File cacheGif = activity.diskLRUCache.get(webName + "_" + artId + "-" + getGifOffset(downloadPosition));
                         if (!cacheGif.exists())
                             throw new Exception("未发现缓存文件");
                         if (Build.VERSION.SDK_INT > 26) {
@@ -732,17 +737,17 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             String[] gifInfo = getGifInfo(startOffset);
             if (gifInfo == null)
                 return;
-            File cacheGif = new File(activity.getCacheDir(), webName + "_" + artId + "-" + startOffset + gifInfo[2]);
+            File cacheGif = activity.diskLRUCache.get(webName + "_" + artId + "-" + startOffset);
             try {
                 send(MSG_TYPE_PRE, nowPos, 0, gifInfo[1]);
-                if (cacheGif.exists()) {
+                if (cacheGif != null) {
                     Log.w("info", "loadGif(fromCache):" + gifInfo[1]);
                     Drawable gifFromStream = type.equals("gif") ? new GifDrawable(cacheGif) : BitmapDrawable.createFromPath(cacheGif.getAbsolutePath());
                     send(MSG_TYPE_LOAD, nowPos, 0, gifFromStream);
                 } else {
                     Log.w("info", "loadGif:" + gifInfo[1]);
                     Request request = new Request.Builder().url(gifInfo[0]).build();
-                    okHttpClient.newCall(request).enqueue(new Callback() {
+                    activity.okHttpClient.newCall(request).enqueue(new Callback() {
                         @Override
                         public void onFailure(@NonNull Call call, @NonNull IOException e) {
                             send(MSG_TYPE_EMPTY, nowPos, 0, "");
@@ -751,13 +756,16 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
 
                         @Override
                         public void onResponse(@NonNull Call call, @NonNull Response response) {
+                            File finalCacheGif = new File(activity.getCacheDir(), webName + "_" + artId + "-" + startOffset + gifInfo[2]);
                             try {
                                 Log.w("info", "loadGif(fromNet):" + gifInfo[1] + ";url:" + gifInfo[0] + ";index:" + request.toString());
-                                int contentLength = (int) response.body().contentLength();
+                                ResponseBody responseBody = response.body();
+                                assert responseBody != null;
+                                int contentLength = (int) responseBody.contentLength();
                                 byte[] bytes;
                                 if (contentLength > 0 && contentLength > 40960 * 2) {
                                     send(MSG_TYPE_LOADING, nowPos, 0, contentLength);
-                                    InputStream is = response.body().byteStream();
+                                    InputStream is = responseBody.byteStream();
                                     bytes = new byte[contentLength];
                                     int len;int sum = 0;int readLen = contentLength > 5 * 1024 * 1024 ? 102400 : 40960;
                                     while ((len = is.read(bytes, sum, readLen)) > 0) {
@@ -766,17 +774,16 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                                         send(MSG_TYPE_LOADING, nowPos, 0, sum);
                                     }
                                 } else {
-                                    bytes = response.body().bytes();
+                                    bytes = responseBody.bytes();
                                 }
-                                if (cacheGif.createNewFile()) {
-                                    RandomAccessFile raf = new RandomAccessFile(cacheGif, "rwd");
-                                    raf.write(bytes);
-                                    raf.close();
-                                }
+                                RandomAccessFile raf = new RandomAccessFile(finalCacheGif, "rwd");
+                                raf.write(bytes);
+                                raf.close();
                                 Drawable gifFromStream = type.equals("gif") ? new GifDrawable(bytes) : BitmapDrawable.createFromStream(new ByteArrayInputStream(bytes), null);
                                 send(MSG_TYPE_LOAD, nowPos, 0, gifFromStream);
+                                activity.diskLRUCache.put(webName + "_" + artId + "-" + startOffset, webName + "_" + artId + "-" + startOffset + gifInfo[2], finalCacheGif.length());
                             } catch (Exception e) {
-                                if (cacheGif.delete()) Log.d("cacheDel", "cacheGif deleted");
+                                if (finalCacheGif.delete()) Log.d("cacheDel", "cacheGif deleted");
                                 send(MSG_TYPE_EMPTY, nowPos, 0, "");
                                 e.printStackTrace();
                             }
@@ -798,17 +805,19 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             }
             if (endFlg) return;
             Log.w("start", "loadGifList(lock):" + webPage);
-            String baseUrl = String.format(webCfg.get("img_web").getAsString(), artId);
-            JsonObject regObj = webCfg.getAsJsonObject("img_reg");
+            String baseUrl = String.format(activity.webCfg.get("img_web").getAsString(), artId);
+            JsonObject regObj = activity.webCfg.getAsJsonObject("img_reg");
             int urlIdx = regObj.get("img_url_idx").getAsInt();
             int extIdx = regObj.get("img_ext_idx").getAsInt();
             int titleIdx = regObj.get("img_title_idx").getAsInt();
             Pattern pt = Pattern.compile(regObj.get("reg").getAsString(), Pattern.CASE_INSENSITIVE);
             try {
-                String url = webPage > 1 ? String.format(webCfg.get("img_web_2nd").getAsString(), artId, webPage) : baseUrl;
+                String url = webPage > 1 ? String.format(activity.webCfg.get("img_web_2nd").getAsString(), artId, webPage) : baseUrl;
                 System.out.println(url);
                 Request req = new Request.Builder().url(url).build();
-                String content = new String(okHttpClient.newCall(req).execute().body().bytes(), "utf-8");
+                ResponseBody responseBody = activity.okHttpClient.newCall(req).execute().body();
+                assert responseBody != null;
+                String content = new String(responseBody.bytes(), "utf-8");
                 Matcher mt = pt.matcher(content);
 //                System.out.print(content);
                 if (!mt.find()) {
@@ -829,10 +838,10 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                         gifUrl = mt.group(urlIdx);
                     }
                     String[] gifInfo = new String[]{gifUrl, name, ext};
-                    gifList.add(gifInfo);
+                    activity.gifList.add(gifInfo);
                     saveDbGifList(DBHelper.TB_IMG_WEB_ITEM, gifInfo);
                 }
-                if (webPage == 1 && gifList.size() > 0) {
+                if (webPage == 1 && activity.gifList.size() > 0) {
                     Log.w("titleGet", title);
                     if (title.equals("动态图")) getNewTitle(content);
                     saveDbGifList(DBHelper.TB_IMG_WEB, new String[]{url, title});
@@ -841,26 +850,28 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             } catch (Exception e) {//java.net.ProtocolException: Too many follow-up requests: 21
                 if (e instanceof ProtocolException) {
                     endFlg = true;
-                    if (gifList.size() > 0) updateDbField(String.valueOf(webPage - 1));
+                    if (activity.gifList.size() > 0) updateDbField(String.valueOf(webPage - 1));
                     send(MSG_TYPE_OVER, "");
                 }
                 e.printStackTrace();
             } finally {
                 Log.w("end", "loadGifList(unlock):end:" + webPage);
-                System.out.println(gifList.toString());
+                System.out.println(activity.gifList.toString());
             }
         }
 
         private void getNewArtId() {
             Log.w("getNewArtId", "获取最新内容...");
-            String url = webCfg.get("spy_root").getAsString();
-            JsonObject regObj = webCfg.getAsJsonObject("img_web_reg");
+            String url = activity.webCfg.get("spy_root").getAsString();
+            JsonObject regObj = activity.webCfg.getAsJsonObject("img_web_reg");
             int artIdIdx = regObj.get("art_id_idx").getAsInt();
             int titleIdx = regObj.get("title_idx").getAsInt();
             Pattern pt = Pattern.compile(regObj.get("reg").getAsString(), Pattern.CASE_INSENSITIVE);
             try {
                 Request req = new Request.Builder().url(url).build();
-                String content = new String(okHttpClient.newCall(req).execute().body().bytes(), "utf-8");
+                ResponseBody responseBody = activity.okHttpClient.newCall(req).execute().body();
+                assert responseBody != null;
+                String content = new String(responseBody.bytes(), "utf-8");
                 Matcher mt = pt.matcher(content);
 //                System.out.println(content);
                 if (mt.find()) {
@@ -879,14 +890,16 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
 
         private void getNewTitle(String content) {
             Log.w("getNewTitle", "获取标题...");
-            JsonObject regObj = webCfg.getAsJsonObject("title_reg");
+            JsonObject regObj = activity.webCfg.getAsJsonObject("title_reg");
             int titleIdx = regObj.get("title_idx").getAsInt();
             Pattern pt = Pattern.compile(regObj.get("reg").getAsString(), Pattern.CASE_INSENSITIVE);
             if (content == null) {
                 content = "";
-                Request req = new Request.Builder().url(String.format(webCfg.get("img_web").getAsString(), artId)).build();
+                Request req = new Request.Builder().url(String.format(activity.webCfg.get("img_web").getAsString(), artId)).build();
                 try {
-                    content = new String(okHttpClient.newCall(req).execute().body().bytes(), "utf-8");
+                    ResponseBody responseBody = activity.okHttpClient.newCall(req).execute().body();
+                    assert responseBody != null;
+                    content = new String(responseBody.bytes(), "utf-8");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -899,13 +912,13 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         }
 
         private boolean loadDbGifList() {
-            Cursor cus = db.query(DBHelper.TB_IMG_WEB, new String[]{"*"}, "art_id = ? and web_name = ?", new String[]{artId + "", webName}, null, null, "id desc", "1");
+            Cursor cus = activity.db.query(DBHelper.TB_IMG_WEB, new String[]{"*"}, "art_id = ? and web_name = ?", new String[]{artId + "", webName}, null, null, "id desc", "1");
             Log.w("db_web", cus.getCount() + "");
             if (cus.getCount() > 0) {
                 cus.moveToFirst();
                 title = cus.getString(cus.getColumnIndex("title"));
                 int totalPage = cus.getInt(cus.getColumnIndex("pages"));
-                Cursor cus2 = db.query(DBHelper.TB_IMG_WEB_ITEM, new String[]{"page,title,url,ext"}, "art_id = ? and web_name = ?", new String[]{artId + "", webName}, null, null, "id asc");
+                Cursor cus2 = activity.db.query(DBHelper.TB_IMG_WEB_ITEM, new String[]{"page,title,url,ext"}, "art_id = ? and web_name = ?", new String[]{artId + "", webName}, null, null, "id asc");
                 int count = cus2.getCount();
                 if (count > 0) {
                     Log.w("db_item", count + "");
@@ -915,7 +928,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                         gifInfo[0] = cus2.getString(cus2.getColumnIndex("url"));
                         gifInfo[1] = cus2.getString(cus2.getColumnIndex("title"));
                         gifInfo[2] = cus2.getString(cus2.getColumnIndex("ext"));
-                        gifList.add(gifInfo);
+                        activity.gifList.add(gifInfo);
                         webPage = cus2.getInt(cus2.getColumnIndex("page"));
                         cus2.moveToNext();
                     }
@@ -934,7 +947,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         private void updateDbField(String val) {
             ContentValues ctv = new ContentValues();
             ctv.put("pages", val);
-            int rows = db.update(DBHelper.TB_IMG_WEB, ctv, "art_id = ? and web_name = ?", new String[]{artId + "",webName});
+            int rows = activity.db.update(DBHelper.TB_IMG_WEB, ctv, "art_id = ? and web_name = ?", new String[]{artId + "",webName});
             Log.w("db_web_update: ", rows + "");
         }
 
@@ -947,7 +960,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 ctv.put("type", type);
                 ctv.put("title", data[1]);
                 ctv.put("time", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()));
-                long newId = db.insert(dbName, null, ctv);
+                long newId = activity.db.insert(dbName, null, ctv);
                 Log.w("db_web_insert: ", newId + "");
             } else {
                 ctv.put("art_id", artId);
@@ -957,32 +970,32 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 ctv.put("title", data[1]);
                 ctv.put("url", data[0]);
                 ctv.put("ext", data[2]);
-                long newId = db.insert(dbName, null, ctv);
+                long newId = activity.db.insert(dbName, null, ctv);
                 Log.w("db_web_item_insert: ", newId + "");
             }
 
         }
 
         String[] getGifInfo(int offset) {
-            Log.w("start", "getGifInfo:" + offset + "-" + webPage + "-" + gifList.size() + "-" + endFlg);
-            if (gifList.size() <= offset) {
+            Log.w("start", "getGifInfo:" + offset + "-" + webPage + "-" + activity.gifList.size() + "-" + endFlg);
+            if (activity.gifList.size() <= offset) {
                 if (endFlg)
                     return null;
                 loadGifList();
                 return getGifInfo(offset);
             } else {
-                return gifList.get(offset);
+                return activity.gifList.get(offset);
             }
         }
 
         void refresh() {
 //            CacheUtil.clearAllCache(activity);
-            okHttpClient.dispatcher().cancelAll();
+            activity.okHttpClient.dispatcher().cancelAll();
             this.gifPosition = 1;
-            if (threadPoolExecutor.getActiveCount() == threadPoolExecutor.getPoolSize()) {
-                threadPoolExecutor.shutdownNow();
+            if (activity.threadPoolExecutor.getActiveCount() == activity.threadPoolExecutor.getPoolSize()) {
+                activity.threadPoolExecutor.shutdownNow();
             }
-            threadPoolExecutor.execute(this::loadGif);
+            activity.threadPoolExecutor.execute(this::loadGif);
         }
     }
 
@@ -992,9 +1005,11 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
      */
     class SectionsPagerAdapter extends FragmentPagerAdapter {
         PlaceholderFragment currentFragment;
+        GifActivity activity;
 
-        SectionsPagerAdapter(FragmentManager fm) {
+        SectionsPagerAdapter(FragmentManager fm, GifActivity activity) {
             super(fm);
+            this.activity = activity;
         }
 
         @Override
@@ -1002,7 +1017,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             Log.w("start", "getItem:" + position);
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
-            return PlaceholderFragment.newInstance(position + 1);
+            return PlaceholderFragment.newInstance(position + 1, activity);
         }
 
         @Override
@@ -1027,7 +1042,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         @Override
         public void handleMessage(Message msg) {
             PlaceholderFragment fragment = mFragment.get();
-            Context context = fragment.activity;
+            GifActivity context = fragment.activity;
             View rootView = fragment.getView();
             if (rootView == null) return;
             TextView textView = rootView.findViewById(R.id.section_label);
@@ -1039,8 +1054,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     TextView tv = rootView.findViewById(fragment.getResources().getIdentifier("gtxt_" + msg.arg1, "id", context.getPackageName()));
                     tv.setText((String) msg.obj);
                     int startOffset = fragment.getGifOffset(msg.arg1);
-                    String ext = fragment.getGifInfo(startOffset)[2];
-                    if (!(new File(context.getCacheDir(), webName + "_" + artId + "-" + startOffset + ext).exists())) {
+                    if (!context.diskLRUCache.containsKey(webName + "_" + artId + "-" + startOffset)) {
                         GifImageView iv1 = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + msg.arg1, "id", context.getPackageName()));
                         iv1.setImageDrawable(context.getDrawable(R.drawable.ic_autorenew_black_24dp));
                         iv1.setMinimumHeight(90);
@@ -1048,7 +1062,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                         iv1.setAnimation(AnimationUtils.loadAnimation(context, R.anim.load_rotate));
                     }
                     if (++fragment.gifPosition < 4) {
-                        threadPoolExecutor.execute(fragment::loadGif);
+                        context.threadPoolExecutor.execute(fragment::loadGif);
                     } else {
                         fragment.gifPosition = 1;
                     }
