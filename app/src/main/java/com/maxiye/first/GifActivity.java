@@ -776,6 +776,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                                     bytes = responseBody.bytes();
                                 }
                                 Drawable gifFromStream = type.equals("gif") ? new GifDrawable(bytes) : BitmapDrawable.createFromStream(new ByteArrayInputStream(bytes), null);
+                                if (gifFromStream == null) throw new Exception("get image err");
                                 send(MSG_TYPE_LOAD, nowPos, 0, gifFromStream);
                                 RandomAccessFile raf = new RandomAccessFile(finalCacheGif, "rwd");
                                 raf.write(bytes);
