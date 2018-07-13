@@ -756,7 +756,6 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
 
                         @Override
                         public void onResponse(@NonNull Call call, @NonNull Response response) {
-                            File finalCacheGif = new File(activity.getCacheDir(), webName + "_" + artId + "-" + startOffset + gifInfo[2]);
                             try {
                                 Log.w("info", "loadGif(fromNet):" + gifInfo[1] + ";url:" + gifInfo[0] + ";index:" + request.toString());
                                 ResponseBody responseBody = response.body();
@@ -776,11 +775,11 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                                 } else {
                                     bytes = responseBody.bytes();
                                 }
+                                Drawable gifFromStream = type.equals("gif") ? new GifDrawable(bytes) : BitmapDrawable.createFromStream(new ByteArrayInputStream(bytes), null);
+                                send(MSG_TYPE_LOAD, nowPos, 0, gifFromStream);
                                 RandomAccessFile raf = new RandomAccessFile(finalCacheGif, "rwd");
                                 raf.write(bytes);
                                 raf.close();
-                                Drawable gifFromStream = type.equals("gif") ? new GifDrawable(bytes) : BitmapDrawable.createFromStream(new ByteArrayInputStream(bytes), null);
-                                send(MSG_TYPE_LOAD, nowPos, 0, gifFromStream);
                                 activity.diskLRUCache.put(webName + "_" + artId + "-" + startOffset, webName + "_" + artId + "-" + startOffset + gifInfo[2], finalCacheGif.length());
                             } catch (Exception e) {
                                 if (finalCacheGif.delete()) Log.d("cacheDel", "cacheGif deleted");
@@ -788,6 +787,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                                 e.printStackTrace();
                             }
                         }
+                        File finalCacheGif = new File(activity.getCacheDir(), webName + "_" + artId + "-" + startOffset + gifInfo[2]);
                     });
                 }
             } catch (Exception e) {
@@ -826,16 +826,12 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 mt.reset();
                 while (mt.find()) {
                     String ext = mt.group(extIdx);
-                    String name = (mt.group(titleIdx) == null ? UUID.randomUUID().toString() : mt.group(titleIdx)) + ext;
-                    System.out.println(name);
-                    System.out.println(mt.group(urlIdx));
-                    System.out.println(ext);
-                    String gifUrl;
+                    String name = getTitle(mt.group(titleIdx)) + ext;
+                    System.out.println("title: " + name + ";url: " + mt.group(urlIdx) + ";ext: " + ext);
+                    String gifUrl = mt.group(urlIdx);
                     if (webName.contains("duowan")) {
                         name = Util.unicode2Chinese(name);
-                        gifUrl = mt.group(urlIdx).replace("\\", "");
-                    } else {
-                        gifUrl = mt.group(urlIdx);
+                        gifUrl = gifUrl.replace("\\", "");
                     }
                     String[] gifInfo = new String[]{gifUrl, name, ext};
                     activity.gifList.add(gifInfo);
@@ -858,6 +854,11 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 Log.w("end", "loadGifList(unlock):end:" + webPage);
                 System.out.println(activity.gifList.toString());
             }
+        }
+
+        private String getTitle(String group) {
+            boolean notNull =  group != null && !group.replaceAll("[\r\n\\s\t]", "").equals("");
+            return notNull ? group : UUID.randomUUID().toString();
         }
 
         private void getNewArtId() {

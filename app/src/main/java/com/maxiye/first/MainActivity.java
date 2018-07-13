@@ -18,8 +18,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.maxiye.first.util.CacheUtil;
-import com.maxiye.first.util.DBHelper;
-import com.maxiye.first.util.DiskLRUCache;
 
 import java.util.Date;
 

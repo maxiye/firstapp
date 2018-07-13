@@ -47,7 +47,7 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
         try {
             JsonObject jsonObject = new Gson().fromJson(new FileReader(diskLru), JsonObject.class);
             for (String key: jsonObject.keySet()) {
-                diskLRUCache.put(key, jsonObject.get(key).getAsString());
+                diskLRUCache._put(key, jsonObject.get(key).getAsString());
             }
             diskLRUCache.now = Integer.parseInt(jsonObject.get("size").getAsString());
             Log.w("DiskLRU:getInstance", "now:" + diskLRUCache.now);
@@ -63,7 +63,7 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
         try {
             put("size", now + "");
             String json = new Gson().toJson(this);
-            remove("size");
+            _remove("size");
             FileWriter fw = new FileWriter(diskLru);
             fw.write(json);
             fw.close();
@@ -82,30 +82,31 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
                 return f;
             } else {
                 super.remove(key);
-                init();
+                clear();
             }
         }
         return null;
     }
 
     public synchronized void put(String key, String value, long fzise) {
-        checkSize();
+        removeEldest();
         now += fzise;
         Log.w("DiskLRU:put", "key:" + key + ";val:" + value + ";size:" + fzise + ";now:" + now);
         super.put(key, value);
     }
 
-    private void checkSize() {
+    private void removeEldest() {
         while (now > capacity) {
             remove(entrySet().iterator().next().getKey());
         }
     }
 
-    private void init() {
-        Log.w("DiskLRU:init", "now:" + now);
+    @Override
+    public void clear() {
+        Log.w("DiskLRU:clear", "now:" + now);
         CacheUtil.clearAllCache(context);
         now = 0;
-        clear();
+        super.clear();
     }
 
     @Override
@@ -120,5 +121,13 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
         }
         Log.w("DiskLRU:remove", "string:" + toString() + "key:" + key + ";now:" + now);
         return val;
+    }
+
+    private void _put(String key, String value) {
+        super.put(key, value);
+    }
+
+    private void _remove(String key) {
+        super.remove(key);
     }
 }
