@@ -65,11 +65,11 @@ public class CircleProgressDrawable extends Drawable {
         }
 
         /**
-         * 宽度因子，越大越窄
-         * @param divide 宽度因子
+         * 细度因子，越大越窄
+         * @param divide 细度因子
          * @return builder
          */
-        public Builder width(int divide) {
+        public Builder thin(int divide) {
             if (divide < 2) {
                 divide = 2;
             }

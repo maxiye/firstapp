@@ -198,10 +198,15 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        diskLRUCache.serialize();
         db.close();
         okHttpClient.dispatcher().cancelAll();
         okHttpClient = null;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        diskLRUCache.serialize();
     }
 
     @Override

@@ -55,7 +55,7 @@
       "icon": "http://tu.duowan.com/favicon.ico",
       "local_icon": "duowan.ico",
       "img_web_reg": {
-        "reg": "<a href=\"([^\"]+/([0-9]+)\\.html)\"[^\u4e00-\u9fa5]+<span class=\"ui-picContentItem__title\">(全球搞笑GIF图\\S+)\\s+",
+        "reg": "<a href=\"([^\"]+/([0-9]+)\\.html)\"[^\u4e00-\u9fa5]+<span class=\"ui-picContentItem__title\">(全球搞笑GIF\\S+)\\s+",
         "art_id_idx": 2,
         "title_idx": 3
       },
@@ -129,7 +129,7 @@
       "icon": "http://tu.duowan.com/favicon.ico",
       "local_icon": "duowan.ico",
       "img_web_reg": {
-        "reg": "<a href=\"([^\"]+/([0-9]+)\\.html)\"[^\u4e00-\u9fa5]+<span class=\"ui-picContentItem__title\">((今日囧图|吐槽囧图集)\\S+)\\s+",
+        "reg": "<a href=\"([^\"]+/([0-9]+)\\.html)\"[^\u4e00-\u9fa5]+<span class=\"ui-picContentItem__title\">((今日囧图|吐槽囧图)\\S+)\\s+",
         "art_id_idx": 2,
         "title_idx": 3
       },
