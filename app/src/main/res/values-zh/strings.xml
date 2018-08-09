@@ -43,4 +43,10 @@
     <string name="db_action">DB操作</string>
     <string name="backup_db">备份数据库</string>
     <string name="restore_db">恢复数据库</string>
+    <string name="gprs_alert">当前处于移动网络，是否继续？</string>
+    <string name="confirm">确认</string>
+    <string name="cancel">取消</string>
+    <string name="gprs_network">当前处于移动网络</string>
+    <string name="no_internet">已进入没有网络的次元，请检查连接！</string>
+    <string name="alert">提示</string>
 </resources>

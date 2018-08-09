@@ -359,11 +359,11 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
         assert am != null;
         if (is_reg_mb) {
-            am.unregisterMediaButtonEventReceiver(new ComponentName(getPackageName(), RemoteControlReceiver.class.getName()));
+            am.unregisterMediaButtonEventReceiver(new ComponentName(getPackageName(), MyReceiver.class.getName()));
             sp_e.putBoolean("ReceiveMediaBtn", false).apply();
             setVolumeControlStream(AudioManager.STREAM_RING);
         } else {
-            am.registerMediaButtonEventReceiver(new ComponentName(getPackageName(), RemoteControlReceiver.class.getName()));
+            am.registerMediaButtonEventReceiver(new ComponentName(getPackageName(), MyReceiver.class.getName()));
             sp_e.putBoolean("ReceiveMediaBtn", true).commit();
             setVolumeControlStream(AudioManager.STREAM_MUSIC);
         }

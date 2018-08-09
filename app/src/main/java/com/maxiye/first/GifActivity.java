@@ -9,6 +9,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.Network;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -54,6 +56,7 @@ import com.maxiye.first.part.CircleProgressDrawable;
 import com.maxiye.first.part.GifWebRvAdapter;
 import com.maxiye.first.util.DBHelper;
 import com.maxiye.first.util.DiskLRUCache;
+import com.maxiye.first.util.NetworkUtil;
 import com.maxiye.first.util.PermissionUtil;
 import com.maxiye.first.util.Util;
 
@@ -107,6 +110,8 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     private static String webName = "gamersky";
     private static String type = "bitmap";
     private JsonObject webCfg;
+    private boolean isGprs = false;//手机网络
+    private boolean gprsContinue = false;//手机网络继续访问
     private static boolean getNewFlg = true;
     private static int artId = 1023742;
     private static String title = "动态图";
@@ -118,6 +123,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     private OkHttpClient okHttpClient;
     private ThreadPoolExecutor threadPoolExecutor;
     private DiskLRUCache diskLRUCache;
+    private NetworkUtil netUtil;
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -201,11 +207,45 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         db.close();
         okHttpClient.dispatcher().cancelAll();
         okHttpClient = null;
+        netUtil.unwatch();
+        netUtil = null;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        isGprs = NetworkUtil.isGprs(this);
+        if (isGprs) {
+            alert(getText(R.string.gprs_network).toString());
+            gprsContinue = false;
+        }
+        if (netUtil == null) {
+            netUtil = new NetworkUtil(this, new ConnectivityManager.NetworkCallback() {
+                @Override
+                public void onAvailable(Network network) {
+                    isGprs = NetworkUtil.isGprs(getApplicationContext());
+                    if (isGprs) {
+                        alert(getText(R.string.gprs_network).toString());
+                        gprsContinue = false;
+                    }
+                    super.onAvailable(network);
+                }
+
+                @Override
+                public void onLost(Network network) {
+                    alert(getText(R.string.no_internet).toString());
+                    super.onLost(network);
+                }
+            });
+        } else {
+            netUtil.watch();
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        netUtil.unwatch();
         diskLRUCache.serialize();
     }
 
@@ -278,7 +318,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             mViewPager.setCurrentItem(Integer.parseInt(itemIdxStr) - 1, true);
             if (endFlg) checkPageEnd();
         });
-        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, "取消", (dialog1, which) -> {});
+        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, getText(R.string.cancel), (dialog1, which) -> {});
         dialog.show();
         if (dialog.getWindow() != null)
             dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
@@ -306,7 +346,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 initPage();
             }
         });
-        dialog2.setButton(AlertDialog.BUTTON_NEGATIVE, "取消", (dialog1, which) -> {});
+        dialog2.setButton(AlertDialog.BUTTON_NEGATIVE, getText(R.string.cancel), (dialog1, which) -> {});
         dialog2.show();
         if (dialog2.getWindow() != null)
             dialog2.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
@@ -341,7 +381,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         //设置反面按钮
         //设置中立按钮
         new AlertDialog.Builder(this)
-                .setTitle("使用浏览器打开")
+                .setTitle(R.string.browser_open)
                 .setIcon(R.drawable.ic_public_orange_60dp)
                 //点击对话框以外的区域是否让对话框消失
                 .setCancelable(true)
@@ -356,7 +396,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     startActivity(new Intent(Intent.ACTION_VIEW, url));
                     dialog.dismiss();
                 })
-                .setNeutralButton("取消", (dialog, which) -> dialog.dismiss())
+                .setNeutralButton(R.string.cancel, (dialog, which) -> dialog.dismiss())
                 .create()
                 .show();
     }
@@ -642,7 +682,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     Log.w("threadPoolExcutor", "shutdownNow");
                 }
                 if (gifPosition == 1) {
-                    activity.threadPoolExecutor.execute(this::loadGif);
+                    checkLoad();
                 }
             }
         }
@@ -735,6 +775,30 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             });
         }
 
+        void checkLoad() {
+            String imgKey = webName + "_" + artId + "-" + getGifOffset(gifPosition);
+            //移动网络禁止 gif
+            if (activity.isGprs && type.equals("gif") && !activity.diskLRUCache.containsKey(imgKey)) {
+                if (!activity.gprsContinue) {
+                    @SuppressLint("InflateParams")
+                    View view = LayoutInflater.from(activity).inflate(R.layout.popup_confirm, null);
+                    PopupWindow popupWindow = new PopupWindow(view, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+                    view.findViewById(R.id.bt_ok).setOnClickListener(v -> {
+                        activity.threadPoolExecutor.execute(this::loadGif);
+                        activity.gprsContinue = true;
+                        popupWindow.dismiss();
+                    });
+                    view.findViewById(R.id.bt_cancel).setOnClickListener(v -> popupWindow.dismiss());
+                    popupWindow.showAtLocation(getView(), Gravity.CENTER,0,0);
+                } else {
+                    activity.threadPoolExecutor.execute(this::loadGif);
+                }
+                activity.alert("正在使用移动网络");
+            } else {
+                activity.threadPoolExecutor.execute(this::loadGif);
+            }
+        }
+
         void loadGif() {
             int nowPos = gifPosition;
             int startOffset = getGifOffset(nowPos);
@@ -742,63 +806,65 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             String[] gifInfo = getGifInfo(startOffset);
             if (gifInfo == null)
                 return;
-            File cacheGif = activity.diskLRUCache.get(webName + "_" + artId + "-" + startOffset);
-            try {
-                send(MSG_TYPE_PRE, nowPos, 0, gifInfo[1]);
-                if (cacheGif != null) {
-                    Log.w("info", "loadGif(fromCache):" + gifInfo[1]);
+            String imgKey = webName + "_" + artId + "-" + startOffset;
+            File cacheGif = activity.diskLRUCache.get(imgKey);
+            send(MSG_TYPE_PRE, nowPos, 0, gifInfo[1]);
+            if (cacheGif != null) {
+                try {
                     Drawable gifFromStream = type.equals("gif") ? new GifDrawable(cacheGif) : BitmapDrawable.createFromPath(cacheGif.getAbsolutePath());
                     send(MSG_TYPE_LOAD, nowPos, 0, gifFromStream);
-                } else {
-                    Log.w("info", "loadGif:" + gifInfo[1]);
-                    Request request = new Request.Builder().url(gifInfo[0]).build();
-                    activity.okHttpClient.newCall(request).enqueue(new Callback() {
-                        @Override
-                        public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                    Log.w("loadGif", "fromCache:" + gifInfo[1]);
+                } catch (IOException e) {
+                    send(MSG_TYPE_EMPTY, nowPos, 0, "");
+                    e.printStackTrace();
+                }
+            } else {
+                Request request = new Request.Builder().url(gifInfo[0]).build();
+                activity.okHttpClient.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                        send(MSG_TYPE_EMPTY, nowPos, 0, "");
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onResponse(@NonNull Call call, @NonNull Response response) {
+                        try {
+                            Log.w("info", "loadGif(fromNet):" + gifInfo[1] + ";url:" + gifInfo[0] + ";index:" + request.toString());
+                            ResponseBody responseBody = response.body();
+                            assert responseBody != null;
+                            int contentLength = (int) responseBody.contentLength();
+                            byte[] bytes;
+                            if (contentLength > 0 && contentLength > 40960 * 2) {
+                                send(MSG_TYPE_LOADING, nowPos, 0, contentLength);
+                                InputStream is = responseBody.byteStream();
+                                bytes = new byte[contentLength];
+                                int len;int sum = 0;int readLen = contentLength > 5 * 1024 * 1024 ? 102400 : 40960;
+                                while ((len = is.read(bytes, sum, readLen)) > 0) {
+                                    sum += len;
+                                    readLen = readLen > bytes.length - sum ? bytes.length - sum : readLen;
+                                    send(MSG_TYPE_LOADING, nowPos, 0, sum);
+                                }
+                            } else {
+                                bytes = responseBody.bytes();
+                            }
+                            Drawable gifFromStream = type.equals("gif") ? new GifDrawable(bytes) : BitmapDrawable.createFromStream(new ByteArrayInputStream(bytes), null);
+                            if (gifFromStream == null) throw new Exception("get image err");
+                            send(MSG_TYPE_LOAD, nowPos, 0, gifFromStream);
+                            RandomAccessFile raf = new RandomAccessFile(finalCacheGif, "rwd");
+                            raf.write(bytes);
+                            raf.close();
+                            activity.diskLRUCache.put(imgKey, imgKey + gifInfo[2], finalCacheGif.length());
+                        } catch (Exception e) {
+                            if (finalCacheGif.delete()) Log.d("cacheDel", "cacheGif deleted");
                             send(MSG_TYPE_EMPTY, nowPos, 0, "");
                             e.printStackTrace();
                         }
-
-                        @Override
-                        public void onResponse(@NonNull Call call, @NonNull Response response) {
-                            try {
-                                Log.w("info", "loadGif(fromNet):" + gifInfo[1] + ";url:" + gifInfo[0] + ";index:" + request.toString());
-                                ResponseBody responseBody = response.body();
-                                assert responseBody != null;
-                                int contentLength = (int) responseBody.contentLength();
-                                byte[] bytes;
-                                if (contentLength > 0 && contentLength > 40960 * 2) {
-                                    send(MSG_TYPE_LOADING, nowPos, 0, contentLength);
-                                    InputStream is = responseBody.byteStream();
-                                    bytes = new byte[contentLength];
-                                    int len;int sum = 0;int readLen = contentLength > 5 * 1024 * 1024 ? 102400 : 40960;
-                                    while ((len = is.read(bytes, sum, readLen)) > 0) {
-                                        sum += len;
-                                        readLen = readLen > bytes.length - sum ? bytes.length - sum : readLen;
-                                        send(MSG_TYPE_LOADING, nowPos, 0, sum);
-                                    }
-                                } else {
-                                    bytes = responseBody.bytes();
-                                }
-                                Drawable gifFromStream = type.equals("gif") ? new GifDrawable(bytes) : BitmapDrawable.createFromStream(new ByteArrayInputStream(bytes), null);
-                                if (gifFromStream == null) throw new Exception("get image err");
-                                send(MSG_TYPE_LOAD, nowPos, 0, gifFromStream);
-                                RandomAccessFile raf = new RandomAccessFile(finalCacheGif, "rwd");
-                                raf.write(bytes);
-                                raf.close();
-                                activity.diskLRUCache.put(webName + "_" + artId + "-" + startOffset, webName + "_" + artId + "-" + startOffset + gifInfo[2], finalCacheGif.length());
-                            } catch (Exception e) {
-                                if (finalCacheGif.delete()) Log.d("cacheDel", "cacheGif deleted");
-                                send(MSG_TYPE_EMPTY, nowPos, 0, "");
-                                e.printStackTrace();
-                            }
-                        }
-                        File finalCacheGif = new File(activity.getCacheDir(), webName + "_" + artId + "-" + startOffset + gifInfo[2]);
-                    });
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
+                    }
+                    File finalCacheGif = new File(activity.getCacheDir(), imgKey + gifInfo[2]);
+                });
             }
+
         }
 
         private synchronized void loadGifList() {
@@ -1002,7 +1068,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             if (activity.threadPoolExecutor.getActiveCount() == activity.threadPoolExecutor.getPoolSize()) {
                 activity.threadPoolExecutor.shutdownNow();
             }
-            activity.threadPoolExecutor.execute(this::loadGif);
+            checkLoad();
         }
     }
 
@@ -1069,7 +1135,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                         iv1.setAnimation(AnimationUtils.loadAnimation(context, R.anim.load_rotate));
                     }
                     if (++fragment.gifPosition < 4) {
-                        context.threadPoolExecutor.execute(fragment::loadGif);
+                        fragment.checkLoad();
                     } else {
                         fragment.gifPosition = 1;
                     }

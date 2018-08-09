@@ -42,4 +42,10 @@
     <string name="db_action">DB Action</string>
     <string name="backup_db">Backup DB</string>
     <string name="restore_db">Restore DB</string>
+    <string name="gprs_alert">GPRS Network ! Continue?</string>
+    <string name="confirm">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="gprs_network">GPRS Network!</string>
+    <string name="no_internet">Failed to Connect the Internet</string>
+    <string name="alert">Alert</string>
 </resources>

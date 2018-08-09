@@ -11,9 +11,10 @@ import android.widget.Toast;
  * Created by Administrator on 2017-06-14.
  */
 
-public class RemoteControlReceiver extends BroadcastReceiver {
+public class MyReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
+        //音频监听
         if (Intent.ACTION_MEDIA_BUTTON.equals(intent.getAction())) {
             KeyEvent event = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
             if (KeyEvent.KEYCODE_MEDIA_PLAY == event.getKeyCode()) {

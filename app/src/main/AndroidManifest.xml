@@ -4,6 +4,7 @@
 
     <uses-sdk android:maxSdkVersion="27"/>
 
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.CALL_PHONE"/>
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
@@ -87,7 +88,7 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".RemoteControlReceiver">
+        <receiver android:name=".MyReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON"/>
             </intent-filter>
@@ -99,14 +100,15 @@
         </activity>
         <activity
             android:name=".GifActivity"
-            android:label="@string/get_gif"
-            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout">
+            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
+            android:label="@string/get_gif">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
     </application>
 
 </manifest>

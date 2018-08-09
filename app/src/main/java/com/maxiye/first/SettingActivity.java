@@ -23,8 +23,8 @@ public class SettingActivity extends AppCompatActivity {
         tv.setTextSize(40);
         tv.setText(msg);
 
-        ViewGroup layout = (ViewGroup) findViewById(R.id.activity_setting);
-        layout.addView(tv);*/
+        ViewGroup popup_confirm = (ViewGroup) findViewById(R.id.activity_setting);
+        popup_confirm.addView(tv);*/
         sp = getSharedPreferences(SETTING, Context.MODE_PRIVATE);
         //初始化设置
         initSetting();
