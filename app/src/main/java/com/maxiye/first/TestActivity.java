@@ -40,6 +40,8 @@ import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
+import com.maxiye.first.api.ExchangeRateActivity;
+import com.maxiye.first.api.WeatherActivity;
 import com.maxiye.first.util.DBHelper;
 import com.maxiye.first.util.PermissionUtil;
 import com.maxiye.first.util.Util;
@@ -458,6 +460,24 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                     break;
                 case R.id.restore_db:
                     DBHelper.restore(this);
+                    break;
+            }
+            return false;
+        });
+        pMenu.show();
+    }
+
+    public void testApi(View view) {
+        PopupMenu pMenu = new PopupMenu(this, view);
+        pMenu.getMenuInflater().inflate(R.menu.test_activity_api_popupmenu, pMenu.getMenu());
+        pMenu.setOnMenuItemClickListener(item -> {
+            int item_id = item.getItemId();
+            switch (item_id) {
+                case R.id.weather_api:
+                    startActivity(new Intent(this, WeatherActivity.class));
+                    break;
+                case R.id.exchange_rate_api:
+                    startActivity(new Intent(this, ExchangeRateActivity.class));
                     break;
             }
             return false;

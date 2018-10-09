@@ -48,4 +48,12 @@
     <string name="gprs_network">GPRS Network!</string>
     <string name="no_internet">Failed to Connect the Internet</string>
     <string name="alert">Alert</string>
+    <string name="free_api">Free Api</string>
+    <string name="weather">Weather</string>
+    <string name="exchange_rate">Exchange Rate</string>
+    <string name="source_currency">Source Currency</string>
+    <string name="target_currency">target_currency</string>
+    <string name="exchange">Exchange</string>
+    <string name="city">City</string>
+    <string name="webview">Webview</string>
 </resources>

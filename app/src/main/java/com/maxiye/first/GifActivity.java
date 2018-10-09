@@ -302,7 +302,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     @SuppressLint("InflateParams")
     public void skipTo(MenuItem item) {
         //实例化布局
-        View view = LayoutInflater.from(this).inflate(R.layout.dialog_item_edittext, null);
+        View view = LayoutInflater.from(this).inflate(R.layout.gif_goto_dialog_edittext, null);
         //找到并对自定义布局中的控件进行操作的示例
         EditText pageEdit = view.findViewById(R.id.gif_dialog_input);
         //创建对话框
@@ -327,7 +327,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     @SuppressLint("InflateParams")
     public void changeUrl(MenuItem item) {
         //实例化布局
-        View view2 = LayoutInflater.from(this).inflate(R.layout.dialog_item_edittext, null);
+        View view2 = LayoutInflater.from(this).inflate(R.layout.gif_goto_dialog_edittext, null);
         //找到并对自定义布局中的控件进行操作的示例
         EditText articleId = view2.findViewById(R.id.gif_dialog_input);
         //创建对话框
@@ -355,7 +355,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     @SuppressLint("InflateParams")
     public void switchWeb(MenuItem item) {
         PopupWindow popupWindow = new PopupWindow(400, ViewGroup.LayoutParams.WRAP_CONTENT);
-        popupWindow.setContentView(LayoutInflater.from(this).inflate(R.layout.popupwindow_view, null));
+        popupWindow.setContentView(LayoutInflater.from(this).inflate(R.layout.gif_history_popupwindow_view, null));
         popupWindow.setOutsideTouchable(true);
         RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
         DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
@@ -404,7 +404,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     @SuppressLint({"InflateParams", "SetTextI18n"})
     public void listHistory(MenuItem item) {
         PopupWindow popupWindow = new PopupWindow(ViewGroup.LayoutParams.MATCH_PARENT, 1200);
-        View root = LayoutInflater.from(this).inflate(R.layout.popupwindow_view, null);
+        View root = LayoutInflater.from(this).inflate(R.layout.gif_history_popupwindow_view, null);
         popupWindow.setFocusable(true);
         popupWindow.setContentView(root);
         popupWindow.setOutsideTouchable(true);
@@ -544,7 +544,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     @SuppressLint("InflateParams")
     public void switchType(MenuItem item) {
         PopupWindow popupWindow = new PopupWindow(400, ViewGroup.LayoutParams.WRAP_CONTENT);
-        popupWindow.setContentView(LayoutInflater.from(this).inflate(R.layout.popupwindow_view, null));
+        popupWindow.setContentView(LayoutInflater.from(this).inflate(R.layout.gif_history_popupwindow_view, null));
         popupWindow.setOutsideTouchable(true);
         RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
         DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
@@ -781,7 +781,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             if (activity.isGprs && type.equals("gif") && !activity.diskLRUCache.containsKey(imgKey)) {
                 if (!activity.gprsContinue) {
                     @SuppressLint("InflateParams")
-                    View view = LayoutInflater.from(activity).inflate(R.layout.popup_confirm, null);
+                    View view = LayoutInflater.from(activity).inflate(R.layout.gif_gprs_popup_confirm, null);
                     PopupWindow popupWindow = new PopupWindow(view, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
                     view.findViewById(R.id.bt_ok).setOnClickListener(v -> {
                         activity.threadPoolExecutor.execute(this::loadGif);

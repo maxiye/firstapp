@@ -65,5 +65,13 @@
             android:layout_weight="1"
             android:onClick="getGif"
             android:text="@string/get_gif"/>
+
+        <Button
+            style="@style/MyButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="testApi"
+            android:text="@string/free_api"/>
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>

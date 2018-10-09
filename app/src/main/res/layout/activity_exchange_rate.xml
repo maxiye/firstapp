@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="20dp"
+    tools:context=".api.ExchangeRateActivity">
+    <EditText
+        android:id="@+id/scur"
+        android:hint="@string/source_currency"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@id/exchRate"
+        android:layout_width="90dp"
+        android:layout_height="50dp"
+        android:inputType="text"
+        android:autofillHints="1"
+        tools:ignore="UnusedAttribute"/>
+    <Button
+        app:layout_constraintLeft_toRightOf="@id/scur"
+        app:layout_constraintRight_toLeftOf="@id/tcur"
+        android:id="@+id/exchRate"
+        android:text="@string/exchange"
+        android:onClick="exchange"
+        android:layout_width="0dp"
+        android:layout_height="50dp"/>
+    <EditText
+        android:id="@+id/tcur"
+        app:layout_constraintLeft_toRightOf="@id/exchRate"
+        app:layout_constraintRight_toRightOf="parent"
+        android:hint="@string/target_currency"
+        android:layout_width="90dp"
+        android:layout_height="50dp"
+        android:inputType="text"
+        android:autofillHints="1"
+        tools:ignore="UnusedAttribute"/>
+    <TextView
+        android:id="@+id/curRet"
+        app:layout_constraintTop_toBottomOf="@id/scur"
+        android:layout_marginTop="20dp"
+        android:lineSpacingExtra="5dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+</android.support.constraint.ConstraintLayout>

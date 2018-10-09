@@ -49,4 +49,12 @@
     <string name="gprs_network">当前处于移动网络</string>
     <string name="no_internet">已进入没有网络的次元，请检查连接！</string>
     <string name="alert">提示</string>
+    <string name="free_api">免费Api</string>
+    <string name="weather">天气</string>
+    <string name="exchange_rate">汇率</string>
+    <string name="source_currency">原币种</string>
+    <string name="target_currency">目标币种</string>
+    <string name="exchange">转换</string>
+    <string name="city">城市</string>
+    <string name="webview">Webview</string>
 </resources>

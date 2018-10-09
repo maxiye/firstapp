@@ -65,6 +65,8 @@
         <activity
             android:name=".TestActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
+            android:label="@string/test"
+            android:logo="@drawable/ic_broken_image_black_24dp"
             android:parentActivityName=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
@@ -96,11 +98,14 @@
 
         <activity
             android:name=".WebViewActivity"
+            android:label="@string/webview"
+            android:logo="@drawable/ic_public_orange_60dp"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout">
         </activity>
         <activity
             android:name=".GifActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
+            android:logo="@drawable/ic_image_black_24dp"
             android:label="@string/get_gif">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -108,7 +113,16 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-
+        <activity android:name=".api.ExchangeRateActivity"
+                  android:label="@string/exchange_rate"
+                  android:logo="@drawable/ic_attach_money_black_24dp"
+                  android:configChanges="keyboardHidden|orientation|screenSize|screenLayout">
+        </activity>
+        <activity android:name=".api.WeatherActivity"
+                  android:label="@string/weather"
+                  android:logo="@drawable/ic_cloud_queue_black_24dp"
+                  android:configChanges="keyboardHidden|orientation|screenSize|screenLayout">
+        </activity>
     </application>
 
 </manifest>

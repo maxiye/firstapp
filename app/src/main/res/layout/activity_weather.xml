@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:padding="10dp"
+    android:background="@color/colorGray"
+    tools:context=".api.WeatherActivity">
+    <EditText
+        android:id="@+id/weaid"
+        android:hint="@string/city"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_width="140dp"
+        android:layout_height="50dp"
+        android:inputType="text"
+        android:autofillHints="1"
+        tools:ignore="UnusedAttribute"/>
+    <Button
+        app:layout_constraintLeft_toRightOf="@id/weaid"
+        app:layout_constraintRight_toRightOf="parent"
+        android:text="@string/search"
+        android:onClick="query"
+        android:layout_width="0dp"
+        android:layout_height="50dp"/>
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/weather_ret_rv"
+        app:layout_constraintTop_toBottomOf="@id/weaid"
+        android:paddingBottom="50dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+</android.support.constraint.ConstraintLayout>

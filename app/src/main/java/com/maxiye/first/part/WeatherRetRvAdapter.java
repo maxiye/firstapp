@@ -1,38 +1,38 @@
 package com.maxiye.first.part;
 
-import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.maxiye.first.R;
 
-import java.util.HashMap;
+import java.io.IOException;
 import java.util.List;
-import java.util.Map;
+
+import pl.droidsonroids.gif.GifDrawable;
+import pl.droidsonroids.gif.GifImageView;
 
 /**
- * gif历史列表适配器
- * Created by due on 2018/5/14.
+ * 适配器
+ * Created by due on 2018/10/08.
  */
-public class GifWebRvAdapter extends RecyclerView.Adapter {
-    private List<Map<String, Object>> mData;
+public class WeatherRetRvAdapter extends RecyclerView.Adapter {
+    private List<String[]> mData;
     private OnItemClickListener clickListener;
     private OnItemLongClickListener longClickListener;
 
-    public void setData(List<Map<String, Object>> data) {
+    public void setData(List<String[]> data) {
         mData = data;
     }
 
-    public List<Map<String, Object>> getData() {
+    public List<String[]> getData() {
         return mData;
     }
 
-    public Map<String, Object> getItemData(int position) {
+    public String[] getItemData(int position) {
         return mData.get(position);
     }
 
@@ -47,15 +47,25 @@ public class GifWebRvAdapter extends RecyclerView.Adapter {
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.gif_history_pwin_rv_list, parent, false));
+        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.weather_ret_rvlist, parent, false));
     }
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ViewHolder viewHolder = (ViewHolder) holder;
-        HashMap<String, Object> item = (HashMap<String, Object>) mData.get(position);
-        viewHolder.mTextView.setText((String) item.get("name"));
-        viewHolder.mImageView.setImageDrawable((Drawable) item.get("icon"));
+        String[] item = mData.get(position);
+        viewHolder.mTextView.setText(item[0]);
+        try {
+            if (position > 0) {
+                viewHolder.mImageView.setImageDrawable(new GifDrawable(item[1]));
+                viewHolder.mImageView1.setImageDrawable(new GifDrawable(item[2]));
+            } else {
+                viewHolder.mImageView.setImageDrawable(null);
+                viewHolder.mImageView1.setImageDrawable(null);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         if (clickListener != null)
             viewHolder.itemView.setOnClickListener(view -> clickListener.onClick(position));
         if (longClickListener != null)
@@ -69,12 +79,14 @@ public class GifWebRvAdapter extends RecyclerView.Adapter {
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         final TextView mTextView;
-        final ImageView mImageView;
+        final GifImageView mImageView;
+        final GifImageView mImageView1;
 
         ViewHolder(View itemView) {
             super(itemView);
-            mTextView = itemView.findViewById(R.id.pw_text_view);
-            mImageView = itemView.findViewById(R.id.pw_image_view);
+            mTextView = itemView.findViewById(R.id.weather_txt);
+            mImageView = itemView.findViewById(R.id.weather_ico);
+            mImageView1 = itemView.findViewById(R.id.weather_ico1);
         }
     }
 
