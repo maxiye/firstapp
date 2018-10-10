@@ -6,7 +6,6 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -24,6 +23,7 @@ public class WeatherActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_weather);
+        findViewById(android.R.id.content).setOnLongClickListener((v) -> ApiUtil.showPopupmenu(this, findViewById(R.id.weaid)));
         RecyclerView rv = findViewById(R.id.weather_ret_rv);
         rv.setLayoutManager(new LinearLayoutManager(this));
         DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
@@ -34,7 +34,7 @@ public class WeatherActivity extends AppCompatActivity {
         query(null);
     }
     @SuppressWarnings("unused")
-    private void alert(String s){
+    private void alert(String s) {
         Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
     }
 

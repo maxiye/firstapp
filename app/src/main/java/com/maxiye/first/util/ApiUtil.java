@@ -1,10 +1,23 @@
 package com.maxiye.first.util;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.util.Log;
+import android.view.View;
+import android.widget.PopupMenu;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.maxiye.first.R;
+import com.maxiye.first.api.BJTimeActivity;
+import com.maxiye.first.api.ExchangeRateActivity;
+import com.maxiye.first.api.IDAddressActivity;
+import com.maxiye.first.api.IPAddressActivity;
+import com.maxiye.first.api.PhoneAddressActivity;
+import com.maxiye.first.api.PostcodeActivity;
+import com.maxiye.first.api.WeatherActivity;
+import com.maxiye.first.api.WorkdayActivity;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +39,12 @@ public class ApiUtil {
     private String sign = "0c74aa000b3b57398e386b872ab67412";
     private String exchangeRateApi = "http://api.k780.com/?app=finance.rate&scur=%s&tcur=%s&appkey=%s&sign=%s";
     private String weatherApi = "http://api.k780.com/?app=weather.future&weaid=%s&&appkey=%s&sign=%s";
+    private String IPAddressApi = "http://api.k780.com/?app=ip.get&ip=%s&appkey=%s&sign=%s&format=json";
+    private String PhoneAddressApi = "http://api.k780.com/?app=phone.get&phone=%s&appkey=%s&sign=%s&format=json";
+    private String IDAddressApi = "http://api.k780.com/?app=idcard.get&idcard=%s&appkey=%s&sign=%s&format=json";
+    private String PostcodeApi = "http://api.k780.com/?app=life.postcode&areaname=%s&appkey=%s&sign=%s&format=json";
+    private String BJTimeApi = "http://api.k780.com/?app=life.time&appkey=%s&sign=%s&format=json";
+    private String WorkdayApi = "http://api.k780.com/?app=life.workday&date=%s&appkey=%s&sign=%s&format=json";
 
     public static ApiUtil getInstance() {
         if (instance == null) {
@@ -36,8 +55,44 @@ public class ApiUtil {
                 }
             }
         }
-
         return instance;
+    }
+
+    public static boolean showPopupmenu(Activity context, View view) {
+        PopupMenu pMenu = new PopupMenu(context, view);
+        pMenu.getMenuInflater().inflate(R.menu.test_activity_api_popupmenu, pMenu.getMenu());
+        pMenu.setOnMenuItemClickListener(item -> {
+            int item_id = item.getItemId();
+            switch (item_id) {
+                case R.id.weather_api:
+                    context.startActivity(new Intent(context, WeatherActivity.class));
+                    break;
+                case R.id.exchange_rate_api:
+                    context.startActivity(new Intent(context, ExchangeRateActivity.class));
+                    break;
+                case R.id.ip_address_api:
+                    context.startActivity(new Intent(context, IPAddressActivity.class));
+                    break;
+                case R.id.phone_address_api:
+                    context.startActivity(new Intent(context, PhoneAddressActivity.class));
+                    break;
+                case R.id.id_address_api:
+                    context.startActivity(new Intent(context, IDAddressActivity.class));
+                    break;
+                case R.id.postcode_api:
+                    context.startActivity(new Intent(context, PostcodeActivity.class));
+                    break;
+                case R.id.bj_time_api:
+                    context.startActivity(new Intent(context, BJTimeActivity.class));
+                    break;
+                case R.id.workday_api:
+                    context.startActivity(new Intent(context, WorkdayActivity.class));
+                    break;
+            }
+            return false;
+        });
+        pMenu.show();
+        return true;
     }
 
     private String callApi(String url) {
@@ -110,5 +165,164 @@ public class ApiUtil {
     private String getWeatherImgName(String url) {
         String[] parts = url.split("/");
         return "weather-" + parts[parts.length - 2] + "-" + parts[parts.length - 1];
+    }
+
+    public String getIPAddress(String ip) {
+        String url = String.format(IPAddressApi, ip, appKey, sign);
+        String ret = callApi(url);
+        JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
+        if (!ret.equals("") && jsonObject.get("success").getAsString().equals("1")) {
+            try {
+                JsonObject retObj = jsonObject.get("result").getAsJsonObject();
+                ret = "状态：" + retObj.get("status").getAsString() +
+                        "\r\nIP：" + retObj.get("ip").getAsString() +
+                        "\r\nIP段开始：" + retObj.get("ip_str").getAsString() +
+                        "\r\nIP段结束：" + retObj.get("ip_end").getAsString() +
+                        "\r\n数字地址：" + retObj.get("inet_ip").getAsString() +
+                        "\r\n数字地址段开始：" + retObj.get("inet_str").getAsString() +
+                        "\r\n数字地址段结束：" + retObj.get("inet_end").getAsString() +
+                        "\r\n区号：" + retObj.get("areano").getAsString() +
+                        "\r\n邮编：" + retObj.get("postno").getAsString() +
+                        "\r\n运营商：" + retObj.get("operators").getAsString() +
+                        "\r\n归属地：" + retObj.get("att").getAsString() +
+                        "\r\n详细归属地：" + retObj.get("detailed").getAsString() +
+                        "\r\n归属地样式1：" + retObj.get("area_style_simcall").getAsString() +
+                        "\r\n归属地样式2：" + retObj.get("area_style_areanm").getAsString();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return ret;
+    }
+
+    public String getPhoneAddress(String phone) {
+        String url = String.format(PhoneAddressApi, phone, appKey, sign);
+        String ret = callApi(url);
+        JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
+        if (!ret.equals("") && jsonObject.get("success").getAsString().equals("1")) {
+            try {
+                JsonObject retObj = jsonObject.get("result").getAsJsonObject();
+                ret = "状态：" + retObj.get("status").getAsString() +
+                        "\r\n电话：" + retObj.get("phone").getAsString() +
+                        "\r\n区号：" + retObj.get("area").getAsString() +
+                        "\r\n邮编：" + retObj.get("postno").getAsString() +
+                        "\r\n归属地：" + retObj.get("att").getAsString() +
+                        "\r\n卡种：" + retObj.get("ctype").getAsString() +
+                        "\r\npar：" + retObj.get("par").getAsString() +
+                        "\r\n前缀：" + retObj.get("prefix").getAsString() +
+                        "\r\n运营商：" + retObj.get("operators").getAsString() +
+                        "\r\n归属地样式1：" + retObj.get("style_simcall").getAsString() +
+                        "\r\n归属地样式2：" + retObj.get("style_citynm").getAsString();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return ret;
+    }
+
+    public String getIDAddress(String id) {
+        String url = String.format(IDAddressApi, id, appKey, sign);
+        String ret = callApi(url);
+        JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
+        if (!ret.equals("") && jsonObject.get("success").getAsString().equals("1")) {
+            try {
+                JsonObject retObj = jsonObject.get("result").getAsJsonObject();
+                ret = "状态：" + retObj.get("status").getAsString() +
+                        "\r\n身份证号码：" + retObj.get("idcard").getAsString() +
+                        "\r\n身份证前缀：" + retObj.get("par").getAsString() +
+                        "\r\n出生年月日：" + retObj.get("born").getAsString() +
+                        "\r\n性别：" + retObj.get("sex").getAsString() +
+                        "\r\n归属地：" + retObj.get("att").getAsString() +
+                        "\r\n区号：" + retObj.get("areano").getAsString() +
+                        "\r\n邮编：" + retObj.get("postno").getAsString() +
+                        "\r\n归属地样式1：" + retObj.get("style_simcall").getAsString() +
+                        "\r\n归属地样式2：" + retObj.get("style_citynm").getAsString();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return ret;
+    }
+
+    public String getPostcode(String area) {//广东省广州市
+        String url = String.format(PostcodeApi, area, appKey, sign);
+        String ret = callApi(url);
+        JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
+        if (!ret.equals("") && jsonObject.get("success").getAsString().equals("1")) {
+            try {
+                JsonObject retObj = jsonObject.get("result").getAsJsonObject().get("lists").getAsJsonArray().get(0).getAsJsonObject();
+                ret = "地区：" + retObj.get("areanm").getAsString() +
+                        "\r\n区号：" + retObj.get("areacode").getAsString() +
+                        "\r\n邮编：" + retObj.get("postcode").getAsString() +
+                        "\r\n地区样式2：" + retObj.get("simcall").getAsString();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return ret;
+    }
+
+    public String getBJTime() {
+        String url = String.format(BJTimeApi, appKey, sign);
+        String ret = callApi(url);
+        JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
+        if (!ret.equals("") && jsonObject.get("success").getAsString().equals("1")) {
+            try {
+                JsonObject retObj = jsonObject.get("result").getAsJsonObject();
+                ret = "时间戳：" + retObj.get("timestamp").getAsString() +
+                        "\r\n时间1：" + retObj.get("datetime_1").getAsString() +
+                        "\r\n时间2：" + retObj.get("datetime_2").getAsString() +
+                        "\r\n星期1：" + retObj.get("week_1").getAsString() +
+                        "\r\n星期2：" + retObj.get("week_2").getAsString() +
+                        "\r\n星期3：" + retObj.get("week_3").getAsString() +
+                        "\r\n星期4：" + retObj.get("week_4").getAsString();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return ret;
+    }
+
+    /**
+     * 判断是否为工作日或假日
+     * @param dates String 20160101,20160102，最多100个
+     * @return String
+     */
+    public String getWorkday(String dates) {
+        String url = String.format(WorkdayApi, dates, appKey, sign);
+        String ret = callApi(url);
+        JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
+        if (!ret.equals("") && jsonObject.get("success").getAsString().equals("1")) {
+            try {
+                if (dates.contains(",")) {
+                    JsonArray retArr = jsonObject.get("result").getAsJsonArray();
+                    StringBuilder retBuilder = new StringBuilder();
+                    for(int i = 0; i<retArr.size(); i++) {
+                        JsonObject retTmp = retArr.get(i).getAsJsonObject();
+                        retBuilder.append("日期：").append(retTmp.get("date").getAsString())
+                                .append("\r\n日期类型：").append(retTmp.get("worknm").getAsString())
+                                .append("\r\n星期1：").append(retTmp.get("week_1").getAsString())
+                                .append("\r\n星期2：").append(retTmp.get("week_2").getAsString())
+                                .append("\r\n星期3：").append(retTmp.get("week_3").getAsString())
+                                .append("\r\n星期4：").append(retTmp.get("week_4").getAsString())
+                                .append("\r\n备注：").append(retTmp.get("remark").getAsString())
+                                .append("\r\n\r\n");
+                    }
+                    ret = retBuilder.toString();
+                } else {
+                    JsonObject retObj = jsonObject.get("result").getAsJsonObject();
+                    ret = "日期：" + retObj.get("date").getAsString() +
+                            "\r\n日期类型：" + retObj.get("worknm").getAsString() +
+                            "\r\n星期1：" + retObj.get("week_1").getAsString() +
+                            "\r\n星期2：" + retObj.get("week_2").getAsString() +
+                            "\r\n星期3：" + retObj.get("week_3").getAsString() +
+                            "\r\n星期4：" + retObj.get("week_4").getAsString() +
+                            "\r\n备注：" + retObj.get("remark").getAsString();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return ret;
     }
 }

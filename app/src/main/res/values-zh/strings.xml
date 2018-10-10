@@ -57,4 +57,11 @@
     <string name="exchange">转换</string>
     <string name="city">城市</string>
     <string name="webview">Webview</string>
+    <string name="ip_address">IP归属地</string>
+    <string name="phone_address">手机号码归属地</string>
+    <string name="id_address">身份证号归属地</string>
+    <string name="postcode">邮编</string>
+    <string name="bj_time">北京时间</string>
+    <string name="workday">工作日</string>
+    <string name="idcard">身份证号</string>
 </resources>

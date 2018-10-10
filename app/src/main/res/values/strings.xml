@@ -56,4 +56,11 @@
     <string name="exchange">Exchange</string>
     <string name="city">City</string>
     <string name="webview">Webview</string>
+    <string name="ip_address">IP Address</string>
+    <string name="phone_address">Phone Address</string>
+    <string name="id_address">ID Address</string>
+    <string name="postcode">Postcode</string>
+    <string name="bj_time">BJ Time</string>
+    <string name="workday">Workday</string>
+    <string name="idcard">ID Card</string>
 </resources>

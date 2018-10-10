@@ -98,31 +98,41 @@
 
         <activity
             android:name=".WebViewActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:label="@string/webview"
-            android:logo="@drawable/ic_public_orange_60dp"
-            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout">
+            android:logo="@drawable/ic_public_orange_60dp">
         </activity>
         <activity
             android:name=".GifActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
-            android:logo="@drawable/ic_image_black_24dp"
-            android:label="@string/get_gif">
+            android:label="@string/get_gif"
+            android:logo="@drawable/ic_image_black_24dp">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".api.ExchangeRateActivity"
-                  android:label="@string/exchange_rate"
-                  android:logo="@drawable/ic_attach_money_black_24dp"
-                  android:configChanges="keyboardHidden|orientation|screenSize|screenLayout">
+        <activity
+            android:parentActivityName=".TestActivity"
+            android:name=".api.ExchangeRateActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
+            android:label="@string/exchange_rate"
+            android:logo="@drawable/ic_attach_money_black_24dp">
         </activity>
-        <activity android:name=".api.WeatherActivity"
-                  android:label="@string/weather"
-                  android:logo="@drawable/ic_cloud_queue_black_24dp"
-                  android:configChanges="keyboardHidden|orientation|screenSize|screenLayout">
+        <activity
+            android:parentActivityName=".TestActivity"
+            android:name=".api.WeatherActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
+            android:label="@string/weather"
+            android:logo="@drawable/ic_cloud_queue_black_24dp">
         </activity>
+        <activity android:name=".api.IPAddressActivity"  android:parentActivityName=".TestActivity" android:label="@string/ip_address"/>
+        <activity android:name=".api.PhoneAddressActivity"  android:parentActivityName=".TestActivity" android:label="@string/phone_address"/>
+        <activity android:name=".api.IDAddressActivity"  android:parentActivityName=".TestActivity" android:label="@string/id_address"/>
+        <activity android:name=".api.PostcodeActivity"  android:parentActivityName=".TestActivity" android:label="@string/postcode"/>
+        <activity android:name=".api.BJTimeActivity"  android:parentActivityName=".TestActivity" android:label="@string/bj_time"/>
+        <activity android:name=".api.WorkdayActivity"  android:parentActivityName=".TestActivity" android:label="@string/workday"/>
     </application>
 
 </manifest>

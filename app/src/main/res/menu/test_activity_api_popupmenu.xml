@@ -3,4 +3,10 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/exchange_rate_api" android:title="@string/exchange_rate"/>
     <item android:id="@+id/weather_api" android:title="@string/weather"/>
+    <item android:id="@+id/ip_address_api" android:title="@string/ip_address"/>
+    <item android:id="@+id/phone_address_api" android:title="@string/phone_address"/>
+    <item android:id="@+id/id_address_api" android:title="@string/id_address"/>
+    <item android:id="@+id/postcode_api" android:title="@string/postcode"/>
+    <item android:id="@+id/bj_time_api" android:title="@string/bj_time"/>
+    <item android:id="@+id/workday_api" android:title="@string/workday"/>
 </menu>
