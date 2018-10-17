@@ -5,4 +5,5 @@
     <item android:id="@+id/create_db" android:title="@string/create_db"/>
     <item android:id="@+id/backup_db" android:title="@string/backup_db"/>
     <item android:id="@+id/restore_db" android:title="@string/restore_db"/>
+    <item android:id="@+id/scan_into_fav_db" android:title="@string/scan_into_fav_db"/>
 </menu>

@@ -64,4 +64,6 @@
     <string name="bj_time">北京时间</string>
     <string name="workday">工作日</string>
     <string name="idcard">身份证号</string>
+    <string name="scan_into_fav_db">扫描添加已收藏文件</string>
+    <string name="scan_fav_tips">扫描添加了 %1$d 个文件</string>
 </resources>

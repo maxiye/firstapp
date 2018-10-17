@@ -63,4 +63,6 @@
     <string name="bj_time">BJ Time</string>
     <string name="workday">Workday</string>
     <string name="idcard">ID Card</string>
+    <string name="scan_into_fav_db">Scan Files Into Favorate</string>
+    <string name="scan_fav_tips">Scaned %1$d Item(s)</string>
 </resources>

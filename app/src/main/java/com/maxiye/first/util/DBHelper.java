@@ -19,6 +19,9 @@ import com.maxiye.first.TestActivity;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**数据库助手
  * Created by Administrator on 2017-05-25.
@@ -26,37 +29,57 @@ import java.nio.file.Files;
 
 public class DBHelper extends SQLiteOpenHelper {
     public final static String DB_NAME = "first.db";
-    private final static int DB_VERSION = 4;
+    private final static int DB_VERSION = 5;
     public final static String TB_BOOK = "book";
     public final static String TB_IMG_WEB = "img_web";
     public final static String TB_IMG_WEB_ITEM = "img_web_item";
+    public final static String TB_IMG_FAVORITE = "img_favorite";
     private final static String CREATE_BOOK = "create table " + TB_BOOK + "("
             + "id integer primary key autoincrement,"
-            + "author text, "
-            + "price real, "
-            + "pages integer, "
-            + "name text)";
+            + "author text default '', "
+            + "price real default 0, "
+            + "pages integer default 0, "
+            + "name text default '')";
     private final static String CREATE_IMG_WEB = "create table " + TB_IMG_WEB + "("
             + "id integer primary key autoincrement,"
-            + "web_name text, "
-            + "type text, "//gif|bitmap
-            + "art_id integer, "
-            + "web_url text, "
-            + "title text, "
-            + "pages integer, "
-            + "time text)";
+            + "web_name text default '', "
+            + "type text default '', "//gif|bitmap
+            + "art_id integer default 0, "
+            + "web_url text default '', "
+            + "title text default '', "
+            + "pages integer default 0, "
+            + "time text default '')";
     //索引名不能相同
     private final static String INDEX_IMG_WEB = "CREATE INDEX IF NOT EXISTS web_idx_art_id on " + TB_IMG_WEB + " (art_id, web_name)";
     private final static String CREATE_IMG_WEB_ITEM = "create table " + TB_IMG_WEB_ITEM + "("
             + "id integer primary key autoincrement,"
-            + "web_name text, "
-            + "type text, "
-            + "art_id integer , "
-            + "page integer , "
-            + "title text, "
-            + "url text, "
-            + "ext text)";//gif|jpg|jpeg|bmp|png
+            + "web_name text default '', "
+            + "type text default '', "
+            + "art_id integer default 0, "
+            + "page integer default 0, "
+            + "title text default '', "
+            + "url text default '', "
+            + "real_url text default '', "//真实图片地址
+            + "fav_flg integer default 0, "//1已收藏，0未收藏
+            + "ext text default '', "//gif|jpg|jpeg|bmp|png
+            + "time text default '')";
     private final static String INDEX_IMG_WEB_ITEM = "CREATE INDEX IF NOT EXISTS web_item_idx_art_id on " + TB_IMG_WEB_ITEM + " (art_id, web_name)";
+
+
+    private final static String CREATE_IMG_FAVORITE = "create table " + TB_IMG_FAVORITE + "("
+            + "id integer primary key autoincrement, "
+            + "item_id integer default 0, "
+            + "web_name text default '', "
+            + "type text default '', "
+            + "art_id integer default 0, "
+            + "page integer default 0, "
+            + "title text default '', "
+            + "url text default '', "
+            + "real_url text default '', "
+            + "ext text default '', "//gif|jpg|jpeg|bmp|png
+            + "time text default '')";
+    private final static String INDEX_IMG_FAVORITE = "CREATE INDEX IF NOT EXISTS img_favorite_idx_art_id on " + TB_IMG_WEB_ITEM + " (art_id, web_name)";
+
     private static final String DROP_BOOK = "DROP TABLE IF EXISTS " + TB_BOOK;
     private static final String DROP_IMG_WEB = "DROP TABLE IF EXISTS " + TB_IMG_WEB;
     private static final String DROP_IMG_WEB_ITEM = "DROP TABLE IF EXISTS " + TB_IMG_WEB_ITEM;
@@ -82,6 +105,7 @@ public class DBHelper extends SQLiteOpenHelper {
         if (oldVersion == 1) update1to2(db);
         if (oldVersion == 2) update2to3(db);
         if (oldVersion == 3) update3to4(db);
+        if (oldVersion == 4) update4to5(db);
         Toast.makeText(mCont, "Update succeeded", Toast.LENGTH_SHORT).show();
     }
 
@@ -137,6 +161,15 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL(INDEX_IMG_WEB);
         db.execSQL(INDEX_IMG_WEB_ITEM);
     }
+
+    private void update4to5(SQLiteDatabase db) {
+        db.execSQL("ALTER TABLE img_web_item ADD COLUMN real_url text DEFAULT '';");
+        db.execSQL("ALTER TABLE img_web_item ADD COLUMN fav_flg integer DEFAULT 0;");
+        db.execSQL("ALTER TABLE img_web_item ADD COLUMN time text DEFAULT '';");
+        db.execSQL(CREATE_IMG_FAVORITE);
+        db.execSQL(INDEX_IMG_FAVORITE);
+    }
+
     public static void backup(Activity activity) {
         File db = activity.getDatabasePath(DB_NAME);
         File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
@@ -169,5 +202,52 @@ public class DBHelper extends SQLiteOpenHelper {
         if (System.currentTimeMillis() - lastBackupTime > 86400 * 5 * 1000) {
             backup(activity);
         }
+    }
+
+    public int scanIntoFav() {
+        int count = 0;
+        String[] types = new String[] {"gif", "bitmap"};
+        SQLiteDatabase db = getWritableDatabase();
+        String datetime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+        for(String type : types) {
+            File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);
+            File[] fileList = dir.listFiles();
+            if (fileList != null) {
+                for (File file : fileList) {
+                    if (file.isFile()) {
+                        String fName = file.getName();
+                        Cursor cus = db.query(DBHelper.TB_IMG_WEB_ITEM, new String[]{"*"}, "title = ?", new String[]{ fName}, null, null, "id desc", "1");
+                        if (cus.getCount() > 0) {
+                            cus.moveToFirst();
+                            int favFlg = cus.getInt(cus.getColumnIndex("fav_flg"));
+                            if (favFlg != 1) {
+                                ContentValues ctv = new ContentValues();
+                                ctv.put("item_id", cus.getInt(cus.getColumnIndex("id")));
+                                ctv.put("art_id", cus.getInt(cus.getColumnIndex("art_id")));
+                                ctv.put("page", cus.getInt(cus.getColumnIndex("page")));
+                                ctv.put("web_name", cus.getString(cus.getColumnIndex("web_name")));
+                                ctv.put("type", cus.getString(cus.getColumnIndex("type")));
+                                ctv.put("title", cus.getString(cus.getColumnIndex("title")));
+                                ctv.put("url", cus.getString(cus.getColumnIndex("url")));
+                                ctv.put("ext", cus.getString(cus.getColumnIndex("ext")));
+                                ctv.put("real_url", cus.getString(cus.getColumnIndex("real_url")));
+                                ctv.put("time", datetime);
+                                long newId = db.insert(TB_IMG_FAVORITE, null, ctv);
+                                Log.w("db_img_fav_insert: ", newId + "");
+                                ContentValues ctv2 = new ContentValues();
+                                ctv2.put("fav_flg", 1);
+                                int rows = db.update(DBHelper.TB_IMG_WEB_ITEM, ctv2, "id = ?", new String[]{cus.getString(cus.getColumnIndex("id"))});
+                                Log.w("db_web_item_update: ", rows + "");
+                                count++;
+                            }
+                            cus.close();
+                        }
+
+                    }
+                }
+            }
+        }
+        return count;
+
     }
 }

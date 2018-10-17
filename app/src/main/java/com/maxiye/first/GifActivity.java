@@ -54,6 +54,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.maxiye.first.part.CircleProgressDrawable;
 import com.maxiye.first.part.GifWebRvAdapter;
+import com.maxiye.first.util.CacheUtil;
 import com.maxiye.first.util.DBHelper;
 import com.maxiye.first.util.DiskLRUCache;
 import com.maxiye.first.util.NetworkUtil;
@@ -161,6 +162,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     .build();
         }
         threadPoolExecutor = new ThreadPoolExecutor(3, 7, 30, TimeUnit.SECONDS, new SynchronousQueue<>(), (r, executor) -> executor.shutdown());
+        //CacheUtil.clearAllCache(this);//清楚所有缓存
         diskLRUCache = DiskLRUCache.getInstance(this, type);
         initPage();
         Log.w("end", "onCreateOver");
@@ -819,7 +821,8 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     e.printStackTrace();
                 }
             } else {
-                Request request = new Request.Builder().url(gifInfo[0]).build();
+                String url = gifInfo[3].equals("") ? gifInfo[0] : gifInfo[3];
+                Request request = new Request.Builder().url(url).build();
                 activity.okHttpClient.newCall(request).enqueue(new Callback() {
                     @Override
                     public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -830,7 +833,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     @Override
                     public void onResponse(@NonNull Call call, @NonNull Response response) {
                         try {
-                            Log.w("info", "loadGif(fromNet):" + gifInfo[1] + ";url:" + gifInfo[0] + ";index:" + request.toString());
+                            Log.w("info", "loadGif(fromNet):" + gifInfo[1] + ";url:" + url + ";index:" + request.toString());
                             ResponseBody responseBody = response.body();
                             assert responseBody != null;
                             int contentLength = (int) responseBody.contentLength();
@@ -882,6 +885,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             int urlIdx = regObj.get("img_url_idx").getAsInt();
             int extIdx = regObj.get("img_ext_idx").getAsInt();
             int titleIdx = regObj.get("img_title_idx").getAsInt();
+            int realUrlIdx = regObj.get("img_real_url_idx") != null ? regObj.get("img_real_url_idx").getAsInt() : -1;
             Pattern pt = Pattern.compile(regObj.get("reg").getAsString(), Pattern.CASE_INSENSITIVE);
             try {
                 String url = webPage > 1 ? String.format(activity.webCfg.get("img_web_2nd").getAsString(), artId, webPage) : baseUrl;
@@ -891,21 +895,23 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 assert responseBody != null;
                 String content = new String(responseBody.bytes(), "utf-8");
                 Matcher mt = pt.matcher(content);
-//                System.out.print(content);
                 if (!mt.find()) {
+                    System.out.print(content);
                     throw new ProtocolException("over");
                 }
                 mt.reset();
                 while (mt.find()) {
                     String ext = mt.group(extIdx);
                     String name = getTitle(mt.group(titleIdx)) + ext;
-                    System.out.println("title: " + name + ";url: " + mt.group(urlIdx) + ";ext: " + ext);
+                    String realUrl = realUrlIdx == -1 ? "" : mt.group(realUrlIdx);
+                    realUrl = realUrl == null ? "" : realUrl;
+                    System.out.println("title: " + name + ";url: " + mt.group(urlIdx) + ";ext: " + ext + ";realUrl: " + realUrl);
                     String gifUrl = mt.group(urlIdx);
                     if (webName.contains("duowan")) {
                         name = Util.unicode2Chinese(name);
                         gifUrl = gifUrl.replace("\\", "");
                     }
-                    String[] gifInfo = new String[]{gifUrl, name, ext};
+                    String[] gifInfo = new String[]{gifUrl, name, ext, realUrl};
                     activity.gifList.add(gifInfo);
                     saveDbGifList(DBHelper.TB_IMG_WEB_ITEM, gifInfo);
                 }
@@ -991,16 +997,17 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 cus.moveToFirst();
                 title = cus.getString(cus.getColumnIndex("title"));
                 int totalPage = cus.getInt(cus.getColumnIndex("pages"));
-                Cursor cus2 = activity.db.query(DBHelper.TB_IMG_WEB_ITEM, new String[]{"page,title,url,ext"}, "art_id = ? and web_name = ?", new String[]{artId + "", webName}, null, null, "id asc");
+                Cursor cus2 = activity.db.query(DBHelper.TB_IMG_WEB_ITEM, new String[]{"page,title,url,ext,real_url"}, "art_id = ? and web_name = ?", new String[]{artId + "", webName}, null, null, "id asc");
                 int count = cus2.getCount();
                 if (count > 0) {
                     Log.w("db_item", count + "");
                     cus2.moveToFirst();
                     for (int i = 0; i < count; i++) {
-                        String[] gifInfo = new String[3];
+                        String[] gifInfo = new String[4];
                         gifInfo[0] = cus2.getString(cus2.getColumnIndex("url"));
                         gifInfo[1] = cus2.getString(cus2.getColumnIndex("title"));
                         gifInfo[2] = cus2.getString(cus2.getColumnIndex("ext"));
+                        gifInfo[3] = cus2.getString(cus2.getColumnIndex("real_url"));
                         activity.gifList.add(gifInfo);
                         webPage = cus2.getInt(cus2.getColumnIndex("page"));
                         cus2.moveToNext();
@@ -1025,6 +1032,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         }
 
         private void saveDbGifList(String dbName, String[] data) {
+            String datetime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
             ContentValues ctv = new ContentValues();
             if (dbName.equals(DBHelper.TB_IMG_WEB)) {
                 ctv.put("art_id", artId);
@@ -1032,7 +1040,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 ctv.put("web_name", webName);
                 ctv.put("type", type);
                 ctv.put("title", data[1]);
-                ctv.put("time", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()));
+                ctv.put("time", datetime);
                 long newId = activity.db.insert(dbName, null, ctv);
                 Log.w("db_web_insert: ", newId + "");
             } else {
@@ -1043,6 +1051,8 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 ctv.put("title", data[1]);
                 ctv.put("url", data[0]);
                 ctv.put("ext", data[2]);
+                ctv.put("real_url", data[3]);
+                ctv.put("time", datetime);
                 long newId = activity.db.insert(dbName, null, ctv);
                 Log.w("db_web_item_insert: ", newId + "");
             }

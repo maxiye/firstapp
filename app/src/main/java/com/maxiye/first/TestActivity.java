@@ -460,6 +460,10 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 case R.id.restore_db:
                     DBHelper.restore(this);
                     break;
+                case R.id.scan_into_fav_db:
+                    int count = new DBHelper(this).scanIntoFav();
+                    alert(getString(R.string.scan_fav_tips, count));
+                    break;
             }
             return false;
         });
