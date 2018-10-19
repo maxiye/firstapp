@@ -114,6 +114,10 @@ public class CircleProgressDrawable extends Drawable {
         this.style = cirStyle;
     }
 
+    public void setMaxProgress(int maxProg) {
+        maxProgress = maxProg;
+    }
+
     public void setCurProgress(int cur) {
         curProgress = cur;
         percent = curProgress * 1.0f / maxProgress;

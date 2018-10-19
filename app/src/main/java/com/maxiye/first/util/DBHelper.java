@@ -97,6 +97,8 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL(INDEX_IMG_WEB);
         db.execSQL(CREATE_IMG_WEB_ITEM);
         db.execSQL(INDEX_IMG_WEB_ITEM);
+        db.execSQL(CREATE_IMG_FAVORITE);
+        db.execSQL(INDEX_IMG_FAVORITE);
         Toast.makeText(mCont, "Create succeeded", Toast.LENGTH_SHORT).show();
     }
 

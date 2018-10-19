@@ -11,8 +11,8 @@ import android.widget.TextView;
 
 import com.maxiye.first.R;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,15 +20,15 @@ import java.util.Map;
  * Created by due on 2018/5/14.
  */
 public class GifWebRvAdapter extends RecyclerView.Adapter {
-    private List<Map<String, Object>> mData;
+    private ArrayList<HashMap<String, Object>> mData;
     private OnItemClickListener clickListener;
     private OnItemLongClickListener longClickListener;
 
-    public void setData(List<Map<String, Object>> data) {
+    public void setData(ArrayList<HashMap<String, Object>> data) {
         mData = data;
     }
 
-    public List<Map<String, Object>> getData() {
+    public ArrayList<HashMap<String, Object>> getData() {
         return mData;
     }
 

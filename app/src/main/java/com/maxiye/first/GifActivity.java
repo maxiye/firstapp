@@ -2,16 +2,19 @@ package com.maxiye.first;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -37,6 +40,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -54,7 +58,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.maxiye.first.part.CircleProgressDrawable;
 import com.maxiye.first.part.GifWebRvAdapter;
-import com.maxiye.first.util.CacheUtil;
 import com.maxiye.first.util.DBHelper;
 import com.maxiye.first.util.DiskLRUCache;
 import com.maxiye.first.util.NetworkUtil;
@@ -76,9 +79,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
-import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -120,6 +122,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     private static boolean endFlg = false;
     private final ArrayList<String[]> gifList = new ArrayList<>();
     private final int HISTORY_PAGE_SIZE = 10;
+    private final int FAVORITE_PAGE_SIZE = 20;
     private SQLiteDatabase db;
     private OkHttpClient okHttpClient;
     private ThreadPoolExecutor threadPoolExecutor;
@@ -209,7 +212,6 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         db.close();
         okHttpClient.dispatcher().cancelAll();
         okHttpClient = null;
-        netUtil.unwatch();
         netUtil = null;
     }
 
@@ -272,9 +274,9 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         return true;
     }
 
-    private List<Map<String,Object>> getWebList() {
+    private ArrayList<HashMap<String, Object>> getWebList() {
         JsonObject all_web = getWebCfg(null);
-        List<Map<String,Object>> webList = new ArrayList<>();
+        ArrayList<HashMap<String, Object>> webList = new ArrayList<>();
         for (String key: all_web.keySet()) {
             HashMap<String,Object> item = new HashMap<>();
             item.put("name", key);
@@ -361,11 +363,11 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         popupWindow.setOutsideTouchable(true);
         RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
         DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
-        divider.setDrawable(getDrawable(R.drawable.gif_rv_divider));
+        divider.setDrawable(Objects.requireNonNull(getDrawable(R.drawable.gif_rv_divider)));
         rv.addItemDecoration(divider);//分隔线
         rv.setLayoutManager(new LinearLayoutManager(this));
         GifWebRvAdapter ma = new GifWebRvAdapter();
-        List<Map<String,Object>> webList = getWebList();
+        ArrayList<HashMap<String, Object>> webList = getWebList();
         ma.setData(webList);
         ma.setOnItemClickListener(position -> {
             webName = (String) webList.get(position).get("name");
@@ -380,8 +382,6 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     }
 
     public void browserOpen(MenuItem item) {
-        //设置反面按钮
-        //设置中立按钮
         new AlertDialog.Builder(this)
                 .setTitle(R.string.browser_open)
                 .setIcon(R.drawable.ic_public_orange_60dp)
@@ -413,11 +413,11 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
         rv.setLayoutManager(new LinearLayoutManager(this));
         DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
-        divider.setDrawable(getDrawable(R.drawable.gif_rv_divider));
+        divider.setDrawable(Objects.requireNonNull(getDrawable(R.drawable.gif_rv_divider)));
         rv.addItemDecoration(divider);//分隔线
         GifWebRvAdapter ma = new GifWebRvAdapter();
         int historyCount = getHistoryCount();
-        List<Map<String,Object>> historyList = getHistoryList(1);
+        final ArrayList<HashMap<String, Object>> historyList = new ArrayList<>(HISTORY_PAGE_SIZE);
         //设置页面相关
         EditText page = root.findViewById(R.id.popup_page);
         page.setText("1");
@@ -430,7 +430,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 int nowPage = Integer.parseInt(page.getText().toString());
                 if (nowPage > 1) {
                     int pre = nowPage - 1;
-                    ma.setData(getHistoryList(pre));
+                    ma.setData(getHistoryList(pre, historyList));
                     ma.notifyDataSetChanged();
                     page.setText(pre + "");
                     next.setVisibility(View.VISIBLE);
@@ -439,7 +439,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             });
             next.setOnClickListener(v -> {
                 int nxt = Integer.parseInt(page.getText().toString()) + 1;
-                ma.setData(getHistoryList(nxt));
+                ma.setData(getHistoryList(nxt, historyList));
                 ma.notifyDataSetChanged();
                 page.setText(nxt + "");
                 prev.setVisibility(View.VISIBLE);
@@ -452,7 +452,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 nowPage = nowPage > total ? total : nowPage;
                 Log.w("HistoryGoPage", "page:" + nowPage);
                 page.setText(nowPage + "");
-                ma.setData(getHistoryList(nowPage));
+                ma.setData(getHistoryList(nowPage, historyList));
                 ma.notifyDataSetChanged();
                 prev.setVisibility(nowPage > 1 ? View.VISIBLE : View.GONE);
                 next.setVisibility(nowPage < total ? View.VISIBLE : View.GONE);
@@ -466,7 +466,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             totalPage.setText(" / " + total);
             next.setVisibility(View.VISIBLE);
         }
-        ma.setData(historyList);
+        ma.setData(getHistoryList(1, historyList));
         ma.setOnItemClickListener(position -> {
             webName = (String) ma.getItemData(position).get("web_name");
             Log.w("rvClick", webName);
@@ -485,8 +485,9 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                         int delArtId = (int) ma.getItemData(position).get("art_id");
                         String delWebName = (String) ma.getItemData(position).get("web_name");
                         deleteHistory(delArtId, delWebName);
-                        ma.setData(getHistoryList(Integer.parseInt(page.getText().toString())));
+                        historyList.remove(position);
                         ma.notifyItemRemoved(position);
+                        ma.notifyItemRangeChanged(position, historyList.size());
                         break;
                 }
                 return false;
@@ -512,14 +513,14 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         db.delete(DBHelper.TB_IMG_WEB_ITEM, "art_id = ? and web_name = ?", new String[]{delArtId + "", delWebName});
     }
 
-    private List<Map<String,Object>> getHistoryList(int page) {
+    private ArrayList<HashMap<String, Object>> getHistoryList(int page, ArrayList<HashMap<String, Object>> historyList) {
         int offset = (page - 1) * HISTORY_PAGE_SIZE;
         JsonObject all_web = getWebCfg(null);
         String sql = "select * from " + DBHelper.TB_IMG_WEB + " where art_id > 0 and type = '" + type + "' order by id desc limit " + HISTORY_PAGE_SIZE + " offset " + offset;
         Cursor cus = db.rawQuery(sql, null);
         Log.w("getHistoryList：", cus.getCount() + "");
-        List<Map<String,Object>> historyList = new ArrayList<>();
         int count = cus.getCount();
+        historyList.clear();
         if (count > 0) {
             cus.moveToFirst();
             for (int i = 0; i < count; i++) {
@@ -543,6 +544,339 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         return historyList;
     }
 
+    @SuppressLint({"InflateParams", "SetTextI18n"})
+    public void listFavorite(MenuItem item) {
+        PopupWindow popupWindow = new PopupWindow(ViewGroup.LayoutParams.MATCH_PARENT, 1600);
+        View root = LayoutInflater.from(this).inflate(R.layout.gif_history_popupwindow_view, null);
+        popupWindow.setFocusable(true);
+        popupWindow.setContentView(root);
+        popupWindow.setOutsideTouchable(true);
+        RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
+        rv.setLayoutManager(new LinearLayoutManager(this));
+        DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
+        divider.setDrawable(Objects.requireNonNull(getDrawable(R.drawable.gif_rv_divider)));
+        rv.addItemDecoration(divider);//分隔线
+        GifWebRvAdapter ma = new GifWebRvAdapter();
+        int favoriteCount = getFavoriteCount();
+        final ArrayList<HashMap<String, Object>> favoriteList = new ArrayList<>(FAVORITE_PAGE_SIZE);
+        //设置页面相关
+        EditText page = root.findViewById(R.id.popup_page);
+        page.setText("1");
+        if (favoriteCount > FAVORITE_PAGE_SIZE) {
+            TextView totalPage = root.findViewById(R.id.popup_total_page);
+            Button prev = root.findViewById(R.id.popup_prev_page);
+            Button next = root.findViewById(R.id.popup_next_page);
+            int total = favoriteCount % FAVORITE_PAGE_SIZE == 0 ? favoriteCount / FAVORITE_PAGE_SIZE : favoriteCount / FAVORITE_PAGE_SIZE + 1;
+            prev.setOnClickListener(v -> {
+                int nowPage = Integer.parseInt(page.getText().toString());
+                if (nowPage > 1) {
+                    int pre = nowPage - 1;
+                    ma.setData(getFavoriteList(pre, favoriteList));
+                    ma.notifyDataSetChanged();
+                    page.setText(pre + "");
+                    next.setVisibility(View.VISIBLE);
+                    prev.setVisibility(pre == 1 ? View.GONE : View.VISIBLE);
+                }
+            });
+            next.setOnClickListener(v -> {
+                int nxt = Integer.parseInt(page.getText().toString()) + 1;
+                ma.setData(getFavoriteList(nxt, favoriteList));
+                ma.notifyDataSetChanged();
+                page.setText(nxt + "");
+                prev.setVisibility(View.VISIBLE);
+                next.setVisibility(nxt < total ? View.VISIBLE : View.GONE);
+            });
+            page.setOnEditorActionListener((textView, i, keyEvent) -> {
+                String nowPageStr = page.getText().toString();
+                nowPageStr = nowPageStr.equals("") ? "1" : nowPageStr;
+                int nowPage = Integer.parseInt(nowPageStr);
+                nowPage = nowPage > total ? total : nowPage;
+                Log.w("FavoriteGoPage", "page:" + nowPage);
+                page.setText(nowPage + "");
+                ma.setData(getFavoriteList(nowPage, favoriteList));
+                ma.notifyDataSetChanged();
+                prev.setVisibility(nowPage > 1 ? View.VISIBLE : View.GONE);
+                next.setVisibility(nowPage < total ? View.VISIBLE : View.GONE);
+                InputMethodManager imm = ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE));
+                if (imm != null) imm.toggleSoftInput(InputMethodManager.RESULT_UNCHANGED_SHOWN, InputMethodManager.HIDE_NOT_ALWAYS);
+                page.clearFocus();
+                return true;
+            });
+            page.setVisibility(View.VISIBLE);
+            totalPage.setVisibility(View.VISIBLE);
+            totalPage.setText(" / " + total);
+            next.setVisibility(View.VISIBLE);
+        }
+        ma.setData(getFavoriteList(1, favoriteList));
+        ma.setOnItemClickListener(position -> viewFav(favoriteList, position, root));
+        ma.setOnItemLongClickListener(position -> {
+            PopupMenu pMenu = new PopupMenu(this, rv.getLayoutManager().findViewByPosition(position));//使用rv.getChildAt只能获取可见的item，0表示当前屏幕可见第一个item
+            pMenu.getMenuInflater().inflate(R.menu.gif_history_popupmenu, pMenu.getMenu());
+            pMenu.setOnMenuItemClickListener(item1 -> {
+                switch (item1.getItemId()) {
+                    case R.id.delete_gif_record:
+                        //删除记录
+                        String id = (String) ma.getItemData(position).get("id");
+                        String itemId = (String) ma.getItemData(position).get("item_id");
+                        deleteFavorite(id, itemId);
+                        favoriteList.remove(position);
+                        ma.notifyItemRemoved(position);
+                        ma.notifyItemRangeChanged(position, favoriteList.size());
+                        break;
+                }
+                return false;
+            });
+            pMenu.show();
+            return true;
+        });
+        rv.setAdapter(ma);
+        popupWindow.showAtLocation(findViewById(R.id.gif_activity_fab), Gravity.BOTTOM, 0, 0);
+    }
+
+    private int getFavoriteCount() {
+        Cursor cus = db.rawQuery("select count(*) from " + DBHelper.TB_IMG_FAVORITE + " where type = '" + type + "'", null);
+        cus.moveToFirst();
+        int count = cus.getInt(0);
+        cus.close();
+        return count;
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private void viewFav(ArrayList<HashMap<String, Object>> favoriteList, int position, View root) {
+        final Dialog dialog = new Dialog(this, android.R.style.Theme_Material_Dialog_Alert);
+        GifImageView imgView = new GifImageView(this);
+        imgView.setImageDrawable(getDrawable(R.drawable.ic_image_black_24dp));
+        GifActivity activity = this;
+        imgView.setOnTouchListener(new View.OnTouchListener() {
+            int storePos = position;
+            float mPosX;
+            float mPosY;
+            float mCurPosX;
+            float mCurPosY;
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        mPosX = mCurPosX = event.getX();
+                        mPosY = mCurPosY = event.getY();
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        mCurPosX = event.getX();
+                        mCurPosY = event.getY();
+                        break;
+                    case MotionEvent.ACTION_UP:
+//                        if (mCurPosY - mPosY > 0
+//                                && (Math.abs(mCurPosY - mPosY) > 25)) {//向下滑動
+//                        } else if (mCurPosY - mPosY < 0
+//                                && (Math.abs(mCurPosY - mPosY) > 25)) {//向上滑动
+//                        }
+                        if (mCurPosY - mPosY > 300) dialog.dismiss();
+                        if (mCurPosX - mPosX > 150) {//向左滑動
+                            viewPre();
+                        } else if (mCurPosX - mPosX < -150) {//向右滑动
+                            viewNext();
+                        }
+                        break;
+                }
+                return true;
+            }
+
+            private void viewPre() {
+                if (storePos > 0) {
+                    storePos--;
+                } else {
+                    Button button = root.findViewById(R.id.popup_prev_page);
+                    if (button.getVisibility() == Button.VISIBLE) {
+                        button.performClick();
+                        storePos = FAVORITE_PAGE_SIZE - 1;
+                    } else {
+                        Toast.makeText(activity, getString(R.string.no_more), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                }
+                loadFavImg(imgView, favoriteList.get(storePos));
+            }
+
+            private void viewNext() {
+                if (storePos < favoriteList.size() - 1) {
+                    storePos++;
+                } else {
+                    Button button = root.findViewById(R.id.popup_next_page);
+                    if (button.getVisibility() == Button.VISIBLE) {
+                        storePos = 0;
+                        button.performClick();
+                    } else {
+                        Toast.makeText(activity, getString(R.string.no_more), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                }
+                loadFavImg(imgView, favoriteList.get(storePos));
+            }
+        });
+        Objects.requireNonNull(dialog.getWindow()).setBackgroundDrawable(new ColorDrawable(0));
+        dialog.setContentView(imgView);
+        loadFavImg(imgView, favoriteList.get(position));
+        dialog.show();
+    }
+
+    private void loadFavImg(GifImageView imgView, HashMap<String, Object> item) {
+        String title = (String) item.get("name");
+        String url = (String) item.get("real_url");
+        url = url.equals("") ? (String) item.get("url") : url;
+        Toast.makeText(this, title, Toast.LENGTH_SHORT).show();
+        new ImgViewTask(imgView, this).execute(title, url, (String) item.get("id"));
+    }
+
+    static class ImgViewTask extends AsyncTask<String, Integer, Drawable> {
+
+        private WeakReference<GifActivity> gifActivityWR;
+        private WeakReference<GifImageView> imgViewWR;
+        private File cache;
+
+        ImgViewTask(GifImageView imgView, GifActivity gifActivity) {
+            imgViewWR = new WeakReference<>(imgView);
+            gifActivityWR = new WeakReference<>(gifActivity);
+        }
+
+        /**
+         * 加载图片
+         * @param strings title,url,id
+         * @return Drawable
+         */
+        @Override
+        protected Drawable doInBackground(String... strings) {
+            GifActivity activity = gifActivityWR.get();
+            String imgKey = "favorite_" + strings[2] + "_" + type;
+            cache = activity.diskLRUCache.get(imgKey);
+            if (cache != null) {
+                try {
+                    Log.w("loadImg(fromCache)", "title：" + strings[0] + ";url：" + strings[1]);
+                    return type.equals("gif") ? new GifDrawable(cache) : BitmapDrawable.createFromPath(cache.getAbsolutePath());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                cache = new File(activity.getCacheDir(), imgKey);
+                Request request = new Request.Builder().url(strings[1]).build();
+                try {
+                    Log.w("loadImg(fromNet)", "title：" + strings[0] + ";url：" + strings[1]);
+                    Response response = activity.okHttpClient.newCall(request).execute();
+                    ResponseBody responseBody = response.body();
+                    assert responseBody != null;
+                    int contentLength = (int) responseBody.contentLength();
+                    byte[] bytes;
+                    if (contentLength > 0 && contentLength > 40960 * 2) {
+                        publishProgress(0, contentLength);
+                        InputStream is = responseBody.byteStream();
+                        bytes = new byte[contentLength];
+                        int len;int sum = 0;int readLen = contentLength > 5 * 1024 * 1024 ? 102400 : 40960;
+                        while ((len = is.read(bytes, sum, readLen)) > 0) {
+                            sum += len;
+                            readLen = readLen > bytes.length - sum ? bytes.length - sum : readLen;
+                            publishProgress(sum, contentLength);
+                        }
+                    } else {
+                        bytes = responseBody.bytes();
+                    }
+                    Drawable gifFromStream = type.equals("gif") ? new GifDrawable(bytes) : BitmapDrawable.createFromStream(new ByteArrayInputStream(bytes), null);
+                    if (gifFromStream == null) throw new Exception("get image err");
+                    RandomAccessFile raf = new RandomAccessFile(cache, "rwd");
+                    raf.write(bytes);
+                    raf.close();
+                    gifActivityWR.get().diskLRUCache.put(imgKey, imgKey, cache.length());
+                    return gifFromStream;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    if (cache.delete()) Log.d("cacheDel", "cacheGif deleted");
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            GifImageView imgView = imgViewWR.get();
+            CircleProgressDrawable circleProgress = new CircleProgressDrawable.Builder()
+                    .capacity(100)
+                    .color(gifActivityWR.get().getColor(R.color.myPrimaryColor))
+                    .build();
+            assert imgView != null;
+            imgView.setImageDrawable(circleProgress);
+            imgView.setMinimumHeight(180);
+            imgView.setMinimumWidth(180);
+            super.onPreExecute();
+        }
+
+        @Override
+        protected void onPostExecute(Drawable drawable) {
+            GifImageView imgView = imgViewWR.get();
+            assert imgView != null;
+            if (drawable == null) {
+                Drawable errShow = gifActivityWR.get().getDrawable(R.drawable.ic_close_black_24dp);
+                imgView.setImageDrawable(errShow);
+            } else {
+                imgView.setImageDrawable(drawable);
+                float zoom = type.equals("gif") ? 4.5f : 6.5f;
+                int width = Math.round(drawable.getIntrinsicWidth() * zoom);
+                int height = Math.round(drawable.getIntrinsicHeight() * zoom);
+                imgView.setMinimumHeight(height);
+                imgView.setMinimumWidth(width);
+            }
+            super.onPostExecute(drawable);
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            GifImageView imgView = imgViewWR.get();
+            assert imgView != null;
+            CircleProgressDrawable circleProgress = (CircleProgressDrawable) imgView.getDrawable();
+            circleProgress.setMaxProgress(values[1]);
+            circleProgress.setCurProgress(values[0]);
+            super.onProgressUpdate(values);
+        }
+    }
+
+    private void deleteFavorite(String delId, String itemId) {
+        ContentValues ctv = new ContentValues();
+        ctv.put("fav_flg", 0);
+        int rows = db.update(DBHelper.TB_IMG_WEB_ITEM, ctv, "id = ?", new String[]{itemId});
+        Log.w("db_item_remove_fav: ", rows + "");
+        db.delete(DBHelper.TB_IMG_FAVORITE, "id = ?", new String[]{delId});
+        Log.w("deleteFavorite", "id：" + delId);
+    }
+
+    private ArrayList<HashMap<String, Object>> getFavoriteList(int page, ArrayList<HashMap<String, Object>> favoriteList) {
+        int offset = (page - 1) * FAVORITE_PAGE_SIZE;
+        String sql = "select * from " + DBHelper.TB_IMG_FAVORITE + " where type = '" + type + "' order by id desc limit " + FAVORITE_PAGE_SIZE + " offset " + offset;
+        Cursor cus = db.rawQuery(sql, null);
+        Log.w("getFavoriteList：", cus.getCount() + "");
+        favoriteList.clear();
+        int count = cus.getCount();
+        if (count > 0) {
+            cus.moveToFirst();
+            for (int i = 0; i < count; i++) {
+                HashMap<String,Object> item = new HashMap<>();
+                item.put("id", cus.getString(cus.getColumnIndex("id")));
+                item.put("item_id", cus.getString(cus.getColumnIndex("item_id")));
+                item.put("name", cus.getString(cus.getColumnIndex("title")));
+                item.put("type", cus.getString(cus.getColumnIndex("type")));
+                item.put("url", cus.getString(cus.getColumnIndex("url")));
+                item.put("real_url", cus.getString(cus.getColumnIndex("real_url")));
+                item.put("art_id", cus.getInt(cus.getColumnIndex("art_id")));
+                try {
+                    item.put("icon", getDrawable(R.drawable.ic_image_black_24dp));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    item.put("icon", getDrawable(R.drawable.ic_image_black_24dp));
+                }
+                favoriteList.add(item);
+                cus.moveToNext();
+            }
+        }
+        cus.close();
+        return favoriteList;
+    }
+
     @SuppressLint("InflateParams")
     public void switchType(MenuItem item) {
         PopupWindow popupWindow = new PopupWindow(400, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -550,11 +884,11 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         popupWindow.setOutsideTouchable(true);
         RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
         DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
-        divider.setDrawable(getDrawable(R.drawable.gif_rv_divider));
+        divider.setDrawable(Objects.requireNonNull(getDrawable(R.drawable.gif_rv_divider)));
         rv.addItemDecoration(divider);//分隔线
         rv.setLayoutManager(new LinearLayoutManager(this));
         GifWebRvAdapter ma = new GifWebRvAdapter();
-        List<Map<String,Object>> typeList = getTypeList();
+        ArrayList<HashMap<String, Object>> typeList = getTypeList();
         ma.setData(typeList);
         ma.setOnItemClickListener(position -> {
             type = (String) typeList.get(position).get("name");
@@ -563,6 +897,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             webCfg = getWebCfg(webName);
             if (webCfg == null) webCfg = getWebCfg("gamersky");
             getNewFlg = true;
+            diskLRUCache.serialize();
             diskLRUCache = DiskLRUCache.getInstance(this, type);
             initPage();
             popupWindow.dismiss();
@@ -571,8 +906,8 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         popupWindow.showAtLocation(findViewById(R.id.get_img_ll), Gravity.TOP | Gravity.END, 0, 210);
     }
 
-    private List<Map<String,Object>> getTypeList() {
-        List<Map<String,Object>> typeList = new ArrayList<>();
+    private ArrayList<HashMap<String, Object>> getTypeList() {
+        ArrayList<HashMap<String, Object>> typeList = new ArrayList<>();
         String[] types = new String[]{"gif", "bitmap"};
         for (String type : types) {
             HashMap<String, Object> typeItem = new HashMap<>();
@@ -603,7 +938,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
          */
         private static final String ARG_SECTION_NUMBER = "section_number";
         private int gifPosition = 1;
-        private int downloadPosition = 1;
+        private int focusedPosition = 1;
         private static final int MSG_TYPE_PRE = 100;
         private static final int MSG_TYPE_LOAD = 101;
         private static final int MSG_TYPE_DOWNLOADED = 102;
@@ -705,10 +1040,10 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         }
 
         private void longClickCb(int position, View view) {
-            downloadPosition = position;
+            focusedPosition = position;
             ListPopupWindow listMenu = new ListPopupWindow(activity);
             listMenu.setAdapter(new ArrayAdapter<>(activity, android.R.layout.simple_list_item_1, new
-                    String[]{getString(R.string.download)}));
+                    String[]{getString(R.string.add_to_fav), getString(R.string.download)}));
             DisplayMetrics  dm = new DisplayMetrics();
             activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
             listMenu.setAnchorView(view);
@@ -718,6 +1053,9 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             listMenu.setOnItemClickListener((parent, view1, position1, id) -> {
                 switch (position1) {
                     case 0:
+                        addFav();
+                        break;
+                    case 1:
                         download();
                         break;
                 }
@@ -726,12 +1064,45 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             listMenu.show();
         }
 
+        private void addFav() {
+            String[] gifInfo = getGifInfo(getGifOffset(focusedPosition));
+            Cursor cus = activity.db.query(DBHelper.TB_IMG_WEB_ITEM, new String[]{"*"}, "art_id = ? and title = ?", new String[]{artId + "", gifInfo[1]}, null, null, "id desc", "1");
+            if (cus.getCount() > 0) {
+                cus.moveToFirst();
+                int favFlg = cus.getInt(cus.getColumnIndex("fav_flg"));
+                if (favFlg != 1) {
+                    ContentValues ctv = new ContentValues();
+                    ctv.put("item_id", cus.getInt(cus.getColumnIndex("id")));
+                    ctv.put("art_id", cus.getInt(cus.getColumnIndex("art_id")));
+                    ctv.put("page", cus.getInt(cus.getColumnIndex("page")));
+                    ctv.put("web_name", cus.getString(cus.getColumnIndex("web_name")));
+                    ctv.put("type", cus.getString(cus.getColumnIndex("type")));
+                    ctv.put("title", cus.getString(cus.getColumnIndex("title")));
+                    ctv.put("url", cus.getString(cus.getColumnIndex("url")));
+                    ctv.put("ext", cus.getString(cus.getColumnIndex("ext")));
+                    ctv.put("real_url", cus.getString(cus.getColumnIndex("real_url")));
+                    ctv.put("time", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()));
+                    long newId = activity.db.insert(DBHelper.TB_IMG_FAVORITE, null, ctv);
+                    Log.w("db_img_fav_insert: ", newId + "");
+                    ContentValues ctv2 = new ContentValues();
+                    ctv2.put("fav_flg", 1);
+                    int rows = activity.db.update(DBHelper.TB_IMG_WEB_ITEM, ctv2, "id = ?", new String[]{cus.getString(cus.getColumnIndex("id"))});
+                    Log.w("db_web_item_update: ", rows + "");
+                    activity.alert(getString(R.string.added_to_fav));
+                } else {
+                    activity.alert(getString(R.string.already_in_fav));
+                }
+                cus.close();
+            }
+        }
+
         private void download() {
+            addFav();
             Log.w("download", "download:start");
             PermissionUtil.req(activity, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PermissionUtil.PER_REQ_STORAGE_WRT, () -> {
                 Toast.makeText(activity, "开始下载文件...", Toast.LENGTH_SHORT).show();
                 activity.threadPoolExecutor.execute(() -> {
-                    String[] gifInfo = getGifInfo(getGifOffset(downloadPosition));
+                    String[] gifInfo = getGifInfo(getGifOffset(focusedPosition));
                     File gif = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type + "/" + gifInfo[1]);
                     Log.w("download", "download:path:" + gif.getAbsolutePath());
                     try {
@@ -744,7 +1115,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                                 throw new Exception("create file error");
                             }
                         }
-                        File cacheGif = activity.diskLRUCache.get(webName + "_" + artId + "-" + getGifOffset(downloadPosition));
+                        File cacheGif = activity.diskLRUCache.get(webName + "_" + artId + "-" + getGifOffset(focusedPosition));
                         if (!cacheGif.exists())
                             throw new Exception("未发现缓存文件");
                         if (Build.VERSION.SDK_INT > 26) {
@@ -1105,7 +1476,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
 
         @Override
         public int getCount() {
-            return 48;
+            return 60;
         }
 
         @Override

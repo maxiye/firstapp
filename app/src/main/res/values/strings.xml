@@ -27,7 +27,7 @@
     <string name="refresh">Refresh</string>
     <string name="gif_desc">Gif Desc</string>
     <string name="section_format">Hello World from Section: %1$d</string>
-    <string name="download">Download Gif</string>
+    <string name="download">Download</string>
     <string name="skip_to">Go to</string>
     <string name="change_art_id">Change Art Id</string>
     <string name="switch_web">Switch Web</string>
@@ -65,4 +65,9 @@
     <string name="idcard">ID Card</string>
     <string name="scan_into_fav_db">Scan Files Into Favorate</string>
     <string name="scan_fav_tips">Scaned %1$d Item(s)</string>
+    <string name="add_to_fav">Add to Favorites</string>
+    <string name="added_to_fav">Added to Favorites</string>
+    <string name="already_in_fav">Already in Favorites</string>
+    <string name="favorite">Favorite</string>
+    <string name="no_more">No More</string>
 </resources>

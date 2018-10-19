@@ -46,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements ApplistFragment.O
             frg.setArguments(getIntent().getExtras());
             getSupportFragmentManager().beginTransaction().add(R.id.applist_fragment, frg).commit();
         }
+//        startActivity(new Intent(this, GifActivity.class));
     }
 
     @Override

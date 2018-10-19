@@ -11,15 +11,15 @@
         tools:ignore="AlwaysShowAction"/>
     <item
         android:orderInCategory="100"
-        android:icon="@drawable/ic_arrow_forward_black_24dp"
-        android:title="@string/skip_to"
-        android:onClick="skipTo"
-        app:showAsAction="always"/>
-    <item
-        android:orderInCategory="100"
         android:icon="@drawable/ic_star_border_black_24dp"
         android:title="@string/switch_web"
         android:onClick="switchWeb"
+        app:showAsAction="always"/>
+    <item
+        android:orderInCategory="100"
+        android:icon="@drawable/ic_broken_image_black_24dp"
+        android:title="@string/switch_type"
+        android:onClick="switchType"
         app:showAsAction="always"/>
     <item
         android:orderInCategory="100"
@@ -29,10 +29,16 @@
         app:showAsAction="always"/>
     <item
         android:orderInCategory="100"
-        android:icon="@drawable/ic_broken_image_black_24dp"
-        android:title="@string/switch_type"
-        android:onClick="switchType"
+        android:icon="@drawable/ic_cloud_done_black_24dp"
+        android:title="@string/favorite"
+        android:onClick="listFavorite"
         app:showAsAction="always"/>
+    <item
+        android:orderInCategory="100"
+        android:icon="@drawable/ic_arrow_forward_black_24dp"
+        android:title="@string/skip_to"
+        android:onClick="skipTo"
+        app:showAsAction="ifRoom"/>
     <item
         android:orderInCategory="100"
         android:icon="@drawable/ic_skip_next_black_24dp"
