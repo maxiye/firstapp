@@ -1,6 +1,5 @@
 package com.maxiye.first.util;
 
-import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -88,6 +87,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public DBHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
         mCont = context;
+        checkBakup();
     }
 
     @Override
@@ -172,8 +172,8 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL(INDEX_IMG_FAVORITE);
     }
 
-    public static void backup(Activity activity) {
-        File db = activity.getDatabasePath(DB_NAME);
+    public static void backup(Context context) {
+        File db = context.getDatabasePath(DB_NAME);
         File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         int i = 0;File bak;
         do {
@@ -184,11 +184,11 @@ public class DBHelper extends SQLiteOpenHelper {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
                 Files.copy(db.toPath(), bak.toPath());
-                Toast.makeText(activity, "Success：" + bak.getPath(), Toast.LENGTH_SHORT).show();
-                activity.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE).edit().putLong(SettingActivity.BACKUP_TIME, System.currentTimeMillis()).apply();
+                Toast.makeText(context, "Success：" + bak.getPath(), Toast.LENGTH_SHORT).show();
+                context.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE).edit().putLong(SettingActivity.BACKUP_TIME, System.currentTimeMillis()).apply();
             } catch (IOException e) {
                 e.printStackTrace();
-                Toast.makeText(activity, "Error：" + e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Error：" + e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -199,10 +199,10 @@ public class DBHelper extends SQLiteOpenHelper {
         activity.startActivityForResult(Intent.createChooser(intent,"选择备份文件"), TestActivity.INTENT_PICK_DB_BAK_REQCODE);
     }
 
-    public static void checkBakup(Activity activity) {
-        long lastBackupTime = activity.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE).getLong(SettingActivity.BACKUP_TIME, 0);
+    private void checkBakup() {
+        long lastBackupTime = mCont.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE).getLong(SettingActivity.BACKUP_TIME, 0);
         if (System.currentTimeMillis() - lastBackupTime > 86400 * 5 * 1000) {
-            backup(activity);
+            backup(mCont);
         }
     }
 

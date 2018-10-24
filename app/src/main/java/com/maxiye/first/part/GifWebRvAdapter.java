@@ -3,6 +3,7 @@ package com.maxiye.first.part;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,7 +41,7 @@ public class GifWebRvAdapter extends RecyclerView.Adapter {
         this.clickListener = onItemClickListener;
     }
 
-    public void setOnItemLongClickListener(OnItemLongClickListener onItemLongClickListener) {
+    void setOnItemLongClickListener(OnItemLongClickListener onItemLongClickListener) {
         this.longClickListener = onItemLongClickListener;
     }
 
@@ -53,8 +54,8 @@ public class GifWebRvAdapter extends RecyclerView.Adapter {
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ViewHolder viewHolder = (ViewHolder) holder;
-        HashMap<String, Object> item = (HashMap<String, Object>) mData.get(position);
-        viewHolder.mTextView.setText((String) item.get("name"));
+        HashMap<String, Object> item = mData.get(position);
+        viewHolder.mTextView.setText(Html.fromHtml((String) item.get("name"), Html.FROM_HTML_MODE_COMPACT));
         viewHolder.mImageView.setImageDrawable((Drawable) item.get("icon"));
         if (clickListener != null)
             viewHolder.itemView.setOnClickListener(view -> clickListener.onClick(position));

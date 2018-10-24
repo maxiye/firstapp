@@ -104,10 +104,4 @@ public class NetworkUtil {
             connMgr.unregisterNetworkCallback(netCB);
         }
     }
-
-    @Override
-    protected void finalize() throws Throwable {
-        if (netCB != null) connMgr.unregisterNetworkCallback(netCB);
-        super.finalize();
-    }
 }

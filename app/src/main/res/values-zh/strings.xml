@@ -29,7 +29,7 @@
     <string name="section_format">页面: %1$d</string>
     <string name="refresh">刷新</string>
     <string name="download">下载</string>
-    <string name="skip_to">输入</string>
+    <string name="skip_to">前往</string>
     <string name="change_art_id">修改文章id</string>
     <string name="switch_web">切换网站</string>
     <string name="browser_open">使用浏览器打开</string>
@@ -71,4 +71,5 @@
     <string name="already_in_fav">已在收藏夹中</string>
     <string name="favorite">收藏夹</string>
     <string name="no_more">没有更多内容了</string>
+    <string name="go_to">Go To</string>
 </resources>

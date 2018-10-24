@@ -4,7 +4,6 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -34,6 +33,7 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.ListPopupWindow;
 import android.support.v7.widget.RecyclerView;
+import android.text.Html;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
@@ -45,7 +45,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -58,6 +57,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.maxiye.first.part.CircleProgressDrawable;
 import com.maxiye.first.part.GifWebRvAdapter;
+import com.maxiye.first.part.PageListPopupWindow;
 import com.maxiye.first.util.DBHelper;
 import com.maxiye.first.util.DiskLRUCache;
 import com.maxiye.first.util.NetworkUtil;
@@ -74,6 +74,7 @@ import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
 import java.net.ProtocolException;
+import java.net.SocketTimeoutException;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -97,7 +98,7 @@ import okhttp3.ResponseBody;
 import pl.droidsonroids.gif.GifDrawable;
 import pl.droidsonroids.gif.GifImageView;
 
-public class GifActivity extends AppCompatActivity implements OnPFListener {
+public class GifActivity extends AppCompatActivity {
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -119,6 +120,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     private static int artId = 1023742;
     private static String title = "动态图";
     private static int webPage = 1;
+    private int favImgPos = 0;
     private static boolean endFlg = false;
     private final ArrayList<String[]> gifList = new ArrayList<>();
     private final int HISTORY_PAGE_SIZE = 10;
@@ -128,6 +130,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     private ThreadPoolExecutor threadPoolExecutor;
     private DiskLRUCache diskLRUCache;
     private NetworkUtil netUtil;
+    private int tryCount = 0;//结束计数器
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -147,7 +150,6 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         fab.setOnClickListener(view -> Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show());
         //检测是否备份数据库
-        DBHelper.checkBakup(this);
         db = new DBHelper(this).getWritableDatabase();//没有则此时创建数据库,生成.db文件
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
@@ -164,7 +166,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     .readTimeout(8, TimeUnit.SECONDS)
                     .build();
         }
-        threadPoolExecutor = new ThreadPoolExecutor(3, 7, 30, TimeUnit.SECONDS, new SynchronousQueue<>(), (r, executor) -> executor.shutdown());
+        threadPoolExecutor = new ThreadPoolExecutor(4, 7, 30, TimeUnit.SECONDS, new SynchronousQueue<>(), (r, executor) -> executor.shutdown());
         //CacheUtil.clearAllCache(this);//清楚所有缓存
         diskLRUCache = DiskLRUCache.getInstance(this, type);
         initPage();
@@ -179,7 +181,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         gifList.clear();
         if (mViewPager.getCurrentItem() == 0) {
             if (mSectionsPagerAdapter.currentFragment != null) {
-                for (int i = 1;i<4;i++) {
+                for (int i = 1; i < 4; i++) {
                     GifImageView giv = findViewById(getResources().getIdentifier("gif_" + i, "id", getPackageName()));
                     giv.clearAnimation();
                     giv.setImageResource(R.drawable.ic_image_black_24dp);
@@ -277,8 +279,8 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     private ArrayList<HashMap<String, Object>> getWebList() {
         JsonObject all_web = getWebCfg(null);
         ArrayList<HashMap<String, Object>> webList = new ArrayList<>();
-        for (String key: all_web.keySet()) {
-            HashMap<String,Object> item = new HashMap<>();
+        for (String key : all_web.keySet()) {
+            HashMap<String, Object> item = new HashMap<>();
             item.put("name", key);
             try {
                 item.put("icon", BitmapDrawable.createFromStream(getAssets().open(all_web.getAsJsonObject(key).get("local_icon").getAsString()), null));
@@ -307,53 +309,46 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
     public void skipTo(MenuItem item) {
         //实例化布局
         View view = LayoutInflater.from(this).inflate(R.layout.gif_goto_dialog_edittext, null);
-        //找到并对自定义布局中的控件进行操作的示例
         EditText pageEdit = view.findViewById(R.id.gif_dialog_input);
         //创建对话框
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setIcon(R.drawable.ic_info_black_24dp)//设置图标
                 .setTitle("请输入页码")//设置标题
                 .setView(view)//添加布局
+                .setPositiveButton(R.string.go_to, (dialog1, which) -> {
+                    String itemIdxStr = pageEdit.getText().toString();
+                    itemIdxStr = itemIdxStr.equals("") ? "1" : itemIdxStr;
+                    mViewPager.setCurrentItem(Integer.parseInt(itemIdxStr) - 1, true);
+                    if (endFlg)
+                        checkPageEnd();
+                }).setNegativeButton(R.string.cancel, (dialog1, which) -> {})
                 .create();
-        //设置按键
-        dialog.setButton(AlertDialog.BUTTON_POSITIVE, "前往", (dialog1, which) -> {
-            String itemIdxStr = pageEdit.getText().toString();
-            itemIdxStr = itemIdxStr.equals("") ? "1" : itemIdxStr;
-            mViewPager.setCurrentItem(Integer.parseInt(itemIdxStr) - 1, true);
-            if (endFlg) checkPageEnd();
-        });
-        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, getText(R.string.cancel), (dialog1, which) -> {});
         dialog.show();
-        if (dialog.getWindow() != null)
-            dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        Objects.requireNonNull(dialog.getWindow()).setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
     }
 
     @SuppressLint("InflateParams")
     public void changeUrl(MenuItem item) {
         //实例化布局
         View view2 = LayoutInflater.from(this).inflate(R.layout.gif_goto_dialog_edittext, null);
-        //找到并对自定义布局中的控件进行操作的示例
         EditText articleId = view2.findViewById(R.id.gif_dialog_input);
         //创建对话框
         AlertDialog dialog2 = new AlertDialog.Builder(this)
                 .setIcon(R.drawable.ic_info_black_24dp)//设置图标
                 .setTitle("请输入文章id")//设置标题
                 .setView(view2)//添加布局
+                .setPositiveButton(R.string.go_to, (dialog1, which) -> {
+                    String txt = articleId.getText().toString();
+                    if (txt.equals("")) {
+                        alert("文章id不能为空");
+                    } else {
+                        artId = Integer.parseInt(txt);
+                        initPage();
+                    }
+                }).setNegativeButton(R.string.cancel, (dialog1, which) -> {})
                 .create();
-        //设置按键
-        dialog2.setButton(AlertDialog.BUTTON_POSITIVE, "前往", (dialog1, which) -> {
-            String txt = articleId.getText().toString();
-            if (txt.equals("")) {
-                alert("文章id不能为空");
-            } else {
-                artId = Integer.parseInt(txt);
-                initPage();
-            }
-        });
-        dialog2.setButton(AlertDialog.BUTTON_NEGATIVE, getText(R.string.cancel), (dialog1, which) -> {});
         dialog2.show();
-        if (dialog2.getWindow() != null)
-            dialog2.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        Objects.requireNonNull(dialog2.getWindow()).setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
     }
 
     @SuppressLint("InflateParams")
@@ -405,98 +400,40 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
 
     @SuppressLint({"InflateParams", "SetTextI18n"})
     public void listHistory(MenuItem item) {
-        PopupWindow popupWindow = new PopupWindow(ViewGroup.LayoutParams.MATCH_PARENT, 1200);
-        View root = LayoutInflater.from(this).inflate(R.layout.gif_history_popupwindow_view, null);
-        popupWindow.setFocusable(true);
-        popupWindow.setContentView(root);
-        popupWindow.setOutsideTouchable(true);
-        RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
-        rv.setLayoutManager(new LinearLayoutManager(this));
-        DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
-        divider.setDrawable(Objects.requireNonNull(getDrawable(R.drawable.gif_rv_divider)));
-        rv.addItemDecoration(divider);//分隔线
-        GifWebRvAdapter ma = new GifWebRvAdapter();
-        int historyCount = getHistoryCount();
-        final ArrayList<HashMap<String, Object>> historyList = new ArrayList<>(HISTORY_PAGE_SIZE);
-        //设置页面相关
-        EditText page = root.findViewById(R.id.popup_page);
-        page.setText("1");
-        if (historyCount > HISTORY_PAGE_SIZE) {
-            TextView totalPage = root.findViewById(R.id.popup_total_page);
-            Button prev = root.findViewById(R.id.popup_prev_page);
-            Button next = root.findViewById(R.id.popup_next_page);
-            int total = historyCount % HISTORY_PAGE_SIZE == 0 ? historyCount / HISTORY_PAGE_SIZE : historyCount / HISTORY_PAGE_SIZE + 1;
-            prev.setOnClickListener(v -> {
-                int nowPage = Integer.parseInt(page.getText().toString());
-                if (nowPage > 1) {
-                    int pre = nowPage - 1;
-                    ma.setData(getHistoryList(pre, historyList));
-                    ma.notifyDataSetChanged();
-                    page.setText(pre + "");
-                    next.setVisibility(View.VISIBLE);
-                    prev.setVisibility(pre == 1 ? View.GONE : View.VISIBLE);
-                }
-            });
-            next.setOnClickListener(v -> {
-                int nxt = Integer.parseInt(page.getText().toString()) + 1;
-                ma.setData(getHistoryList(nxt, historyList));
-                ma.notifyDataSetChanged();
-                page.setText(nxt + "");
-                prev.setVisibility(View.VISIBLE);
-                next.setVisibility(nxt < total ? View.VISIBLE : View.GONE);
-            });
-            page.setOnEditorActionListener((textView, i, keyEvent) -> {
-                String nowPageStr = page.getText().toString();
-                nowPageStr = nowPageStr.equals("") ? "1" : nowPageStr;
-                int nowPage = Integer.parseInt(nowPageStr);
-                nowPage = nowPage > total ? total : nowPage;
-                Log.w("HistoryGoPage", "page:" + nowPage);
-                page.setText(nowPage + "");
-                ma.setData(getHistoryList(nowPage, historyList));
-                ma.notifyDataSetChanged();
-                prev.setVisibility(nowPage > 1 ? View.VISIBLE : View.GONE);
-                next.setVisibility(nowPage < total ? View.VISIBLE : View.GONE);
-                InputMethodManager imm = ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE));
-                if (imm != null) imm.toggleSoftInput(InputMethodManager.RESULT_UNCHANGED_SHOWN, InputMethodManager.HIDE_NOT_ALWAYS);
-                page.clearFocus();
-                return true;
-            });
-            page.setVisibility(View.VISIBLE);
-            totalPage.setVisibility(View.VISIBLE);
-            totalPage.setText(" / " + total);
-            next.setVisibility(View.VISIBLE);
-        }
-        ma.setData(getHistoryList(1, historyList));
-        ma.setOnItemClickListener(position -> {
-            webName = (String) ma.getItemData(position).get("web_name");
-            Log.w("rvClick", webName);
-            webCfg = getWebCfg(webName);
-            artId = (int) ma.getItemData(position).get("art_id");
-            initPage();
-            popupWindow.dismiss();
-        });
-        ma.setOnItemLongClickListener(position -> {
-            PopupMenu pMenu = new PopupMenu(this, rv.getLayoutManager().findViewByPosition(position));//使用rv.getChildAt只能获取可见的item，0表示当前屏幕可见第一个item
-            pMenu.getMenuInflater().inflate(R.menu.gif_history_popupmenu, pMenu.getMenu());
-            pMenu.setOnMenuItemClickListener(item1 -> {
-                switch (item1.getItemId()) {
-                    case R.id.delete_gif_record:
-                        //删除记录
-                        int delArtId = (int) ma.getItemData(position).get("art_id");
-                        String delWebName = (String) ma.getItemData(position).get("web_name");
-                        deleteHistory(delArtId, delWebName);
-                        historyList.remove(position);
-                        ma.notifyItemRemoved(position);
-                        ma.notifyItemRangeChanged(position, historyList.size());
-                        break;
-                }
-                return false;
-            });
-            pMenu.show();
-            return true;
-        });
-        rv.setAdapter(ma);
-        popupWindow.showAtLocation(findViewById(R.id.gif_activity_fab), Gravity.BOTTOM, 0, 0);
+        PopupWindow pageWindow = new PageListPopupWindow.Builder(this)
+                .setListGetter(this::getHistoryList)
+                .setItemClickListener((pageWin, position) -> {
+                    webName = (String) pageWin.ma.getItemData(position).get("web_name");
+                    Log.w("rvClick", webName);
+                    webCfg = getWebCfg(webName);
+                    artId = (int) pageWin.ma.getItemData(position).get("art_id");
+                    initPage();
+                    pageWin.popupWindow.dismiss();
+                })
+                .setItemLongClickListener((pageWin, position) -> {
+                    PopupMenu pMenu = new PopupMenu(this, pageWin.rv.getLayoutManager().findViewByPosition(position));//使用rv.getChildAt只能获取可见的item，0表示当前屏幕可见第一个item
+                    pMenu.getMenuInflater().inflate(R.menu.gif_history_popupmenu, pMenu.getMenu());
+                    pMenu.setOnMenuItemClickListener(item1 -> {
+                        switch (item1.getItemId()) {
+                            case R.id.delete_gif_record:
+                                //删除记录
+                                int delArtId = (int) pageWin.ma.getItemData(position).get("art_id");
+                                String delWebName = (String) pageWin.ma.getItemData(position).get("web_name");
+                                deleteHistory(delArtId, delWebName);
+                                pageWin.list.remove(position);
+                                pageWin.ma.notifyItemRemoved(position);
+                                pageWin.ma.notifyItemRangeChanged(position, pageWin.list.size());
+                                break;
+                        }
+                        return false;
+                    });
+                    pMenu.show();
+                    return true;
+                }).setPageSize(HISTORY_PAGE_SIZE)
+                .setTotal(getHistoryCount())
+                .setWindowHeight(1200)
+                .build();
+        pageWindow.showAtLocation(findViewById(R.id.gif_activity_fab), Gravity.BOTTOM, 0, 0);
     }
 
     private int getHistoryCount() {
@@ -524,7 +461,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         if (count > 0) {
             cus.moveToFirst();
             for (int i = 0; i < count; i++) {
-                HashMap<String,Object> item = new HashMap<>();
+                HashMap<String, Object> item = new HashMap<>();
                 item.put("web_name", cus.getString(cus.getColumnIndex("web_name")));
                 item.put("name", cus.getString(cus.getColumnIndex("title")));
                 item.put("type", cus.getString(cus.getColumnIndex("type")));
@@ -546,91 +483,33 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
 
     @SuppressLint({"InflateParams", "SetTextI18n"})
     public void listFavorite(MenuItem item) {
-        PopupWindow popupWindow = new PopupWindow(ViewGroup.LayoutParams.MATCH_PARENT, 1600);
-        View root = LayoutInflater.from(this).inflate(R.layout.gif_history_popupwindow_view, null);
-        popupWindow.setFocusable(true);
-        popupWindow.setContentView(root);
-        popupWindow.setOutsideTouchable(true);
-        RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
-        rv.setLayoutManager(new LinearLayoutManager(this));
-        DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
-        divider.setDrawable(Objects.requireNonNull(getDrawable(R.drawable.gif_rv_divider)));
-        rv.addItemDecoration(divider);//分隔线
-        GifWebRvAdapter ma = new GifWebRvAdapter();
-        int favoriteCount = getFavoriteCount();
-        final ArrayList<HashMap<String, Object>> favoriteList = new ArrayList<>(FAVORITE_PAGE_SIZE);
-        //设置页面相关
-        EditText page = root.findViewById(R.id.popup_page);
-        page.setText("1");
-        if (favoriteCount > FAVORITE_PAGE_SIZE) {
-            TextView totalPage = root.findViewById(R.id.popup_total_page);
-            Button prev = root.findViewById(R.id.popup_prev_page);
-            Button next = root.findViewById(R.id.popup_next_page);
-            int total = favoriteCount % FAVORITE_PAGE_SIZE == 0 ? favoriteCount / FAVORITE_PAGE_SIZE : favoriteCount / FAVORITE_PAGE_SIZE + 1;
-            prev.setOnClickListener(v -> {
-                int nowPage = Integer.parseInt(page.getText().toString());
-                if (nowPage > 1) {
-                    int pre = nowPage - 1;
-                    ma.setData(getFavoriteList(pre, favoriteList));
-                    ma.notifyDataSetChanged();
-                    page.setText(pre + "");
-                    next.setVisibility(View.VISIBLE);
-                    prev.setVisibility(pre == 1 ? View.GONE : View.VISIBLE);
-                }
-            });
-            next.setOnClickListener(v -> {
-                int nxt = Integer.parseInt(page.getText().toString()) + 1;
-                ma.setData(getFavoriteList(nxt, favoriteList));
-                ma.notifyDataSetChanged();
-                page.setText(nxt + "");
-                prev.setVisibility(View.VISIBLE);
-                next.setVisibility(nxt < total ? View.VISIBLE : View.GONE);
-            });
-            page.setOnEditorActionListener((textView, i, keyEvent) -> {
-                String nowPageStr = page.getText().toString();
-                nowPageStr = nowPageStr.equals("") ? "1" : nowPageStr;
-                int nowPage = Integer.parseInt(nowPageStr);
-                nowPage = nowPage > total ? total : nowPage;
-                Log.w("FavoriteGoPage", "page:" + nowPage);
-                page.setText(nowPage + "");
-                ma.setData(getFavoriteList(nowPage, favoriteList));
-                ma.notifyDataSetChanged();
-                prev.setVisibility(nowPage > 1 ? View.VISIBLE : View.GONE);
-                next.setVisibility(nowPage < total ? View.VISIBLE : View.GONE);
-                InputMethodManager imm = ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE));
-                if (imm != null) imm.toggleSoftInput(InputMethodManager.RESULT_UNCHANGED_SHOWN, InputMethodManager.HIDE_NOT_ALWAYS);
-                page.clearFocus();
-                return true;
-            });
-            page.setVisibility(View.VISIBLE);
-            totalPage.setVisibility(View.VISIBLE);
-            totalPage.setText(" / " + total);
-            next.setVisibility(View.VISIBLE);
-        }
-        ma.setData(getFavoriteList(1, favoriteList));
-        ma.setOnItemClickListener(position -> viewFav(favoriteList, position, root));
-        ma.setOnItemLongClickListener(position -> {
-            PopupMenu pMenu = new PopupMenu(this, rv.getLayoutManager().findViewByPosition(position));//使用rv.getChildAt只能获取可见的item，0表示当前屏幕可见第一个item
-            pMenu.getMenuInflater().inflate(R.menu.gif_history_popupmenu, pMenu.getMenu());
-            pMenu.setOnMenuItemClickListener(item1 -> {
-                switch (item1.getItemId()) {
-                    case R.id.delete_gif_record:
-                        //删除记录
-                        String id = (String) ma.getItemData(position).get("id");
-                        String itemId = (String) ma.getItemData(position).get("item_id");
-                        deleteFavorite(id, itemId);
-                        favoriteList.remove(position);
-                        ma.notifyItemRemoved(position);
-                        ma.notifyItemRangeChanged(position, favoriteList.size());
-                        break;
-                }
-                return false;
-            });
-            pMenu.show();
-            return true;
-        });
-        rv.setAdapter(ma);
-        popupWindow.showAtLocation(findViewById(R.id.gif_activity_fab), Gravity.BOTTOM, 0, 0);
+        PopupWindow pageWindow = new PageListPopupWindow.Builder(this)
+                .setListGetter(this::getFavoriteList)
+                .setItemClickListener((pageWin, position) -> viewFav(pageWin.list, position, pageWin.rootView))
+                .setItemLongClickListener((pageWin, position) -> {
+                    PopupMenu pMenu = new PopupMenu(this, pageWin.rv.getLayoutManager().findViewByPosition(position));//使用rv.getChildAt只能获取可见的item，0表示当前屏幕可见第一个item
+                    pMenu.getMenuInflater().inflate(R.menu.gif_history_popupmenu, pMenu.getMenu());
+                    pMenu.setOnMenuItemClickListener(item1 -> {
+                        switch (item1.getItemId()) {
+                            case R.id.delete_gif_record:
+                                //删除记录
+                                String id = (String) pageWin.ma.getItemData(position).get("id");
+                                String itemId = (String) pageWin.ma.getItemData(position).get("item_id");
+                                deleteFavorite(id, itemId);
+                                pageWin.list.remove(position);
+                                pageWin.ma.notifyItemRemoved(position);
+                                pageWin.ma.notifyItemRangeChanged(position, pageWin.list.size());
+                                break;
+                        }
+                        return false;
+                    });
+                    pMenu.show();
+                    return true;
+                }).setPageSize(FAVORITE_PAGE_SIZE)
+                .setTotal(getFavoriteCount())
+                .setWindowHeight(1600)
+                .build();
+        pageWindow.showAtLocation(findViewById(R.id.gif_activity_fab), Gravity.BOTTOM, 0, 0);
     }
 
     private int getFavoriteCount() {
@@ -647,18 +526,28 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         GifImageView imgView = new GifImageView(this);
         imgView.setImageDrawable(getDrawable(R.drawable.ic_image_black_24dp));
         GifActivity activity = this;
+        favImgPos = position;
+        imgView.setOnLongClickListener(v -> {
+            HashMap<String, Object> item = favoriteList.get(favImgPos);
+            String name = (String) item.get("title");
+            String cacheKey = "favorite_" + item.get("id") + "_" + type;
+            download(name, cacheKey, v);
+            return false;
+        });
         imgView.setOnTouchListener(new View.OnTouchListener() {
-            int storePos = position;
             float mPosX;
             float mPosY;
             float mCurPosX;
             float mCurPosY;
+            long mTime;
+
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         mPosX = mCurPosX = event.getX();
                         mPosY = mCurPosY = event.getY();
+                        mTime = System.currentTimeMillis();
                         break;
                     case MotionEvent.ACTION_MOVE:
                         mCurPosX = event.getX();
@@ -670,61 +559,116 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
 //                        } else if (mCurPosY - mPosY < 0
 //                                && (Math.abs(mCurPosY - mPosY) > 25)) {//向上滑动
 //                        }
-                        if (mCurPosY - mPosY > 300) dialog.dismiss();
                         if (mCurPosX - mPosX > 150) {//向左滑動
                             viewPre();
+                            break;
                         } else if (mCurPosX - mPosX < -150) {//向右滑动
                             viewNext();
+                            break;
                         }
+                        if (mCurPosY - mPosY > 250) {
+                            dialog.dismiss();
+                            break;
+                        }
+                        if (System.currentTimeMillis() - mTime > 500) v.performLongClick();
                         break;
                 }
                 return true;
             }
 
             private void viewPre() {
-                if (storePos > 0) {
-                    storePos--;
+                if (favImgPos > 0) {
+                    favImgPos--;
                 } else {
                     Button button = root.findViewById(R.id.popup_prev_page);
                     if (button.getVisibility() == Button.VISIBLE) {
                         button.performClick();
-                        storePos = FAVORITE_PAGE_SIZE - 1;
+                        favImgPos = FAVORITE_PAGE_SIZE - 1;
                     } else {
-                        Toast.makeText(activity, getString(R.string.no_more), Toast.LENGTH_SHORT).show();
+                        activity.alert(getString(R.string.no_more));
                         return;
                     }
                 }
-                loadFavImg(imgView, favoriteList.get(storePos));
+                loadFavImg(dialog, imgView, favoriteList.get(favImgPos));
             }
 
             private void viewNext() {
-                if (storePos < favoriteList.size() - 1) {
-                    storePos++;
+                if (favImgPos < favoriteList.size() - 1) {
+                    favImgPos++;
                 } else {
                     Button button = root.findViewById(R.id.popup_next_page);
                     if (button.getVisibility() == Button.VISIBLE) {
-                        storePos = 0;
+                        favImgPos = 0;
                         button.performClick();
                     } else {
-                        Toast.makeText(activity, getString(R.string.no_more), Toast.LENGTH_SHORT).show();
+                        activity.alert(getString(R.string.no_more));
                         return;
                     }
                 }
-                loadFavImg(imgView, favoriteList.get(storePos));
+                loadFavImg(dialog, imgView, favoriteList.get(favImgPos));
             }
         });
-        Objects.requireNonNull(dialog.getWindow()).setBackgroundDrawable(new ColorDrawable(0));
+        Objects.requireNonNull(dialog.getWindow()).setBackgroundDrawable(new ColorDrawable(0x3f009688));
         dialog.setContentView(imgView);
-        loadFavImg(imgView, favoriteList.get(position));
+        loadFavImg(dialog, imgView, favoriteList.get(position));
         dialog.show();
     }
 
-    private void loadFavImg(GifImageView imgView, HashMap<String, Object> item) {
-        String title = (String) item.get("name");
+    private void download(String name, String cacheKey, View view) {
+        PermissionUtil.req(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PermissionUtil.PER_REQ_STORAGE_WRT, () -> {
+            Toast.makeText(this, "开始下载文件...", Toast.LENGTH_SHORT).show();
+            File img = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type + "/" + name);
+            Log.w("download", "path:" + img.getAbsolutePath());
+            try {
+                if (!img.getParentFile().exists() && !img.getParentFile().mkdirs()) {
+                    Log.w("create dir error", img.getParentFile().getAbsolutePath());
+                    throw new Exception("create dir error");
+                }
+                File cacheGif = diskLRUCache.get(cacheKey);
+                if (cacheGif == null || !cacheGif.exists())
+                    throw new Exception("未发现缓存文件");
+                if (Build.VERSION.SDK_INT > 25) {
+                    Files.copy(cacheGif.toPath(), img.toPath());
+                } else {
+                    if (!img.exists() && !img.createNewFile()) {
+                        throw new Exception("create file error");
+                    }
+                    try {
+                        FileInputStream input = new FileInputStream(cacheGif);
+                        FileOutputStream output = new FileOutputStream(img);
+                        byte[] buf = new byte[4096];
+                        int bytesRead;
+                        while ((bytesRead = input.read(buf)) > 0) {
+                            output.write(buf, 0, bytesRead);
+                        }
+                        input.close();
+                        output.close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                //发送广播
+                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(img)));
+                Snackbar.make(view, "下载完成", Snackbar.LENGTH_SHORT)
+                        .setAction("打开", v -> {
+                            Intent imgView = new Intent(Intent.ACTION_VIEW);
+                            imgView.setDataAndType(FileProvider.getUriForFile(this, "com.maxiye.first.fileprovider", img), "image/*");
+                            imgView.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);//不加黑屏读取不了
+                            startActivity(imgView);
+                        }).show();
+            } catch (Exception e) {
+                alert("下载失败：" + e.toString());
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private void loadFavImg(Dialog dialog, GifImageView imgView, HashMap<String, Object> item) {
+        String title = (String) item.get("title");
         String url = (String) item.get("real_url");
         url = url.equals("") ? (String) item.get("url") : url;
-        Toast.makeText(this, title, Toast.LENGTH_SHORT).show();
-        new ImgViewTask(imgView, this).execute(title, url, (String) item.get("id"));
+        dialog.setTitle(Html.fromHtml("<p style='color: #F66725; text-align: center; font-size: 10px'>" + title + "</p>", Html.FROM_HTML_MODE_COMPACT));
+        new ImgViewTask(imgView, this).execute(title, url, (String) item.get("id"), (String) item.get("path"));
     }
 
     static class ImgViewTask extends AsyncTask<String, Integer, Drawable> {
@@ -740,14 +684,15 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
 
         /**
          * 加载图片
-         * @param strings title,url,id
+         * @param strings title,url,id,path
          * @return Drawable
          */
         @Override
         protected Drawable doInBackground(String... strings) {
             GifActivity activity = gifActivityWR.get();
             String imgKey = "favorite_" + strings[2] + "_" + type;
-            cache = activity.diskLRUCache.get(imgKey);
+            String path = strings[3];
+            cache = path.equals("") ? activity.diskLRUCache.get(imgKey) : new File(path);
             if (cache != null) {
                 try {
                     Log.w("loadImg(fromCache)", "title：" + strings[0] + ";url：" + strings[1]);
@@ -756,6 +701,11 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     e.printStackTrace();
                 }
             } else {
+                //移动网络禁止 gif
+                if (activity.isGprs && type.equals("gif")) {
+                    activity.runOnUiThread(()-> activity.alert("正在使用移动网络"));
+                    if (!activity.gprsContinue) return null;
+                }
                 cache = new File(activity.getCacheDir(), imgKey);
                 Request request = new Request.Builder().url(strings[1]).build();
                 try {
@@ -854,21 +804,37 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         int count = cus.getCount();
         if (count > 0) {
             cus.moveToFirst();
+            String dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type + "/";
             for (int i = 0; i < count; i++) {
-                HashMap<String,Object> item = new HashMap<>();
+                HashMap<String, Object> item = new HashMap<>();
                 item.put("id", cus.getString(cus.getColumnIndex("id")));
                 item.put("item_id", cus.getString(cus.getColumnIndex("item_id")));
-                item.put("name", cus.getString(cus.getColumnIndex("title")));
+                item.put("title", cus.getString(cus.getColumnIndex("title")));
+                String name = cus.getString(cus.getColumnIndex("title"));
                 item.put("type", cus.getString(cus.getColumnIndex("type")));
                 item.put("url", cus.getString(cus.getColumnIndex("url")));
                 item.put("real_url", cus.getString(cus.getColumnIndex("real_url")));
                 item.put("art_id", cus.getInt(cus.getColumnIndex("art_id")));
-                try {
-                    item.put("icon", getDrawable(R.drawable.ic_image_black_24dp));
-                } catch (Exception e) {
-                    e.printStackTrace();
+                String path = "";
+                File file = new File(dir + item.get("title"));
+                if (file.exists()) {
+                    name += "<span style='color: #13b294'>&emsp;&emsp;√</span>";
+                    path = dir + item.get("title");
+                } else {
+                    file = diskLRUCache.get("favorite_" + item.get("id") + "_" + type);
+                }
+                if (file != null && file.exists()) {
+                    try {
+                        item.put("icon", Drawable.createFromStream(new FileInputStream(file), null));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    Log.w("getFavoriteList-fileNotFound：", name);
                     item.put("icon", getDrawable(R.drawable.ic_image_black_24dp));
                 }
+                item.put("path", path);
+                item.put("name", name);
                 favoriteList.add(item);
                 cus.moveToNext();
             }
@@ -918,7 +884,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         return typeList;
     }
 
-    @Override
+
     public void checkPageEnd() {
         int nowPage = mViewPager.getCurrentItem() + 1;
         int pages = gifList.size() % 3 == 0 ? gifList.size() / 3 : gifList.size() / 3 + 1;
@@ -941,13 +907,9 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         private int focusedPosition = 1;
         private static final int MSG_TYPE_PRE = 100;
         private static final int MSG_TYPE_LOAD = 101;
-        private static final int MSG_TYPE_DOWNLOADED = 102;
-        private static final int MSG_TYPE_DOWNLOAD_ERR = 103;
-        private static final int MSG_TYPE_EMPTY = 104;
-        private static final int MSG_TYPE_OVER = 105;
-        private static final int MSG_TYPE_LOADING = 106;
+        private static final int MSG_TYPE_EMPTY = 102;
+        private static final int MSG_TYPE_LOADING = 103;
         private GifActivity activity;
-        private OnPFListener mListener;
         private MyHandler myHandler;
 
         public PlaceholderFragment() {}
@@ -957,7 +919,6 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             super.onDestroy();
             if (myHandler != null) myHandler.removeCallbacksAndMessages(null);
             myHandler = null;
-            mListener = null;
             activity = null;
         }
 
@@ -976,17 +937,6 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             return fragment;
         }
 
-        @Override
-        public void onAttach(Context context) {
-            super.onAttach(context);
-            if (context instanceof OnPFListener) {
-                mListener = (OnPFListener) context;
-            } else {
-                throw new RuntimeException(context.toString()
-                        + " must implement OnPFListener");
-            }
-        }
-
         @SuppressLint("SetTextI18n")
         @Override
         public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -995,7 +945,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             TextView textView = rootView.findViewById(R.id.section_label);
             assert getArguments() != null;
             textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
-            for (int i = 1;i<4;i++) {
+            for (int i = 1; i < 4; i++) {
                 int pos = i;
                 GifImageView giv = rootView.findViewById(getResources().getIdentifier("gif_" + i, "id", activity.getPackageName()));
                 giv.setMinimumHeight(90);
@@ -1023,11 +973,13 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 }
             }
         }
+        @SuppressWarnings("unused")
         public void send(int what, Object obj) {
             if (myHandler != null) {
                 myHandler.sendMessage(myHandler.obtainMessage(what, obj));
             }
         }
+
         public void send(int what, int arg1, int arg2, Object obj) {
             if (myHandler != null) {
                 myHandler.sendMessage(myHandler.obtainMessage(what, arg1, arg2, obj));
@@ -1044,7 +996,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             ListPopupWindow listMenu = new ListPopupWindow(activity);
             listMenu.setAdapter(new ArrayAdapter<>(activity, android.R.layout.simple_list_item_1, new
                     String[]{getString(R.string.add_to_fav), getString(R.string.download)}));
-            DisplayMetrics  dm = new DisplayMetrics();
+            DisplayMetrics dm = new DisplayMetrics();
             activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
             listMenu.setAnchorView(view);
             listMenu.setWidth(dm.widthPixels * 2 / 3);
@@ -1056,7 +1008,10 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                         addFav();
                         break;
                     case 1:
-                        download();
+                        addFav();
+                        String[] gifInfo = getGifInfo(getGifOffset(focusedPosition));
+                        String cacheKey = webName + "_" + artId + "-" + getGifOffset(focusedPosition);
+                        activity.download(gifInfo[1], cacheKey, activity.findViewById(android.R.id.content));
                         break;
                 }
                 listMenu.dismiss();
@@ -1096,58 +1051,6 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             }
         }
 
-        private void download() {
-            addFav();
-            Log.w("download", "download:start");
-            PermissionUtil.req(activity, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PermissionUtil.PER_REQ_STORAGE_WRT, () -> {
-                Toast.makeText(activity, "开始下载文件...", Toast.LENGTH_SHORT).show();
-                activity.threadPoolExecutor.execute(() -> {
-                    String[] gifInfo = getGifInfo(getGifOffset(focusedPosition));
-                    File gif = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type + "/" + gifInfo[1]);
-                    Log.w("download", "download:path:" + gif.getAbsolutePath());
-                    try {
-                        if (!gif.exists()) {
-                            if (!gif.getParentFile().exists() && !gif.getParentFile().mkdirs()) {
-                                Log.w("doing", gif.getParentFile().getAbsolutePath());
-                                throw new Exception("create dir error");
-                            }
-                            if (!gif.createNewFile()) {
-                                throw new Exception("create file error");
-                            }
-                        }
-                        File cacheGif = activity.diskLRUCache.get(webName + "_" + artId + "-" + getGifOffset(focusedPosition));
-                        if (!cacheGif.exists())
-                            throw new Exception("未发现缓存文件");
-                        if (Build.VERSION.SDK_INT > 26) {
-                            Files.copy(cacheGif.toPath(), gif.toPath());
-                        } else {
-                            try {
-                                FileInputStream input = new FileInputStream(cacheGif);
-                                FileOutputStream output = new FileOutputStream(gif);
-                                byte[] buf = new byte[4096];
-                                int bytesRead;
-                                while ((bytesRead = input.read(buf)) > 0) {
-                                    output.write(buf, 0, bytesRead);
-                                }
-                                input.close();
-                                output.close();
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        //发送广播
-                        Intent scanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                        scanIntent.setData(Uri.fromFile(gif));
-                        activity.sendBroadcast(scanIntent);
-                        send(MSG_TYPE_DOWNLOADED, gif);
-                    } catch (Exception e) {
-                        send(MSG_TYPE_DOWNLOAD_ERR, "下载失败");
-                        e.printStackTrace();
-                    }
-                });
-            });
-        }
-
         void checkLoad() {
             String imgKey = webName + "_" + artId + "-" + getGifOffset(gifPosition);
             //移动网络禁止 gif
@@ -1162,7 +1065,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                         popupWindow.dismiss();
                     });
                     view.findViewById(R.id.bt_cancel).setOnClickListener(v -> popupWindow.dismiss());
-                    popupWindow.showAtLocation(getView(), Gravity.CENTER,0,0);
+                    popupWindow.showAtLocation(activity.findViewById(android.R.id.content), Gravity.CENTER, 0, 0);
                 } else {
                     activity.threadPoolExecutor.execute(this::loadGif);
                 }
@@ -1235,6 +1138,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                             e.printStackTrace();
                         }
                     }
+
                     File finalCacheGif = new File(activity.getCacheDir(), imgKey + gifInfo[2]);
                 });
             }
@@ -1244,10 +1148,8 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         private synchronized void loadGifList() {
             //数据库获取
             if (webPage == 1) {
-                if (getNewFlg)
-                    getNewArtId();
-                if (loadDbGifList())
-                    return;
+                if (getNewFlg) getNewArtId();
+                if (loadDbGifList()) return;
             }
             if (endFlg) return;
             Log.w("start", "loadGifList(lock):" + webPage);
@@ -1288,15 +1190,17 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                 }
                 if (webPage == 1 && activity.gifList.size() > 0) {
                     Log.w("titleGet", title);
-                    if (title.equals("动态图")) getNewTitle(content);
+                    if (title.equals("动态图"))  getNewTitle(content);
                     saveDbGifList(DBHelper.TB_IMG_WEB, new String[]{url, title});
                 }
                 webPage++;
-            } catch (Exception e) {//java.net.ProtocolException: Too many follow-up requests: 21
-                if (e instanceof ProtocolException) {
+                activity.tryCount = 0;
+            } catch (Exception e) {//java.net.ProtocolException: Too many follow-up requests: 21//java.io.EOFException 返回空内容，responseBody.bytes()
+                if (activity.tryCount++ > 3 && !(e instanceof SocketTimeoutException)) {
                     endFlg = true;
+                    activity.tryCount = 0;
                     if (activity.gifList.size() > 0) updateDbField(String.valueOf(webPage - 1));
-                    send(MSG_TYPE_OVER, "");
+                    activity.runOnUiThread(()->activity.checkPageEnd());
                 }
                 e.printStackTrace();
             } finally {
@@ -1306,8 +1210,9 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         }
 
         private String getTitle(String group) {
-            boolean notNull =  group != null && !group.replaceAll("[\r\n\\s\t]", "").equals("");
-            return notNull ? group : UUID.randomUUID().toString();
+            boolean notNull = group != null && !group.replaceAll("[\r\n\\s\t]", "").equals("");
+            String title = notNull ? group : UUID.randomUUID().toString();
+            return title.replaceAll("[\r\n\\s\t]", "");
         }
 
         private void getNewArtId() {
@@ -1398,7 +1303,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
         private void updateDbField(String val) {
             ContentValues ctv = new ContentValues();
             ctv.put("pages", val);
-            int rows = activity.db.update(DBHelper.TB_IMG_WEB, ctv, "art_id = ? and web_name = ?", new String[]{artId + "",webName});
+            int rows = activity.db.update(DBHelper.TB_IMG_WEB, ctv, "art_id = ? and web_name = ?", new String[]{artId + "", webName});
             Log.w("db_web_update: ", rows + "");
         }
 
@@ -1435,6 +1340,10 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             if (activity.gifList.size() <= offset) {
                 if (endFlg)
                     return null;
+                if (!NetworkUtil.isConnected(activity)) {
+                    activity.runOnUiThread(() -> activity.alert(getString(R.string.no_internet)));
+                    return null;
+                }
                 loadGifList();
                 return getGifInfo(offset);
             } else {
@@ -1485,6 +1394,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             super.setPrimaryItem(container, position, object);
         }
     }
+
     private static class MyHandler extends Handler {
         private final WeakReference<PlaceholderFragment> mFragment;
 
@@ -1523,7 +1433,7 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     break;
                 case PlaceholderFragment.MSG_TYPE_LOADING:
                     GifImageView iv2 = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + msg.arg1, "id", context.getPackageName()));
-                    if (iv2.getDrawable() instanceof  CircleProgressDrawable) {
+                    if (iv2.getDrawable() instanceof CircleProgressDrawable) {
                         CircleProgressDrawable circleProgress = (CircleProgressDrawable) iv2.getDrawable();
                         circleProgress.setCurProgress((int) msg.obj);
                     } else {
@@ -1548,19 +1458,6 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
                     iv3.setMinimumHeight(height);
                     iv3.setMinimumWidth(width);
                     break;
-                case PlaceholderFragment.MSG_TYPE_OVER:
-                    fragment.mListener.checkPageEnd();
-                    break;
-                case PlaceholderFragment.MSG_TYPE_DOWNLOADED:
-                    File gif = (File) msg.obj;
-                    Snackbar.make(rootView, "下载完成", Snackbar.LENGTH_SHORT)
-                            .setAction("打开", v -> {
-                                Intent imgView = new Intent(Intent.ACTION_VIEW);
-                                imgView.setDataAndType(FileProvider.getUriForFile(context, "com.maxiye.first.fileprovider", gif), "image/*");
-                                imgView.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);//不加黑屏读取不了
-                                context.startActivity(imgView);
-                            }).show();
-                    break;
                 case PlaceholderFragment.MSG_TYPE_EMPTY:
                     GifImageView iv4 = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + msg.arg1, "id", context.getPackageName()));
                     iv4.clearAnimation();
@@ -1569,8 +1466,4 @@ public class GifActivity extends AppCompatActivity implements OnPFListener {
             }
         }
     }
-}
-
-interface OnPFListener {
-    void checkPageEnd();
 }
