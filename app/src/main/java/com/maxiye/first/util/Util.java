@@ -60,6 +60,20 @@ public class Util {
         return inSampleSize;
     }
 
+    public static int predictInSampleSize(long fileSize, String type) {
+        if (type.equals("gif"))
+            return 4;
+        if (fileSize < 30720) {//30
+            return 4;
+        } else if (fileSize < 122880) {//120
+            return 8;
+        } else if (fileSize < 491520) {//480
+            return 16;
+        } else {
+            return 32;
+        }
+    }
+
 
     /* Checks if external storage is available for read and write */
     public static boolean isExternalStorageWritable() {

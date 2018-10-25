@@ -75,7 +75,7 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
 
     public File get(String key) {
         String val = super.get(key);
-        Log.w("DiskLRU:get", "key:" + key + ";val:" + val + ";now:" + now);
+//        Log.w("DiskLRU:get", "key:" + key + ";val:" + val + ";now:" + now);
         if (val != null) {
             File f = new File(context.getCacheDir(), val);
             if (f.exists() && f.isFile()) {
@@ -91,7 +91,7 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
     public synchronized void put(String key, String value, long fzise) {
         removeEldest();
         now += fzise;
-        Log.w("DiskLRU:put", "key:" + key + ";val:" + value + ";size:" + fzise + ";now:" + now);
+//        Log.w("DiskLRU:put", "key:" + key + ";val:" + value + ";size:" + fzise + ";now:" + now);
         super.put(key, value);
     }
 
@@ -119,7 +119,7 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
                 now -= len;
             }
         }
-        Log.w("DiskLRU:remove", "string:" + toString() + "key:" + key + ";now:" + now);
+//        Log.w("DiskLRU:remove", "string:" + toString() + "key:" + key + ";now:" + now);
         return val;
     }
 
