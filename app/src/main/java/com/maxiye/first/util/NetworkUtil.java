@@ -35,7 +35,6 @@ public class NetworkUtil {
      * @param context contect
      * @return boolean
      */
-    @SuppressWarnings("unused")
     public static boolean isConnected(Context context) {
         ConnectivityManager connMgr = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         assert connMgr != null;
@@ -61,7 +60,6 @@ public class NetworkUtil {
      * @param context context
      * @return boolean
      */
-    @SuppressWarnings("unused")
     public static boolean isGprs(Context context) {
         ConnectivityManager connMgr = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         assert connMgr != null;
@@ -69,7 +67,7 @@ public class NetworkUtil {
         return netInfo != null && netInfo.getType() == ConnectivityManager.TYPE_MOBILE;
     }
 
-    public void watch(ConnectivityManager.NetworkCallback networkCallback) {
+    private void watch(ConnectivityManager.NetworkCallback networkCallback) {
         if (networkCallback != null) {
             netCB = networkCallback;
             connMgr.registerDefaultNetworkCallback(netCB);

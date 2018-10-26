@@ -23,9 +23,7 @@ import java.util.Date;
 
 
 public class MainActivity extends AppCompatActivity implements ApplistFragment.OnFrgActionListener, ActivityCompat.OnRequestPermissionsResultCallback, SearchView.OnQueryTextListener {
-    public final static String EXTRA_MESSAGE = "com.maxiye.first.MESSAGE";
     public static final String EXTRA_URL = "com.maxiye.first.URL";
-    private final static int INTERVAL = 600;
     private long last_press_time = 0;
 
     private ApplistFragment frg;
@@ -107,11 +105,11 @@ public class MainActivity extends AppCompatActivity implements ApplistFragment.O
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
+        int INTERVAL = 800;
         switch (keyCode) {
             case KeyEvent.KEYCODE_BACK:
                 long now = new Date().getTime();
-                long interval = now - last_press_time;
-                if (interval < INTERVAL) {
+                if (now - last_press_time < INTERVAL) {
                     finish();
                 } else {
                     last_press_time = now;
@@ -127,10 +125,7 @@ public class MainActivity extends AppCompatActivity implements ApplistFragment.O
 
     //设置
     private void setting() {
-        Intent intent = new Intent(this, SettingActivity.class);
-        String msg = "helloworld";
-        intent.putExtra(EXTRA_MESSAGE, msg);
-        startActivity(intent);
+        startActivity(new Intent(this, SettingActivity.class));
     }
 
     /**
@@ -146,10 +141,9 @@ public class MainActivity extends AppCompatActivity implements ApplistFragment.O
     //ListView项目点击事件，实现OnFrgActionListener接口
     public void onItemClick(View view) {
         TextView tv = view.findViewById(R.id.applist_package_name);
-        String str = tv.getText().toString();
         ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         assert clm != null;
-        clm.setPrimaryClip(ClipData.newPlainText(null, str));
+        clm.setPrimaryClip(ClipData.newPlainText(null, tv.getText().toString()));
         alert(getString(R.string.clip_toast));
     }
 

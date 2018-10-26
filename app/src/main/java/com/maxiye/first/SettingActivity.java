@@ -17,14 +17,6 @@ public class SettingActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setting);
-        /*Intent intent = getIntent();
-        String msg = intent.getStringExtra(MainActivity.EXTRA_MESSAGE);
-        TextView tv = new TextView(this);
-        tv.setTextSize(40);
-        tv.setText(msg);
-
-        ViewGroup gif_gprs_popup_confirm = (ViewGroup) findViewById(R.id.activity_setting);
-        gif_gprs_popup_confirm.addView(tv);*/
         sp = getSharedPreferences(SETTING, Context.MODE_PRIVATE);
         //初始化设置
         initSetting();

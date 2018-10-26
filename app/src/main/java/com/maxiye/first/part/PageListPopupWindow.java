@@ -26,7 +26,7 @@ import java.util.Objects;
  * Created by due on 2018/10/22.
  */
 public class PageListPopupWindow {
-    public ArrayList<HashMap<String, Object>> list = new ArrayList<>();
+    public ArrayList<HashMap<String, Object>> list;
     public RecyclerView rv;
     public GifWebRvAdapter ma;
     public PopupWindow popupWindow;
@@ -147,6 +147,7 @@ public class PageListPopupWindow {
             totalPage.setText(" / " + pages);
             next.setVisibility(View.VISIBLE);
         }
+        list = new ArrayList<>(pageSize);
         ma.setData(listGetter.getList(1, list));
         if (itemClickListener != null) ma.setOnItemClickListener(position -> itemClickListener.onClick(this, position));
         if (itemLongClickListener != null) ma.setOnItemLongClickListener(position -> itemLongClickListener.onLongClick(this, position));

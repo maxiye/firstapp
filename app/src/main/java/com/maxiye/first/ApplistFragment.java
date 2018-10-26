@@ -138,8 +138,7 @@ public class ApplistFragment extends Fragment {
                 }
                 boolean show_system_apps = fragment.sp.getBoolean(SettingActivity.SHOW_SYSTEM, false);
                 //过滤
-                //String app_list = "";
-                List<ApplicationInfo> ai_al_c = fragment.ai_al.stream()
+                List<Map<String, Object>> ai_list = fragment.ai_al.stream()
                         .filter(ai -> show_system_apps || ((ai.flags & ApplicationInfo.FLAG_SYSTEM) == 0))
                         .filter(ai -> {
                             if (strings[0] != null && !strings[0].isEmpty()) {
@@ -148,22 +147,21 @@ public class ApplistFragment extends Fragment {
                             }
                             return true;
                         })
-//                .forEach(ai -> app_list += (ai.flags & ApplicationInfo.FLAG_SYSTEM)+"??")
+                        .map(ai -> {
+                            HashMap<String, Object> app_info = new HashMap<>();
+                            try {
+                                PackageInfo pi = fragment.pm.getPackageInfo(ai.packageName, 0);
+                                app_info.put("name", fragment.pm.getApplicationLabel(ai) + " v" + pi.versionName + "(" + pi.versionCode + ")");
+                                app_info.put("pkg", ai.packageName);
+                                app_info.put("icon", fragment.pm.getApplicationIcon(ai));
+                            } catch (PackageManager.NameNotFoundException e1) {
+                                e1.printStackTrace();
+                            }
+                            return app_info;
+                        })
                         .collect(Collectors.toList());
                 //写入文件
                 //SaveAppListEx("app_list.txt", app_list);
-                List<Map<String, Object>> ai_list = ai_al_c.stream().map(ai -> {
-                    HashMap<String, Object> app_info = new HashMap<>();
-                    try {
-                        PackageInfo pi = fragment.pm.getPackageInfo(ai.packageName, 0);
-                        app_info.put("name", fragment.pm.getApplicationLabel(ai) + " v" + pi.versionName + "(" + pi.versionCode + ")");
-                        app_info.put("pkg", ai.packageName);
-                        app_info.put("icon", fragment.pm.getApplicationIcon(ai));
-                    } catch (PackageManager.NameNotFoundException e1) {
-                        e1.printStackTrace();
-                    }
-                    return app_info;
-                }).collect(Collectors.toList());
                 return ai_list.size() > 0 ? ai_list : null;
             }
             return null;

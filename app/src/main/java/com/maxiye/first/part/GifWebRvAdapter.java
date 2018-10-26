@@ -55,12 +55,17 @@ public class GifWebRvAdapter extends RecyclerView.Adapter {
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ViewHolder viewHolder = (ViewHolder) holder;
         HashMap<String, Object> item = mData.get(position);
-        viewHolder.mTextView.setText(Html.fromHtml((String) item.get("name"), Html.FROM_HTML_MODE_COMPACT));
-        viewHolder.mImageView.setImageDrawable((Drawable) item.get("icon"));
-        if (clickListener != null)
-            viewHolder.itemView.setOnClickListener(view -> clickListener.onClick(position));
-        if (longClickListener != null)
-            viewHolder.itemView.setOnLongClickListener(view -> longClickListener.onLongClick(position));
+        if (!item.isEmpty()) {
+            viewHolder.mTextView.setText(Html.fromHtml((String) item.get("name"), Html.FROM_HTML_MODE_COMPACT));
+            viewHolder.mImageView.setImageDrawable((Drawable) item.get("icon"));
+            if (clickListener != null)
+                viewHolder.itemView.setOnClickListener(view -> clickListener.onClick(position));
+            if (longClickListener != null)
+                viewHolder.itemView.setOnLongClickListener(view -> longClickListener.onLongClick(position));
+        } else {
+            viewHolder.mTextView.setText("");
+            viewHolder.mImageView.setImageDrawable(null);
+        }
     }
 
     @Override
