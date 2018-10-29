@@ -118,6 +118,7 @@ public class GifActivity extends AppCompatActivity {
     private static int artId = 1023742;
     private static String title = "动态图";
     private static int webPage = 1;
+    private int page = 1;
     private static boolean endFlg = false;
     private final int HISTORY_PAGE_SIZE = 10;
     private final int FAVORITE_PAGE_SIZE = 20;
@@ -134,6 +135,7 @@ public class GifActivity extends AppCompatActivity {
     private ThreadPoolExecutor threadPoolExecutor;
     private DiskLRUCache diskLRUCache;
     private NetworkUtil netUtil;
+    private MyHandler myHandler;
     private int tryCount = 0;//loadGifList错误计数器
     private ImgViewTask favViewTask;
 
@@ -172,8 +174,9 @@ public class GifActivity extends AppCompatActivity {
                     .build();
         }
         threadPoolExecutor = new ThreadPoolExecutor(4, 7, 30, TimeUnit.SECONDS, new SynchronousQueue<>(), (r, executor) -> executor.shutdown());
-        //CacheUtil.clearAllCache(this);//清楚所有缓存
+//        CacheUtil.clearAllCache(this);//清楚所有缓存
         diskLRUCache = DiskLRUCache.getInstance(this, type);
+        myHandler = new MyHandler(this);
         initPage();
         Log.w("end", "onCreateOver");
     }
@@ -928,17 +931,15 @@ public class GifActivity extends AppCompatActivity {
         private static final int MSG_TYPE_PRE = 100;
         private static final int MSG_TYPE_LOAD = 101;
         private static final int MSG_TYPE_EMPTY = 102;
-        private static final int MSG_TYPE_LOADING = 103;
+        private static final int MSG_TYPE_PRELOAD = 103;
+        private static final int MSG_TYPE_LOADING = 104;
         private GifActivity activity;
-        private MyHandler myHandler;
 
         public PlaceholderFragment() {}
 
         @Override
         public void onDestroy() {
             super.onDestroy();
-            if (myHandler != null) myHandler.removeCallbacksAndMessages(null);
-            myHandler = null;
             activity = null;
         }
 
@@ -950,7 +951,6 @@ public class GifActivity extends AppCompatActivity {
         static PlaceholderFragment newInstance(int page, GifActivity activity) {
             PlaceholderFragment fragment = new PlaceholderFragment();
             fragment.page = page;
-            fragment.myHandler = new MyHandler(fragment);
             fragment.activity = activity;
             return fragment;
         }
@@ -979,7 +979,7 @@ public class GifActivity extends AppCompatActivity {
         public void setUserVisibleHint(boolean isVisibleToUser) {
             super.setUserVisibleHint(isVisibleToUser);
             activity.okHttpClient.dispatcher().cancelAll();
-            if (myHandler != null) myHandler.removeCallbacksAndMessages(null);
+            activity.myHandler.removeCallbacksAndMessages(null);
             if (isVisibleToUser) {
                 if (activity.threadPoolExecutor.getActiveCount() == activity.threadPoolExecutor.getMaximumPoolSize()) {
                     activity.threadPoolExecutor.shutdownNow();
@@ -990,16 +990,10 @@ public class GifActivity extends AppCompatActivity {
                 }
             }
         }
-        @SuppressWarnings("unused")
-        public void send(int what, Object obj) {
-            if (myHandler != null) {
-                myHandler.sendMessage(myHandler.obtainMessage(what, obj));
-            }
-        }
 
         public void send(int what, int arg1, int arg2, Object obj) {
-            if (myHandler != null) {
-                myHandler.sendMessage(myHandler.obtainMessage(what, arg1, arg2, obj));
+            if (page == activity.page && activity.myHandler != null) {
+                activity.myHandler.sendMessage(activity.myHandler.obtainMessage(what, arg1, arg2, obj));
             }
         }
 
@@ -1107,7 +1101,7 @@ public class GifActivity extends AppCompatActivity {
                     send(MSG_TYPE_LOAD, nowPos, 0, gifFromStream);
                     Log.w("loadGif", "fromCache:" + gifInfo[1]);
                 } catch (IOException e) {
-                    send(MSG_TYPE_EMPTY, nowPos, 0, "");
+                    send(MSG_TYPE_EMPTY, nowPos, 0, null);
                     e.printStackTrace();
                 }
             } else {
@@ -1116,7 +1110,7 @@ public class GifActivity extends AppCompatActivity {
                 activity.okHttpClient.newCall(request).enqueue(new Callback() {
                     @Override
                     public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                        send(MSG_TYPE_EMPTY, nowPos, 0, "");
+                        send(MSG_TYPE_EMPTY, nowPos, 0, null);
                         e.printStackTrace();
                     }
 
@@ -1129,14 +1123,14 @@ public class GifActivity extends AppCompatActivity {
                             int contentLength = (int) responseBody.contentLength();
                             byte[] bytes;
                             if (contentLength > 0 && contentLength > 40960 * 2) {
-                                send(MSG_TYPE_LOADING, nowPos, 0, contentLength);
+                                send(MSG_TYPE_PRELOAD, nowPos, contentLength, null);
                                 InputStream is = responseBody.byteStream();
                                 bytes = new byte[contentLength];
                                 int len;int sum = 0;int readLen = contentLength > 5 * 1024 * 1024 ? 102400 : 40960;
                                 while ((len = is.read(bytes, sum, readLen)) > 0) {
                                     sum += len;
                                     readLen = readLen > bytes.length - sum ? bytes.length - sum : readLen;
-                                    send(MSG_TYPE_LOADING, nowPos, sum, contentLength);
+                                    send(MSG_TYPE_LOADING, nowPos, sum, null);
                                 }
                             } else {
                                 bytes = responseBody.bytes();
@@ -1150,11 +1144,10 @@ public class GifActivity extends AppCompatActivity {
                             activity.diskLRUCache.put(imgKey, imgKey + gifInfo[2], finalCacheGif.length());
                         } catch (Exception e) {
                             if (finalCacheGif.delete()) Log.d("cacheDel", "cacheGif deleted");
-                            send(MSG_TYPE_EMPTY, nowPos, 0, "");
+                            send(MSG_TYPE_EMPTY, nowPos, 0, null);
                             e.printStackTrace();
                         }
                     }
-
                     File finalCacheGif = new File(activity.getCacheDir(), imgKey + gifInfo[2]);
                 });
             }
@@ -1408,38 +1401,39 @@ public class GifActivity extends AppCompatActivity {
         @Override
         public void setPrimaryItem(ViewGroup container, int position, Object object) {
             currentFragment = (PlaceholderFragment) object;
+            activity.page = currentFragment.page;
             super.setPrimaryItem(container, position, object);
         }
     }
 
     private static class MyHandler extends Handler {
-        private final WeakReference<PlaceholderFragment> mFragment;
+        private final WeakReference<GifActivity> activityWR;
 
-        MyHandler(PlaceholderFragment fragment) {
-            mFragment = new WeakReference<>(fragment);
+        MyHandler(GifActivity activity) {
+            activityWR = new WeakReference<>(activity);
         }
 
         @SuppressLint("SetTextI18n")
         @Override
         public void handleMessage(Message msg) {
-            PlaceholderFragment fragment = mFragment.get();
-            GifActivity context = fragment.activity;
+            GifActivity activity = activityWR.get();
+            PlaceholderFragment fragment = activity.mSectionsPagerAdapter.currentFragment;
             View rootView = fragment.getView();
             if (rootView == null) return;
-            GifImageView imageView = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + msg.arg1, "id", context.getPackageName()));
+            GifImageView imageView = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + msg.arg1, "id", activity.getPackageName()));
             switch (msg.what) {
                 case PlaceholderFragment.MSG_TYPE_PRE:
                     if (msg.arg1 == 1) {
                         TextView textView = rootView.findViewById(R.id.section_label);
                         textView.setText(title + "：" + fragment.page);
                     }
-                    TextView tv = rootView.findViewById(fragment.getResources().getIdentifier("gtxt_" + msg.arg1, "id", context.getPackageName()));
+                    TextView tv = rootView.findViewById(fragment.getResources().getIdentifier("gtxt_" + msg.arg1, "id", activity.getPackageName()));
                     tv.setText((String) msg.obj);
-                    if (!context.diskLRUCache.containsKey(webName + "_" + artId + "-" + fragment.getGifOffset(msg.arg1))) {
-                        imageView.setImageDrawable(context.iconCacheList.get("loading"));
+                    if (!activity.diskLRUCache.containsKey(webName + "_" + artId + "-" + fragment.getGifOffset(msg.arg1))) {
+                        imageView.setImageDrawable(activity.iconCacheList.get("loading"));
                         imageView.setMinimumHeight(90);
                         imageView.setMinimumWidth(90);
-                        imageView.setAnimation(AnimationUtils.loadAnimation(context, R.anim.load_rotate));
+                        imageView.setAnimation(AnimationUtils.loadAnimation(activity, R.anim.load_rotate));
                     }
                     if (++fragment.gifPosition < 4) {
                         fragment.checkLoad();
@@ -1447,17 +1441,18 @@ public class GifActivity extends AppCompatActivity {
                         fragment.gifPosition = 1;
                     }
                     break;
+                case PlaceholderFragment.MSG_TYPE_PRELOAD:
+                    CircleProgressDrawable circleProgress = new CircleProgressDrawable.Builder()
+                            .capacity(msg.arg2)
+                            .color(activity.getColor(R.color.actionTitle))
+                            .build();
+                    imageView.clearAnimation();
+                    imageView.setImageDrawable(circleProgress);
+                    break;
                 case PlaceholderFragment.MSG_TYPE_LOADING:
-                    if (msg.arg2 != 0) {
-                        CircleProgressDrawable circleProgress = (CircleProgressDrawable) imageView.getDrawable();
-                        circleProgress.setCurProgress(msg.arg2);
-                    } else {
-                        CircleProgressDrawable circleProgress = new CircleProgressDrawable.Builder()
-                                .capacity((int) msg.obj)
-                                .color(context.getColor(R.color.actionTitle))
-                                .build();
-                        imageView.clearAnimation();
-                        imageView.setImageDrawable(circleProgress);
+                    Drawable process = imageView.getDrawable();
+                    if (process instanceof CircleProgressDrawable) {
+                        ((CircleProgressDrawable) process).setCurProgress(msg.arg2);
                     }
                     break;
                 case PlaceholderFragment.MSG_TYPE_LOAD:
@@ -1474,7 +1469,7 @@ public class GifActivity extends AppCompatActivity {
                     break;
                 case PlaceholderFragment.MSG_TYPE_EMPTY:
                     imageView.clearAnimation();
-                    imageView.setImageDrawable(context.getDrawable(R.drawable.ic_close_black_24dp));
+                    imageView.setImageDrawable(activity.getDrawable(R.drawable.ic_close_black_24dp));
                     break;
             }
         }
