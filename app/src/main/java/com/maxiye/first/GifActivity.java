@@ -829,35 +829,33 @@ public class GifActivity extends AppCompatActivity {
                 item.put("id", cus.getString(cus.getColumnIndex("id")));
                 item.put("item_id", cus.getString(cus.getColumnIndex("item_id")));
                 item.put("title", cus.getString(cus.getColumnIndex("title")));
-                String name = cus.getString(cus.getColumnIndex("title"));
                 item.put("url", cus.getString(cus.getColumnIndex("url")));
                 item.put("real_url", cus.getString(cus.getColumnIndex("real_url")));
                 //item.put("type", cus.getString(cus.getColumnIndex("type")));
                 //item.put("art_id", cus.getInt(cus.getColumnIndex("art_id")));
-                String path = "";
+                String name = cus.getString(cus.getColumnIndex("title"));
+                cus.moveToNext();
                 File file = new File(dir + item.get("title"));
                 if (file.exists()) {
-                    name += "<span style='color: #13b294'>&emsp;&emsp;√</span>";
-                    path = dir + item.get("title");
+                    item.put("path", dir + item.get("title"));
+                    item.put("name", name + "<span style='color: #13b294'>&emsp;&emsp;√</span>");
                 } else {
-                    file = diskLRUCache.get("favorite_" + item.get("id") + "_" + type);
-                }
-                if (file != null && file.exists()) {
-                    try {
-                        BitmapFactory.decodeStream(new FileInputStream(file), null, opts);
-                        newOpts.inSampleSize = Util.calculateInSampleSize(opts, 50, 50);
-                        item.put("icon", new BitmapDrawable(getResources(), BitmapFactory.decodeStream(new FileInputStream(file), null, newOpts)));
-                        //Log.w("getFavoriteList-oompress", "fileSize：" + file.length() / 1024 + " kB；compress：" + newOpts.inSampleSize);
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    item.put("path", "");
+                    item.put("name", name);
+                    if ((file = diskLRUCache.get("favorite_" + item.get("id") + "_" + type)) == null || !file.exists()) {
+                        item.put("icon", iconCacheList.get("default"));
+//                        Log.w("getFavoriteList-fileNotFound", name);
+                        break;
                     }
-                } else {
-                    item.put("icon", iconCacheList.get("default"));
-//                    Log.w("getFavoriteList-fileNotFound", name);
                 }
-                item.put("path", path);
-                item.put("name", name);
-                cus.moveToNext();
+                try {
+                    BitmapFactory.decodeStream(new FileInputStream(file), null, opts);
+                    newOpts.inSampleSize = Util.calculateInSampleSize(opts, 50, 50);
+                    item.put("icon", new BitmapDrawable(getResources(), BitmapFactory.decodeStream(new FileInputStream(file), null, newOpts)));
+                    //Log.w("getFavoriteList-oompress", "fileSize：" + file.length() / 1024 + " kB；compress：" + newOpts.inSampleSize);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             } else {
                 item.clear();
             }
@@ -908,7 +906,7 @@ public class GifActivity extends AppCompatActivity {
     }
 
 
-    public void checkPageEnd() {
+    private void checkPageEnd() {
         int nowPage = mViewPager.getCurrentItem() + 1;
         int pages = gifList.size() % 3 == 0 ? gifList.size() / 3 : gifList.size() / 3 + 1;
         if (nowPage > pages) {

@@ -37,7 +37,6 @@ public class Util {
      * @param reqHeight int
      * @return int
      */
-    @SuppressWarnings("unused")
     public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
         // Raw height and width of image
         final int height = options.outHeight;
@@ -60,6 +59,7 @@ public class Util {
         return inSampleSize;
     }
 
+    @SuppressWarnings("unused")
     public static int predictInSampleSize(long fileSize, String type) {
         if (type.equals("gif"))
             return 4;

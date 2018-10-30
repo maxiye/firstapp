@@ -197,7 +197,7 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
      *
      * @param msg 消息
      */
-    public void alert(String msg) {
+    private void alert(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
