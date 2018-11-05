@@ -112,17 +112,18 @@ public class GifActivity extends AppCompatActivity {
      */
     public static final String GET_NEW_FLG = "GifActivity.getNewFlg";
     public static final String WEB_NAME = "GifActivity.webName";
-    private static String webName = "gamersky";
-    private static String type = "bitmap";
     private static boolean getNewFlg = true;//是否获取新的文章
-    private static int artId = 1023742;
-    private static String title = "动态图";
-    private static int webPage = 1;
-    private int page = 1;
     private static boolean endFlg = false;
+    private static String webName = "yxdown";
+    private static String type = "bitmap";
+    private static String title = "动态图";
+    private static int artId = 1023742;
+    private static int webPage = 1;
     private final int HISTORY_PAGE_SIZE = 10;
     private final int FAVORITE_PAGE_SIZE = 20;
     private int favImgPos = 0;//收藏图片浏览位置
+    private int page = 1;
+    private int tryCount = 0;//loadGifList错误计数器
     private boolean isGprs = false;//手机网络
     private boolean gprsContinue = false;//手机网络继续访问
     private SectionsPagerAdapter mSectionsPagerAdapter;
@@ -136,7 +137,6 @@ public class GifActivity extends AppCompatActivity {
     private DiskLRUCache diskLRUCache;
     private NetworkUtil netUtil;
     private MyHandler myHandler;
-    private int tryCount = 0;//loadGifList错误计数器
     private ImgViewTask favViewTask;
 
     /**
@@ -541,10 +541,7 @@ public class GifActivity extends AppCompatActivity {
         });
         imgView.setOnTouchListener(new View.OnTouchListener() {
             int vPosX;
-            float mPosX;
-            float mPosY;
-            float mCurPosX;
-            float mCurPosY;
+            float mPosX, mPosY, mCurPosX, mCurPosY;
             long mTime;
 
             @Override
@@ -730,11 +727,15 @@ public class GifActivity extends AppCompatActivity {
                         publishProgress(0, contentLength);
                         InputStream is = responseBody.byteStream();
                         bytes = new byte[contentLength];
-                        int len;int sum = 0;int readLen = contentLength > 5 * 1024 * 1024 ? 102400 : 40960;
+                        int len, sum = 0, readLen = contentLength > 5 * 1024 * 1024 ? 102400 : 40960;
+                        int chunkSize, threshold = chunkSize = contentLength / 100;
                         while ((len = is.read(bytes, sum, readLen)) > 0) {
                             sum += len;
                             readLen = readLen > bytes.length - sum ? bytes.length - sum : readLen;
-                            publishProgress(sum, contentLength);
+                            if (sum >= threshold) {
+                                publishProgress(sum, contentLength);
+                                threshold = sum + chunkSize;
+                            }
                         }
                     } else {
                         bytes = responseBody.bytes();
@@ -828,16 +829,17 @@ public class GifActivity extends AppCompatActivity {
             if (count > i) {
                 item.put("id", cus.getString(cus.getColumnIndex("id")));
                 item.put("item_id", cus.getString(cus.getColumnIndex("item_id")));
-                item.put("title", cus.getString(cus.getColumnIndex("title")));
+                String name = cus.getString(cus.getColumnIndex("title"));
+                item.put("title", name);
                 item.put("url", cus.getString(cus.getColumnIndex("url")));
                 item.put("real_url", cus.getString(cus.getColumnIndex("real_url")));
                 //item.put("type", cus.getString(cus.getColumnIndex("type")));
                 //item.put("art_id", cus.getInt(cus.getColumnIndex("art_id")));
-                String name = cus.getString(cus.getColumnIndex("title"));
+                Log.w("fav", name);
                 cus.moveToNext();
-                File file = new File(dir + item.get("title"));
+                File file = new File(dir + name);
                 if (file.exists()) {
-                    item.put("path", dir + item.get("title"));
+                    item.put("path", dir + name);
                     item.put("name", name + "<span style='color: #13b294'>&emsp;&emsp;√</span>");
                 } else {
                     item.put("path", "");
@@ -845,7 +847,7 @@ public class GifActivity extends AppCompatActivity {
                     if ((file = diskLRUCache.get("favorite_" + item.get("id") + "_" + type)) == null || !file.exists()) {
                         item.put("icon", iconCacheList.get("default"));
 //                        Log.w("getFavoriteList-fileNotFound", name);
-                        break;
+                        continue;
                     }
                 }
                 try {
@@ -923,9 +925,7 @@ public class GifActivity extends AppCompatActivity {
          * The fragment argument representing the section number for this
          * fragment.
          */
-        private int page;
-        private int gifPosition = 1;
-        private int focusedPosition = 1;
+        private int page, gifPosition = 1, focusedPosition = 1;
         private static final int MSG_TYPE_PRE = 100;
         private static final int MSG_TYPE_LOAD = 101;
         private static final int MSG_TYPE_EMPTY = 102;
@@ -1032,8 +1032,7 @@ public class GifActivity extends AppCompatActivity {
             Cursor cus = activity.db.query(DBHelper.TB_IMG_WEB_ITEM, new String[]{"*"}, "art_id = ? and title = ?", new String[]{artId + "", gifInfo[1]}, null, null, "id desc", "1");
             if (cus.getCount() > 0) {
                 cus.moveToFirst();
-                int favFlg = cus.getInt(cus.getColumnIndex("fav_flg"));
-                if (favFlg != 1) {
+                if (cus.getInt(cus.getColumnIndex("fav_flg")) != 1) {
                     ContentValues ctv = new ContentValues();
                     ctv.put("item_id", cus.getInt(cus.getColumnIndex("id")));
                     ctv.put("art_id", cus.getInt(cus.getColumnIndex("art_id")));
@@ -1084,8 +1083,7 @@ public class GifActivity extends AppCompatActivity {
         }
 
         void loadGif() {
-            int nowPos = gifPosition;
-            int startOffset = getGifOffset(nowPos);
+            int nowPos = gifPosition, startOffset = getGifOffset(nowPos);
             Log.w("info", "loadGif:" + startOffset);
             String[] gifInfo = getGifInfo(startOffset);
             if (gifInfo == null)
@@ -1115,7 +1113,7 @@ public class GifActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(@NonNull Call call, @NonNull Response response) {
                         try {
-                            Log.w("info", "loadGif(fromNet):" + gifInfo[1] + ";url:" + url + ";index:" + request.toString());
+                            Log.w("loadGif", "fromNet:" + gifInfo[1] + ";url:" + url + ";index:" + request.toString());
                             ResponseBody responseBody = response.body();
                             assert responseBody != null;
                             int contentLength = (int) responseBody.contentLength();
@@ -1124,11 +1122,15 @@ public class GifActivity extends AppCompatActivity {
                                 send(MSG_TYPE_PRELOAD, nowPos, contentLength, null);
                                 InputStream is = responseBody.byteStream();
                                 bytes = new byte[contentLength];
-                                int len;int sum = 0;int readLen = contentLength > 5 * 1024 * 1024 ? 102400 : 40960;
+                                int len, sum = 0, readLen = contentLength > 5 * 1024 * 1024 ? 102400 : 40960;
+                                int chunkSize, threshold = chunkSize = contentLength / 50;
                                 while ((len = is.read(bytes, sum, readLen)) > 0) {
                                     sum += len;
                                     readLen = readLen > bytes.length - sum ? bytes.length - sum : readLen;
-                                    send(MSG_TYPE_LOADING, nowPos, sum, null);
+                                    if (sum >= threshold) {
+                                        send(MSG_TYPE_LOADING, nowPos, sum, null);
+                                        threshold = sum + chunkSize;
+                                    }
                                 }
                             } else {
                                 bytes = responseBody.bytes();
