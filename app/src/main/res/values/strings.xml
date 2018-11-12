@@ -71,4 +71,6 @@
     <string name="favorite">Favorite</string>
     <string name="no_more">No More</string>
     <string name="go_to">Go To</string>
+    <string name="fix_fav_file">Fix Fav File</string>
+    <string name="fix_fav_tips">Fixed %1$d File(s)</string>
 </resources>

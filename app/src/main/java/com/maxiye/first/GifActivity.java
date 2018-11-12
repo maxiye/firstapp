@@ -127,7 +127,7 @@ public class GifActivity extends AppCompatActivity {
     private boolean isGprs = false;//手机网络
     private boolean gprsContinue = false;//手机网络继续访问
     private SectionsPagerAdapter mSectionsPagerAdapter;
-    private final ArrayList<String[]> gifList = new ArrayList<>();
+    private final ArrayList<String[]> gifList = new ArrayList<>(60);
     private JsonObject webCfg;
     private String[] webList;
     private HashMap<String, Drawable> iconCacheList;
@@ -323,7 +323,8 @@ public class GifActivity extends AppCompatActivity {
                     mViewPager.setCurrentItem(Integer.parseInt(itemIdxStr) - 1, true);
                     if (endFlg)
                         checkPageEnd();
-                }).setNegativeButton(R.string.cancel, (dialog1, which) -> {})
+                }).setNegativeButton(R.string.cancel, (dialog1, which) -> {
+                })
                 .create();
         dialog.show();
         Objects.requireNonNull(dialog.getWindow()).setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
@@ -347,7 +348,8 @@ public class GifActivity extends AppCompatActivity {
                         artId = Integer.parseInt(txt);
                         initPage();
                     }
-                }).setNegativeButton(R.string.cancel, (dialog1, which) -> {})
+                }).setNegativeButton(R.string.cancel, (dialog1, which) -> {
+                })
                 .create();
         dialog2.show();
         Objects.requireNonNull(dialog2.getWindow()).setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
@@ -463,11 +465,11 @@ public class GifActivity extends AppCompatActivity {
         Log.w("getHistoryList：", count + "");
         cus.moveToFirst();
         if (historyList.size() < HISTORY_PAGE_SIZE) {
-            for (int i = historyList.size();i < HISTORY_PAGE_SIZE;i++) {
+            for (int i = historyList.size(); i < HISTORY_PAGE_SIZE; i++) {
                 historyList.add(new HashMap<>(4));
             }
         }
-        for (int i = 0;i < HISTORY_PAGE_SIZE;i++) {
+        for (int i = 0; i < HISTORY_PAGE_SIZE; i++) {
             HashMap<String, Object> item = historyList.get(i);
             if (count > i) {
                 String web_name = cus.getString(cus.getColumnIndex("web_name"));
@@ -535,36 +537,41 @@ public class GifActivity extends AppCompatActivity {
         imgView.setOnLongClickListener(v -> {
             HashMap<String, Object> item = favoriteList.get(favImgPos);
             String name = (String) item.get("title");
+            String id = (String) item.get("id");
             String cacheKey = "favorite_" + item.get("id") + "_" + type;
-            download(name, cacheKey, v);
+            download(id + "_" + name, cacheKey, v);
             return false;
         });
         imgView.setOnTouchListener(new View.OnTouchListener() {
-            int vPosX;
+            int vScrollX;
             float mPosX, mPosY, mCurPosX, mCurPosY;
-            long mTime;
+            private Runnable runnable = imgView::performLongClick;
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-                        vPosX = v.getScrollX();
+                        vScrollX = v.getScrollX();
                         mPosX = mCurPosX = event.getX();
                         mPosY = mCurPosY = event.getY();
-                        mTime = System.currentTimeMillis();
+                        myHandler.postDelayed(runnable, 500);
                         break;
                     case MotionEvent.ACTION_MOVE:
+                        if (mCurPosX == mPosX) {
+                            myHandler.removeCallbacks(runnable);
+                        }
                         mCurPosX = event.getX();
-                        mCurPosY = event.getY();
-                        v.setScrollX((int) (mPosX - mCurPosX + vPosX));
+                        v.setScrollX((int) (mPosX - mCurPosX + vScrollX));
                         break;
                     case MotionEvent.ACTION_UP:
+                        mCurPosY = event.getY();
+                        v.setScrollX(vScrollX);
+                        myHandler.removeCallbacks(runnable);
 //                        if (mCurPosY - mPosY > 0
 //                                && (Math.abs(mCurPosY - mPosY) > 25)) {//向下滑動
 //                        } else if (mCurPosY - mPosY < 0
 //                                && (Math.abs(mCurPosY - mPosY) > 25)) {//向上滑动
 //                        }
-                        v.setScrollX(vPosX);
                         if (mCurPosX - mPosX > 200) {//向左滑動
                             viewPre();
                             break;
@@ -576,7 +583,6 @@ public class GifActivity extends AppCompatActivity {
                             dialog.dismiss();
                             break;
                         }
-                        if (mPosX == mCurPosX && System.currentTimeMillis() - mTime > 500) v.performLongClick();
                         break;
                 }
                 return true;
@@ -600,7 +606,11 @@ public class GifActivity extends AppCompatActivity {
 
             private void viewNext() {
                 if (favImgPos < favoriteList.size() - 1) {
-                    favImgPos++;
+                    if (favoriteList.get(favImgPos + 1).isEmpty()) {
+                        activity.alert(getString(R.string.no_more));
+                        return;
+                    }
+                    ++favImgPos;
                 } else {
                     Button button = root.findViewById(R.id.popup_next_page);
                     if (button.getVisibility() == Button.VISIBLE) {
@@ -674,7 +684,8 @@ public class GifActivity extends AppCompatActivity {
         String url = (String) item.get("real_url");
         url = url.equals("") ? (String) item.get("url") : url;
         dialog.setTitle(Html.fromHtml("<p style='color: #F66725; text-align: center'>" + title + "</p>", Html.FROM_HTML_MODE_COMPACT));
-        if (favViewTask != null) favViewTask.cancel(true);
+        if (favViewTask != null)
+            favViewTask.cancel(true);
         favViewTask = new ImgViewTask(imgView, this);
         favViewTask.executeOnExecutor(threadPoolExecutor, title, url, (String) item.get("id"), (String) item.get("path"));
     }
@@ -683,7 +694,7 @@ public class GifActivity extends AppCompatActivity {
 
         private WeakReference<GifActivity> gifActivityWR;
         private WeakReference<GifImageView> imgViewWR;
-        private File cache;
+        private CircleProgressDrawable circleProgress;
 
         ImgViewTask(GifImageView imgView, GifActivity gifActivity) {
             imgViewWR = new WeakReference<>(imgView);
@@ -692,6 +703,7 @@ public class GifActivity extends AppCompatActivity {
 
         /**
          * 加载图片
+         *
          * @param strings title,url,id,path
          * @return Drawable
          */
@@ -700,19 +712,20 @@ public class GifActivity extends AppCompatActivity {
             GifActivity activity = gifActivityWR.get();
             String imgKey = "favorite_" + strings[2] + "_" + type;
             String path = strings[3];
-            cache = path.equals("") ? activity.diskLRUCache.get(imgKey) : new File(path);
+            File cache = path.equals("") ? activity.diskLRUCache.get(imgKey) : new File(path);
             if (cache != null) {
                 try {
                     Log.w("loadImg(fromCache)", "title：" + strings[0] + ";url：" + strings[1]);
-                    return type.equals("gif") ? new GifDrawable(cache) : BitmapDrawable.createFromPath(cache.getAbsolutePath());
+                    return type.equals("gif") ? new GifDrawable(cache) : Drawable.createFromStream(new FileInputStream(cache), null);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             } else {
                 //移动网络禁止 gif
                 if (activity.isGprs && type.equals("gif")) {
-                    activity.runOnUiThread(()-> activity.alert("正在使用移动网络"));
-                    if (!activity.gprsContinue) return null;
+                    activity.runOnUiThread(() -> activity.alert("正在使用移动网络"));
+                    if (!activity.gprsContinue)
+                        return null;
                 }
                 cache = new File(activity.getCacheDir(), imgKey);
                 Request request = new Request.Builder().url(strings[1]).build();
@@ -728,20 +741,24 @@ public class GifActivity extends AppCompatActivity {
                         InputStream is = responseBody.byteStream();
                         bytes = new byte[contentLength];
                         int len, sum = 0, readLen = contentLength > 5 * 1024 * 1024 ? 102400 : 40960;
-                        int chunkSize, threshold = chunkSize = contentLength / 100;
+                        int chunkSize, threshold = chunkSize = contentLength / 50;
                         while ((len = is.read(bytes, sum, readLen)) > 0) {
                             sum += len;
-                            readLen = readLen > bytes.length - sum ? bytes.length - sum : readLen;
                             if (sum >= threshold) {
                                 publishProgress(sum, contentLength);
                                 threshold = sum + chunkSize;
+                            }
+                            if (readLen > contentLength - sum) {
+                                readLen = contentLength - sum;
+                                threshold = contentLength;
                             }
                         }
                     } else {
                         bytes = responseBody.bytes();
                     }
-                    Drawable gifFromStream = type.equals("gif") ? new GifDrawable(bytes) : BitmapDrawable.createFromStream(new ByteArrayInputStream(bytes), null);
-                    if (gifFromStream == null) throw new Exception("get image err");
+                    Drawable gifFromStream = type.equals("gif") ? new GifDrawable(bytes) : Drawable.createFromStream(new ByteArrayInputStream(bytes), null);
+                    if (gifFromStream == null)
+                        throw new Exception("get image err");
                     RandomAccessFile raf = new RandomAccessFile(cache, "rwd");
                     raf.write(bytes);
                     raf.close();
@@ -749,7 +766,8 @@ public class GifActivity extends AppCompatActivity {
                     return gifFromStream;
                 } catch (Exception e) {
                     e.printStackTrace();
-                    if (cache.delete()) Log.d("cacheDel", "cacheGif deleted");
+                    if (cache.delete())
+                        Log.d("cacheDel", "cacheGif deleted");
                 }
             }
             return null;
@@ -758,11 +776,9 @@ public class GifActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             GifImageView imgView = imgViewWR.get();
-            CircleProgressDrawable circleProgress = new CircleProgressDrawable.Builder()
-                    .capacity(100)
+            circleProgress = new CircleProgressDrawable.Builder()
                     .color(gifActivityWR.get().getColor(R.color.myPrimaryColor))
                     .build();
-            assert imgView != null;
             imgView.setImageDrawable(circleProgress);
             imgView.setMinimumHeight(180);
             imgView.setMinimumWidth(180);
@@ -772,13 +788,12 @@ public class GifActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Drawable drawable) {
             GifImageView imgView = imgViewWR.get();
-            assert imgView != null;
             if (drawable == null) {
                 Drawable errShow = gifActivityWR.get().getDrawable(R.drawable.ic_close_black_24dp);
                 imgView.setImageDrawable(errShow);
             } else {
-                imgView.setImageDrawable(drawable);
-                float zoom = type.equals("gif") ? 3f : 6f;
+//                imgView.setImageDrawable(drawable);//todo fix
+                float zoom = type.equals("gif") ? 3f : 5.5f;
                 int width = Math.round(drawable.getIntrinsicWidth() * zoom);
                 int height = Math.round(drawable.getIntrinsicHeight() * zoom);
                 imgView.setMinimumHeight(height);
@@ -789,17 +804,15 @@ public class GifActivity extends AppCompatActivity {
 
         @Override
         protected void onProgressUpdate(Integer... values) {
-            GifImageView imgView = imgViewWR.get();
-            assert imgView != null;
-            CircleProgressDrawable circleProgress = (CircleProgressDrawable) imgView.getDrawable();
-            circleProgress.setMaxProgress(values[1]);
+            if (values[0] == 0)
+                circleProgress.setMaxProgress(values[1]);
             circleProgress.setCurProgress(values[0]);
             super.onProgressUpdate(values);
         }
     }
 
     private void deleteFavorite(String delId, String itemId) {
-        ContentValues ctv = new ContentValues();
+        ContentValues ctv = new ContentValues(1);
         ctv.put("fav_flg", 0);
         int rows = db.update(DBHelper.TB_IMG_WEB_ITEM, ctv, "id = ?", new String[]{itemId});
         Log.w("db_item_remove_fav: ", rows + "");
@@ -819,31 +832,31 @@ public class GifActivity extends AppCompatActivity {
         opts.inJustDecodeBounds = true;
         BitmapFactory.Options newOpts = new BitmapFactory.Options();
         if (favoriteList.size() < FAVORITE_PAGE_SIZE) {
-            for (int i = favoriteList.size();i < FAVORITE_PAGE_SIZE;i++) {
+            for (int i = favoriteList.size(); i < FAVORITE_PAGE_SIZE; i++) {
                 favoriteList.add(new HashMap<>(8));
             }
         }
         String dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type + "/";
-        for (int i = 0;i < FAVORITE_PAGE_SIZE;i++) {
+        for (int i = 0; i < FAVORITE_PAGE_SIZE; i++) {
             HashMap<String, Object> item = favoriteList.get(i);
             if (count > i) {
                 item.put("id", cus.getString(cus.getColumnIndex("id")));
                 item.put("item_id", cus.getString(cus.getColumnIndex("item_id")));
-                String name = cus.getString(cus.getColumnIndex("title"));
-                item.put("title", name);
+                String title = cus.getString(cus.getColumnIndex("title"));
+                item.put("title", title);
                 item.put("url", cus.getString(cus.getColumnIndex("url")));
                 item.put("real_url", cus.getString(cus.getColumnIndex("real_url")));
-                //item.put("type", cus.getString(cus.getColumnIndex("type")));
                 //item.put("art_id", cus.getInt(cus.getColumnIndex("art_id")));
-                Log.w("fav", name);
+                //item.put("type", cus.getString(cus.getColumnIndex("type")));
+                String name = item.get("id") + "_" + title;
                 cus.moveToNext();
                 File file = new File(dir + name);
                 if (file.exists()) {
                     item.put("path", dir + name);
-                    item.put("name", name + "<span style='color: #13b294'>&emsp;&emsp;√</span>");
+                    item.put("name", title + "<span style='color: #13b294'>&emsp;&emsp;√</span>");
                 } else {
                     item.put("path", "");
-                    item.put("name", name);
+                    item.put("name", title);
                     if ((file = diskLRUCache.get("favorite_" + item.get("id") + "_" + type)) == null || !file.exists()) {
                         item.put("icon", iconCacheList.get("default"));
 //                        Log.w("getFavoriteList-fileNotFound", name);
@@ -884,7 +897,8 @@ public class GifActivity extends AppCompatActivity {
             okHttpClient.dispatcher().cancelAll();
             Log.w("typeListRvClick", type);
             webCfg = getWebCfg(webName);
-            if (webCfg == null) webCfg = getWebCfg("gamersky");
+            if (webCfg == null)
+                webCfg = getWebCfg("gamersky");
             getNewFlg = true;
             diskLRUCache.serialize();
             diskLRUCache = DiskLRUCache.getInstance(this, type);
@@ -896,7 +910,7 @@ public class GifActivity extends AppCompatActivity {
     }
 
     private ArrayList<HashMap<String, Object>> getTypeList() {
-        ArrayList<HashMap<String, Object>> typeList = new ArrayList<>();
+        ArrayList<HashMap<String, Object>> typeList = new ArrayList<>(2);
         String[] types = new String[]{"gif", "bitmap"};
         for (String type : types) {
             HashMap<String, Object> typeItem = new HashMap<>(2);
@@ -933,7 +947,8 @@ public class GifActivity extends AppCompatActivity {
         private static final int MSG_TYPE_LOADING = 104;
         private GifActivity activity;
 
-        public PlaceholderFragment() {}
+        public PlaceholderFragment() {
+        }
 
         @Override
         public void onDestroy() {
@@ -1016,10 +1031,10 @@ public class GifActivity extends AppCompatActivity {
                         addFav();
                         break;
                     case 1:
-                        addFav();
+                        long favId = addFav();
                         String[] gifInfo = getGifInfo(getGifOffset(focusedPosition));
                         String cacheKey = webName + "_" + artId + "-" + getGifOffset(focusedPosition);
-                        activity.download(gifInfo[1], cacheKey, activity.findViewById(android.R.id.content));
+                        activity.download(favId + "_" + gifInfo[1], cacheKey, activity.findViewById(android.R.id.content));
                         break;
                 }
                 listMenu.dismiss();
@@ -1027,14 +1042,15 @@ public class GifActivity extends AppCompatActivity {
             listMenu.show();
         }
 
-        private void addFav() {
+        private long addFav() {
             String[] gifInfo = getGifInfo(getGifOffset(focusedPosition));
             Cursor cus = activity.db.query(DBHelper.TB_IMG_WEB_ITEM, new String[]{"*"}, "art_id = ? and title = ?", new String[]{artId + "", gifInfo[1]}, null, null, "id desc", "1");
+            long favId = 0;
             if (cus.getCount() > 0) {
                 cus.moveToFirst();
                 if (cus.getInt(cus.getColumnIndex("fav_flg")) != 1) {
-                    ContentValues ctv = new ContentValues();
-                    ctv.put("item_id", cus.getInt(cus.getColumnIndex("id")));
+                    ContentValues ctv = new ContentValues(10);
+                    ctv.put("item_id", cus.getLong(cus.getColumnIndex("id")));
                     ctv.put("art_id", cus.getInt(cus.getColumnIndex("art_id")));
                     ctv.put("page", cus.getInt(cus.getColumnIndex("page")));
                     ctv.put("web_name", cus.getString(cus.getColumnIndex("web_name")));
@@ -1044,18 +1060,23 @@ public class GifActivity extends AppCompatActivity {
                     ctv.put("ext", cus.getString(cus.getColumnIndex("ext")));
                     ctv.put("real_url", cus.getString(cus.getColumnIndex("real_url")));
                     ctv.put("time", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()));
-                    long newId = activity.db.insert(DBHelper.TB_IMG_FAVORITE, null, ctv);
-                    Log.w("db_img_fav_insert: ", newId + "");
-                    ContentValues ctv2 = new ContentValues();
+                    favId = activity.db.insert(DBHelper.TB_IMG_FAVORITE, null, ctv);
+                    Log.w("db_img_fav_insert: ", favId + "");
+                    ContentValues ctv2 = new ContentValues(1);
                     ctv2.put("fav_flg", 1);
                     int rows = activity.db.update(DBHelper.TB_IMG_WEB_ITEM, ctv2, "id = ?", new String[]{cus.getString(cus.getColumnIndex("id"))});
                     Log.w("db_web_item_update: ", rows + "");
                     activity.alert(getString(R.string.added_to_fav));
                 } else {
+                    Cursor cus2 = activity.db.query(DBHelper.TB_IMG_FAVORITE, new String[]{"id"}, "item_id = ?", new String[]{cus.getString(cus.getColumnIndex("id"))}, null, null, "id desc", "1");
+                    cus2.moveToFirst();
+                    favId = cus2.getLong(cus.getColumnIndex("id"));
+                    cus2.close();
                     activity.alert(getString(R.string.already_in_fav));
                 }
                 cus.close();
             }
+            return favId;
         }
 
         void checkLoad() {
@@ -1093,7 +1114,7 @@ public class GifActivity extends AppCompatActivity {
             send(MSG_TYPE_PRE, nowPos, 0, gifInfo[1]);
             if (cacheGif != null) {
                 try {
-                    Drawable gifFromStream = type.equals("gif") ? new GifDrawable(cacheGif) : BitmapDrawable.createFromPath(cacheGif.getAbsolutePath());
+                    Drawable gifFromStream = type.equals("gif") ? new GifDrawable(cacheGif) : Drawable.createFromStream(new FileInputStream(cacheGif), null);
                     send(MSG_TYPE_LOAD, nowPos, 0, gifFromStream);
                     Log.w("loadGif", "fromCache:" + gifInfo[1]);
                 } catch (IOException e) {
@@ -1126,28 +1147,34 @@ public class GifActivity extends AppCompatActivity {
                                 int chunkSize, threshold = chunkSize = contentLength / 50;
                                 while ((len = is.read(bytes, sum, readLen)) > 0) {
                                     sum += len;
-                                    readLen = readLen > bytes.length - sum ? bytes.length - sum : readLen;
                                     if (sum >= threshold) {
                                         send(MSG_TYPE_LOADING, nowPos, sum, null);
                                         threshold = sum + chunkSize;
+                                    }
+                                    if (readLen > contentLength - sum) {
+                                        readLen = contentLength - sum;
+                                        threshold = contentLength;
                                     }
                                 }
                             } else {
                                 bytes = responseBody.bytes();
                             }
-                            Drawable gifFromStream = type.equals("gif") ? new GifDrawable(bytes) : BitmapDrawable.createFromStream(new ByteArrayInputStream(bytes), null);
-                            if (gifFromStream == null) throw new Exception("get image err");
+                            Drawable gifFromStream = type.equals("gif") ? new GifDrawable(bytes) : Drawable.createFromStream(new ByteArrayInputStream(bytes), null);
+                            if (gifFromStream == null)
+                                throw new Exception("get image err");
                             send(MSG_TYPE_LOAD, nowPos, 0, gifFromStream);
                             RandomAccessFile raf = new RandomAccessFile(finalCacheGif, "rwd");
                             raf.write(bytes);
                             raf.close();
                             activity.diskLRUCache.put(imgKey, imgKey + gifInfo[2], finalCacheGif.length());
                         } catch (Exception e) {
-                            if (finalCacheGif.delete()) Log.d("cacheDel", "cacheGif deleted");
+                            if (finalCacheGif.delete())
+                                Log.d("cacheDel", "cacheGif deleted");
                             send(MSG_TYPE_EMPTY, nowPos, 0, null);
                             e.printStackTrace();
                         }
                     }
+
                     File finalCacheGif = new File(activity.getCacheDir(), imgKey + gifInfo[2]);
                 });
             }
@@ -1157,10 +1184,13 @@ public class GifActivity extends AppCompatActivity {
         private synchronized void loadGifList() {
             //数据库获取
             if (webPage == 1) {
-                if (getNewFlg) getNewArtId();
-                if (loadDbGifList()) return;
+                if (getNewFlg)
+                    getNewArtId();
+                if (loadDbGifList())
+                    return;
             }
-            if (endFlg) return;
+            if (endFlg)
+                return;
             Log.w("start", "loadGifList(lock):" + webPage);
             String baseUrl = String.format(activity.webCfg.get("img_web").getAsString(), artId);
             JsonObject regObj = activity.webCfg.getAsJsonObject("img_reg");
@@ -1199,7 +1229,8 @@ public class GifActivity extends AppCompatActivity {
                 }
                 if (webPage == 1 && activity.gifList.size() > 0) {
                     Log.w("titleGet", title);
-                    if (title.equals("动态图"))  getNewTitle(content);
+                    if (title.equals("动态图"))
+                        getNewTitle(content);
                     saveDbGifList(DBHelper.TB_IMG_WEB, new String[]{url, title});
                 }
                 webPage++;
@@ -1208,8 +1239,9 @@ public class GifActivity extends AppCompatActivity {
                 if (activity.tryCount++ > 3 && !(e instanceof SocketTimeoutException)) {
                     endFlg = true;
                     activity.tryCount = 0;
-                    if (activity.gifList.size() > 0) updateDbField(String.valueOf(webPage - 1));
-                    activity.runOnUiThread(()->activity.checkPageEnd());
+                    if (activity.gifList.size() > 0)
+                        updateDbField(String.valueOf(webPage - 1));
+                    activity.runOnUiThread(() -> activity.checkPageEnd());
                 }
                 e.printStackTrace();
             } finally {
@@ -1311,7 +1343,7 @@ public class GifActivity extends AppCompatActivity {
 
 
         private void updateDbField(String val) {
-            ContentValues ctv = new ContentValues();
+            ContentValues ctv = new ContentValues(1);
             ctv.put("pages", val);
             int rows = activity.db.update(DBHelper.TB_IMG_WEB, ctv, "art_id = ? and web_name = ?", new String[]{artId + "", webName});
             Log.w("db_web_update: ", rows + "");
@@ -1319,8 +1351,8 @@ public class GifActivity extends AppCompatActivity {
 
         private void saveDbGifList(String dbName, String[] data) {
             String datetime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
-            ContentValues ctv = new ContentValues();
             if (dbName.equals(DBHelper.TB_IMG_WEB)) {
+                ContentValues ctv = new ContentValues(6);
                 ctv.put("art_id", artId);
                 ctv.put("web_url", data[0]);
                 ctv.put("web_name", webName);
@@ -1330,6 +1362,7 @@ public class GifActivity extends AppCompatActivity {
                 long newId = activity.db.insert(dbName, null, ctv);
                 Log.w("db_web_insert: ", newId + "");
             } else {
+                ContentValues ctv = new ContentValues(9);
                 ctv.put("art_id", artId);
                 ctv.put("page", webPage);
                 ctv.put("web_name", webName);
@@ -1419,7 +1452,8 @@ public class GifActivity extends AppCompatActivity {
             GifActivity activity = activityWR.get();
             PlaceholderFragment fragment = activity.mSectionsPagerAdapter.currentFragment;
             View rootView = fragment.getView();
-            if (rootView == null) return;
+            if (rootView == null)
+                return;
             GifImageView imageView = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + msg.arg1, "id", activity.getPackageName()));
             switch (msg.what) {
                 case PlaceholderFragment.MSG_TYPE_PRE:
@@ -1459,7 +1493,7 @@ public class GifActivity extends AppCompatActivity {
                     imageView.clearAnimation();
                     Drawable gifFromStream = (Drawable) msg.obj;
                     float zoom = type.equals("gif") ? 2.5f : 4.5f;
-                    imageView.setImageDrawable(gifFromStream);
+//                    imageView.setImageDrawable(gifFromStream);//todo fix
                     int width = Math.round(gifFromStream.getIntrinsicWidth() * zoom);
                     int height = Math.round(gifFromStream.getIntrinsicHeight() * zoom);
                     int layoutWidth = rootView.getWidth();

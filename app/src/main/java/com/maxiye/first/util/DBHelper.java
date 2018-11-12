@@ -122,7 +122,7 @@ public class DBHelper extends SQLiteOpenHelper {
         onCreate(db);
         cur1.moveToFirst();
         for (int i = 0; i < cur1.getCount(); i++) {
-            ContentValues ctv = new ContentValues();
+            ContentValues ctv = new ContentValues(6);
             ctv.put("art_id", cur1.getInt(cur1.getColumnIndex("art_id")));
             ctv.put("pages", cur1.getInt(cur1.getColumnIndex("pages")));
             ctv.put("web_name", "gamersky");
@@ -136,7 +136,7 @@ public class DBHelper extends SQLiteOpenHelper {
         cur1.close();
         cur2.moveToFirst();
         for (int i = 0; i < cur2.getCount(); i++) {
-            ContentValues ctv = new ContentValues();
+            ContentValues ctv = new ContentValues(5);
             ctv.put("art_id", cur2.getInt(cur2.getColumnIndex("art_id")));
             ctv.put("page", cur2.getInt(cur2.getColumnIndex("page")));
             ctv.put("web_name", "gamersky");
@@ -223,7 +223,7 @@ public class DBHelper extends SQLiteOpenHelper {
                             cus.moveToFirst();
                             int favFlg = cus.getInt(cus.getColumnIndex("fav_flg"));
                             if (favFlg != 1) {
-                                ContentValues ctv = new ContentValues();
+                                ContentValues ctv = new ContentValues(10);
                                 ctv.put("item_id", cus.getInt(cus.getColumnIndex("id")));
                                 ctv.put("art_id", cus.getInt(cus.getColumnIndex("art_id")));
                                 ctv.put("page", cus.getInt(cus.getColumnIndex("page")));
@@ -236,7 +236,7 @@ public class DBHelper extends SQLiteOpenHelper {
                                 ctv.put("time", datetime);
                                 long newId = db.insert(TB_IMG_FAVORITE, null, ctv);
                                 Log.w("db_img_fav_insert: ", newId + "");
-                                ContentValues ctv2 = new ContentValues();
+                                ContentValues ctv2 = new ContentValues(1);
                                 ctv2.put("fav_flg", 1);
                                 int rows = db.update(DBHelper.TB_IMG_WEB_ITEM, ctv2, "id = ?", new String[]{cus.getString(cus.getColumnIndex("id"))});
                                 Log.w("db_web_item_update: ", rows + "");
@@ -251,5 +251,33 @@ public class DBHelper extends SQLiteOpenHelper {
         }
         return count;
 
+    }
+
+    public int fixFavFile() {
+        int count = 0;
+        String[] types = new String[] {"gif", "bitmap"};
+        SQLiteDatabase db = getWritableDatabase();
+        for(String type : types) {
+            File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);
+            File[] fileList = dir.listFiles();
+            if (fileList != null) {
+                for (File file : fileList) {
+                    if (file.isFile()) {
+                        String fName = file.getName();
+                        Cursor cus = db.query(DBHelper.TB_IMG_FAVORITE, new String[]{"id"}, "title = ?", new String[]{ fName}, null, null, "id desc", "1");
+                        if (cus.getCount() > 0) {
+                            cus.moveToFirst();
+                            String favId = cus.getString(cus.getColumnIndex("id"));
+                            if (file.renameTo(new File(dir, favId + "_" + fName))) {
+                                count++;
+                            }
+                            cus.close();
+                        }
+
+                    }
+                }
+            }
+        }
+        return count;
     }
 }

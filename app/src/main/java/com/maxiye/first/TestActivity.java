@@ -464,6 +464,10 @@ public class TestActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                     int count = new DBHelper(this).scanIntoFav();
                     alert(getString(R.string.scan_fav_tips, count));
                     break;
+                case R.id.fix_fav_file:
+                    int count2 = new DBHelper(this).fixFavFile();
+                    alert(getString(R.string.fix_fav_tips, count2));
+                    break;
             }
             return false;
         });
