@@ -74,4 +74,20 @@
     <string name="go_to">出发</string>
     <string name="fix_fav_file">修复收藏的下载文件名</string>
     <string name="fix_fav_tips">修复了 %1$d 个文件</string>
+    <string name="delete_file">删除文件</string>
+    <string name="delete_success">删除成功</string>
+    <string name="file_is_lost">文件不存在或已删除！</string>
+    <string name="delete_fav_and_file">真·删除</string>
+    <string name="input_page">请输入页码</string>
+    <string name="input_artid">请输入文章id</string>
+    <string name="artid_can_not_be_empty">文章id不能为空</string>
+    <string name="first_page">首页</string>
+    <string name="current_page">当前页</string>
+    <string name="downloading">开始下载文件……</string>
+    <string name="cache_is_lost">未发现缓存文件</string>
+    <string name="download_success">下载完成</string>
+    <string name="open">打开</string>
+    <string name="download_err">下载失败</string>
+    <string name="auto_back_to_first_page">已自动跳回最后一页……</string>
+    <string name="choose_a_backup">选择备份文件</string>
 </resources>

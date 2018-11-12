@@ -12,6 +12,7 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.maxiye.first.R;
 import com.maxiye.first.SettingActivity;
 import com.maxiye.first.TestActivity;
 
@@ -196,7 +197,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public static void restore(TestActivity activity) {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*");
-        activity.startActivityForResult(Intent.createChooser(intent,"选择备份文件"), TestActivity.INTENT_PICK_DB_BAK_REQCODE);
+        activity.startActivityForResult(Intent.createChooser(intent, activity.getString(R.string.choose_a_backup)), TestActivity.INTENT_PICK_DB_BAK_REQCODE);
     }
 
     private void checkBakup() {

@@ -315,7 +315,7 @@ public class GifActivity extends AppCompatActivity {
         //创建对话框
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setIcon(R.drawable.ic_info_black_24dp)//设置图标
-                .setTitle("请输入页码")//设置标题
+                .setTitle(R.string.input_page)//设置标题
                 .setView(view)//添加布局
                 .setPositiveButton(R.string.go_to, (dialog1, which) -> {
                     String itemIdxStr = pageEdit.getText().toString();
@@ -338,12 +338,12 @@ public class GifActivity extends AppCompatActivity {
         //创建对话框
         AlertDialog dialog2 = new AlertDialog.Builder(this)
                 .setIcon(R.drawable.ic_info_black_24dp)//设置图标
-                .setTitle("请输入文章id")//设置标题
+                .setTitle(R.string.input_artid)//设置标题
                 .setView(view2)//添加布局
                 .setPositiveButton(R.string.go_to, (dialog1, which) -> {
                     String txt = articleId.getText().toString();
                     if (txt.equals("")) {
-                        alert("文章id不能为空");
+                        alert(getString(R.string.artid_can_not_be_empty));
                     } else {
                         artId = Integer.parseInt(txt);
                         initPage();
@@ -390,12 +390,12 @@ public class GifActivity extends AppCompatActivity {
         new AlertDialog.Builder(this)
                 .setTitle(R.string.browser_open)
                 .setIcon(R.drawable.ic_public_orange_60dp)
-                .setPositiveButton("首页", (dialog, which) -> {
+                .setPositiveButton(R.string.first_page, (dialog, which) -> {
                     Uri url = Uri.parse(String.format(webCfg.get("img_web").getAsString(), artId));
                     startActivity(new Intent(Intent.ACTION_VIEW, url));
                     dialog.dismiss();
                 })
-                .setNegativeButton("当前页", (dialog, which) -> {
+                .setNegativeButton(R.string.current_page, (dialog, which) -> {
                     Uri url = Uri.parse(webPage > 1 ? String.format(webCfg.get("img_web_2nd").getAsString(), artId, webPage - 1) : String.format(webCfg.get("img_web").getAsString(), artId));
                     startActivity(new Intent(Intent.ACTION_VIEW, url));
                     dialog.dismiss();
@@ -422,7 +422,7 @@ public class GifActivity extends AppCompatActivity {
                     pMenu.getMenuInflater().inflate(R.menu.gif_history_popupmenu, pMenu.getMenu());
                     pMenu.setOnMenuItemClickListener(item1 -> {
                         switch (item1.getItemId()) {
-                            case R.id.delete_gif_record:
+                            case R.id.delete_fav:
                                 //删除记录
                                 int delArtId = (int) pageWin.ma.getItemData(position).get("art_id");
                                 String delWebName = (String) pageWin.ma.getItemData(position).get("web_name");
@@ -498,11 +498,33 @@ public class GifActivity extends AppCompatActivity {
                     pMenu.getMenuInflater().inflate(R.menu.gif_history_popupmenu, pMenu.getMenu());
                     pMenu.setOnMenuItemClickListener(item1 -> {
                         switch (item1.getItemId()) {
-                            case R.id.delete_gif_record:
+                            case R.id.delete_fav:
                                 //删除记录
                                 String id = (String) pageWin.ma.getItemData(position).get("id");
                                 String itemId = (String) pageWin.ma.getItemData(position).get("item_id");
                                 deleteFavorite(id, itemId);
+                                pageWin.list.remove(position);
+                                pageWin.ma.notifyItemRemoved(position);
+                                pageWin.ma.notifyItemRangeChanged(position, pageWin.list.size());
+                                break;
+                            case R.id.delete_fav_file:
+                                File favFile = new File((String) pageWin.ma.getItemData(position).get("path"));
+                                if (favFile.exists() && favFile.delete()) {
+                                    alert(getString(R.string.delete_success));
+                                } else {
+                                    alert(getString(R.string.file_is_lost));
+                                }
+                                break;
+                            case R.id.delete_fav_and_file:
+                                File favFile2 = new File((String) pageWin.ma.getItemData(position).get("path"));
+                                if (favFile2.exists() && favFile2.delete()) {
+                                    alert(getString(R.string.delete_success));
+                                } else {
+                                    alert(getString(R.string.file_is_lost));
+                                }
+                                String id2 = (String) pageWin.ma.getItemData(position).get("id");
+                                String itemId2 = (String) pageWin.ma.getItemData(position).get("item_id");
+                                deleteFavorite(id2, itemId2);
                                 pageWin.list.remove(position);
                                 pageWin.ma.notifyItemRemoved(position);
                                 pageWin.ma.notifyItemRangeChanged(position, pageWin.list.size());
@@ -632,7 +654,7 @@ public class GifActivity extends AppCompatActivity {
 
     private void download(String name, String cacheKey, View view) {
         PermissionUtil.req(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PermissionUtil.PER_REQ_STORAGE_WRT, () -> {
-            Toast.makeText(this, "开始下载文件...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.downloading, Toast.LENGTH_SHORT).show();
             File img = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type + "/" + name);
             Log.w("download", "path:" + img.getAbsolutePath());
             try {
@@ -642,7 +664,7 @@ public class GifActivity extends AppCompatActivity {
                 }
                 File cacheGif = diskLRUCache.get(cacheKey);
                 if (cacheGif == null || !cacheGif.exists())
-                    throw new Exception("未发现缓存文件");
+                    throw new Exception(getString(R.string.cache_is_lost));
                 if (Build.VERSION.SDK_INT > 25) {
                     Files.copy(cacheGif.toPath(), img.toPath());
                 } else {
@@ -665,15 +687,15 @@ public class GifActivity extends AppCompatActivity {
                 }
                 //发送广播
                 sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(img)));
-                Snackbar.make(view, "下载完成", Snackbar.LENGTH_SHORT)
-                        .setAction("打开", v -> {
+                Snackbar.make(view, R.string.download_success, Snackbar.LENGTH_SHORT)
+                        .setAction(R.string.open, v -> {
                             Intent imgView = new Intent(Intent.ACTION_VIEW);
                             imgView.setDataAndType(FileProvider.getUriForFile(this, "com.maxiye.first.fileprovider", img), "image/*");
                             imgView.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);//不加黑屏读取不了
                             startActivity(imgView);
                         }).show();
             } catch (Exception e) {
-                alert("下载失败：" + e.toString());
+                alert(getString(R.string.download_err) + e.toString());
                 e.printStackTrace();
             }
         });
@@ -723,7 +745,7 @@ public class GifActivity extends AppCompatActivity {
             } else {
                 //移动网络禁止 gif
                 if (activity.isGprs && type.equals("gif")) {
-                    activity.runOnUiThread(() -> activity.alert("正在使用移动网络"));
+                    activity.runOnUiThread(() -> activity.alert(activity.getString(R.string.gprs_network)));
                     if (!activity.gprsContinue)
                         return null;
                 }
@@ -792,7 +814,7 @@ public class GifActivity extends AppCompatActivity {
                 Drawable errShow = gifActivityWR.get().getDrawable(R.drawable.ic_close_black_24dp);
                 imgView.setImageDrawable(errShow);
             } else {
-//                imgView.setImageDrawable(drawable);//todo fix
+                imgView.setImageDrawable(drawable);
                 float zoom = type.equals("gif") ? 3f : 5.5f;
                 int width = Math.round(drawable.getIntrinsicWidth() * zoom);
                 int height = Math.round(drawable.getIntrinsicHeight() * zoom);
@@ -926,7 +948,7 @@ public class GifActivity extends AppCompatActivity {
         int nowPage = mViewPager.getCurrentItem() + 1;
         int pages = gifList.size() % 3 == 0 ? gifList.size() / 3 : gifList.size() / 3 + 1;
         if (nowPage > pages) {
-            alert("已自动跳回最后一页...");
+            alert(getString(R.string.auto_back_to_first_page));
             mViewPager.setCurrentItem(pages - 1, true);
         }
     }
@@ -996,7 +1018,7 @@ public class GifActivity extends AppCompatActivity {
             if (isVisibleToUser) {
                 if (activity.threadPoolExecutor.getActiveCount() == activity.threadPoolExecutor.getMaximumPoolSize()) {
                     activity.threadPoolExecutor.shutdownNow();
-                    Log.w("threadPoolExcutor", "shutdownNow");
+                    Log.w("threadPoolExecutor", "shutdownNow");
                 }
                 if (gifPosition == 1) {
                     checkLoad();
@@ -1097,7 +1119,7 @@ public class GifActivity extends AppCompatActivity {
                 } else {
                     activity.threadPoolExecutor.execute(this::loadGif);
                 }
-                activity.alert("正在使用移动网络");
+                activity.alert(getString(R.string.gprs_network));
             } else {
                 activity.threadPoolExecutor.execute(this::loadGif);
             }
@@ -1257,7 +1279,7 @@ public class GifActivity extends AppCompatActivity {
         }
 
         private void getNewArtId() {
-            Log.w("getNewArtId", "获取最新内容...");
+            Log.w("getNewArtId", "获取最新内容……");
             String url = activity.webCfg.get("spy_root").getAsString();
             JsonObject regObj = activity.webCfg.getAsJsonObject("img_web_reg");
             int artIdIdx = regObj.get("art_id_idx").getAsInt();
@@ -1492,10 +1514,10 @@ public class GifActivity extends AppCompatActivity {
                 case PlaceholderFragment.MSG_TYPE_LOAD:
                     imageView.clearAnimation();
                     Drawable gifFromStream = (Drawable) msg.obj;
-                    float zoom = type.equals("gif") ? 2.5f : 4.5f;
-//                    imageView.setImageDrawable(gifFromStream);//todo fix
-                    int width = Math.round(gifFromStream.getIntrinsicWidth() * zoom);
-                    int height = Math.round(gifFromStream.getIntrinsicHeight() * zoom);
+                    float scale = type.equals("gif") ? 2.5f : 4.5f;
+                    imageView.setImageDrawable(gifFromStream);
+                    int width = Math.round(gifFromStream.getIntrinsicWidth() * scale);
+                    int height = Math.round(gifFromStream.getIntrinsicHeight() * scale);
                     int layoutWidth = rootView.getWidth();
                     height = width > layoutWidth ? height * layoutWidth / width : height;
                     imageView.setMinimumHeight(height);
