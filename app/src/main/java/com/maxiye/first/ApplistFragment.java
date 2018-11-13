@@ -148,7 +148,7 @@ public class ApplistFragment extends Fragment {
                             return true;
                         })
                         .map(ai -> {
-                            HashMap<String, Object> app_info = new HashMap<>();
+                            HashMap<String, Object> app_info = new HashMap<>(3);
                             try {
                                 PackageInfo pi = fragment.pm.getPackageInfo(ai.packageName, 0);
                                 app_info.put("name", fragment.pm.getApplicationLabel(ai) + " v" + pi.versionName + "(" + pi.versionCode + ")");
