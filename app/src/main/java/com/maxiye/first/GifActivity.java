@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.BitmapFactory;
@@ -64,6 +65,7 @@ import com.maxiye.first.util.NetworkUtil;
 import com.maxiye.first.util.PermissionUtil;
 import com.maxiye.first.util.Util;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -75,6 +77,9 @@ import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
+import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -96,6 +101,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okio.BufferedSource;
 import pl.droidsonroids.gif.GifDrawable;
 import pl.droidsonroids.gif.GifImageView;
 
@@ -202,7 +208,8 @@ public class GifActivity extends AppCompatActivity {
     private JsonObject getWebCfg(String webName) {
         JsonObject webCfg = null;
         try {
-            InputStream is = getAssets().open("img_spy_config.json");
+            AssetManager am = getAssets();
+            InputStream is = am.open("img_spy_config.json");
             JsonObject cfgs = new Gson().fromJson(new InputStreamReader(is), JsonObject.class).getAsJsonObject(type);
             is.close();
             webCfg = cfgs.getAsJsonObject(webName);
@@ -212,7 +219,7 @@ public class GifActivity extends AppCompatActivity {
                 int index = 0;
                 for (String key : cfgs.keySet()) {
                     webList[index++] = key;
-                    iconCacheList.put(key, BitmapDrawable.createFromStream(is = getAssets().open(cfgs.getAsJsonObject(key).get("local_icon").getAsString()), null));
+                    iconCacheList.put(key, BitmapDrawable.createFromStream(is = am.open(cfgs.getAsJsonObject(key).get("local_icon").getAsString()), null));
                     is.close();
                 }
                 iconCacheList.put("default", getDrawable(R.drawable.ic_image_black_24dp));
@@ -668,16 +675,17 @@ public class GifActivity extends AppCompatActivity {
                     if (!img.exists() && !img.createNewFile()) {
                         throw new Exception("create file error");
                     }
-                    try {
-                        FileInputStream input = new FileInputStream(cacheGif);
-                        FileOutputStream output = new FileOutputStream(img);
-                        byte[] buf = new byte[4096];
-                        int bytesRead;
-                        while ((bytesRead = input.read(buf)) > 0) {
-                            output.write(buf, 0, bytesRead);
+                    try (FileInputStream input = new FileInputStream(cacheGif); FileOutputStream output = new FileOutputStream(img)) {
+                        FileChannel ifc = input.getChannel(), ofc = output.getChannel();
+                        long length = 102400, position = ifc.position(), fsize = ifc.size();
+                        while (position != fsize) {
+                            if ((fsize - position) < length) {
+                                length = fsize - position;
+                            }
+                            MappedByteBuffer inbuffer = ifc.map(FileChannel.MapMode.READ_ONLY, position, length);
+                            ofc.write(inbuffer);
+                            ifc.position(position += length);
                         }
-                        input.close();
-                        output.close();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -759,24 +767,14 @@ public class GifActivity extends AppCompatActivity {
                     assert responseBody != null;
                     int contentLength = (int) responseBody.contentLength();
                     byte[] bytes;
-                    if (contentLength > 0 && contentLength > 40960 * 2) {
+                    if (contentLength > 40960 * 2) {
                         publishProgress(0, contentLength);
-                        InputStream is = responseBody.byteStream();
-                        bytes = new byte[contentLength];
-                        int len, sum = 0, readLen = contentLength > 5 * 1024 * 1024 ? 102400 : 40960;
-                        int chunkSize, threshold = chunkSize = contentLength / 50;
-                        while ((len = is.read(bytes, sum, readLen)) > 0) {
-                            sum += len;
-                            if (sum >= threshold) {
-                                publishProgress(sum, contentLength);
-                                threshold = sum + chunkSize;
-                            }
-                            if (readLen > contentLength - sum) {
-                                readLen = contentLength - sum;
-                                threshold = contentLength;
-                            }
+                        ByteBuffer buffer = ByteBuffer.allocate(contentLength);
+                        BufferedSource source = responseBody.source();
+                        while (source.read(buffer) != -1) {
+                            publishProgress(buffer.position(), contentLength);
                         }
-                        is.close();
+                        bytes = buffer.array();
                     } else {
                         bytes = responseBody.bytes();
                     }
@@ -887,13 +885,12 @@ public class GifActivity extends AppCompatActivity {
                         continue;
                     }
                 }
-                FileInputStream fis;
-                try {
-                    BitmapFactory.decodeStream(fis = new FileInputStream(file), null, opts);
-                    fis.close();
+                try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file))) {
+                    bis.mark(1);
+                    BitmapFactory.decodeStream(bis, null, opts);
                     newOpts.inSampleSize = Util.calculateInSampleSize(opts, 50, 50);
-                    item.put("icon", new BitmapDrawable(getResources(), BitmapFactory.decodeStream(fis = new FileInputStream(file), null, newOpts)));
-                    fis.close();
+                    bis.reset();
+                    item.put("icon", new BitmapDrawable(getResources(), BitmapFactory.decodeStream(bis, null, newOpts)));
                     //Log.w("getFavoriteList-oompress", "fileSize：" + file.length() / 1024 + " kB；compress：" + newOpts.inSampleSize);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -1169,24 +1166,14 @@ public class GifActivity extends AppCompatActivity {
                             assert responseBody != null;
                             int contentLength = (int) responseBody.contentLength();
                             byte[] bytes;
-                            if (contentLength > 0 && contentLength > 40960 * 2) {
+                            if (contentLength > 40960 * 2) {
                                 send(MSG_TYPE_PRELOAD, nowPos, contentLength, null);
-                                InputStream is = responseBody.byteStream();
-                                bytes = new byte[contentLength];
-                                int len, sum = 0, readLen = contentLength > 5 * 1024 * 1024 ? 102400 : 40960;
-                                int chunkSize, threshold = chunkSize = contentLength / 50;
-                                while ((len = is.read(bytes, sum, readLen)) > 0) {
-                                    sum += len;
-                                    if (sum >= threshold) {
-                                        send(MSG_TYPE_LOADING, nowPos, sum, null);
-                                        threshold = sum + chunkSize;
-                                    }
-                                    if (readLen > contentLength - sum) {
-                                        readLen = contentLength - sum;
-                                        threshold = contentLength;
-                                    }
+                                ByteBuffer buffer = ByteBuffer.allocate(contentLength);
+                                BufferedSource source = responseBody.source();
+                                while (source.read(buffer) != -1) {
+                                    send(MSG_TYPE_LOADING, nowPos, buffer.position(), null);
                                 }
-                                is.close();
+                                bytes = buffer.array();
                             } else {
                                 bytes = responseBody.bytes();
                             }
