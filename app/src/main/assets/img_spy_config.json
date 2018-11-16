@@ -1,6 +1,6 @@
 {
   "gif": {
-    "gamersky": {
+    /*"gamersky": {
       "web_root": "http://www.gamersky.com",
       "spy_root": "http://wap.gamersky.com/news/ent/",
       "spy_img_web_root": "http://wap.gamersky.com",
@@ -21,6 +21,31 @@
       },
       "title_reg": {
         "reg": "<title>([^|]+)|游民星空</title>",
+        "title_idx": 1
+      }
+    },*/
+    "gamersky": {
+      "web_root": "http://www.gamersky.com",
+      "spy_root": "http://wap.gamersky.com/news/ent/",
+      "spy_img_web_root": "http://wap.gamersky.com",
+      "icon": "http://www.gamersky.com/favicon.ico",
+      "local_icon": "gamersky.png",
+      "img_web_reg": {
+        "reg": "<h5[^>]+>([^<]+动态图)[\\s\\S]*?<a href=\"([^\"]+/Content-([0-9]+)\\.html)\"",
+        "art_id_idx": 3,
+        "title_idx": 1
+      },
+      "img_web": "http://appapi2.gamersky.com/v5/getArticle",
+      "img_web_2nd": "http://appapi2.gamersky.com/404",
+      "request_body": "{\"os\":\"android\",\"app\":\"GSAPP\",\"osVersion\":\"8.1.0\",\"deviceType\":\"SM-N9600\",\"appVersion\":\"4.5.0\",\"deviceId\":\"\",\"request\":{\"modelFieldNames\":\"Tag,Tag_Index,Subheading,Title,TitleIntact,GameLib,Author,CopyFrom,NewsType,BlockReference,Content,DefaultPicUrl,ThumbnailsPicUrl,Status,UpdateTime\",\"articleId\":\"%1$d\",\"cacheMinutes\":0}}",
+      "img_reg": {
+        "reg": " src=\\\\\"([^\"]+(\\.gif))\\\\\"[^>]*?>.*?(<br>\\\\r\\\\n([^<]+))?(</p>|<br>)",
+        "img_url_idx": 1,
+        "img_ext_idx": 2,
+        "img_title_idx": 4
+      },
+      "title_reg": {
+        "reg": "\"Title\": \"([\\s\\S]*?(?=\",))",
         "title_idx": 1
       }
     },
@@ -74,7 +99,7 @@
     }
   },
   "bitmap": {
-    "gamersky": {
+    /*"gamersky": {
       "web_root": "http://www.gamersky.com",
       "spy_root": "http://wap.gamersky.com/news/ent/",
       "spy_img_web_root": "http://wap.gamersky.com",
@@ -96,6 +121,32 @@
       },
       "title_reg": {
         "reg": "<title>([^|]+)|游民星空</title>",
+        "title_idx": 1
+      }
+    },*/
+    "gamersky": {
+      "web_root": "http://www.gamersky.com",
+      "spy_root": "http://wap.gamersky.com/news/ent/",
+      "spy_img_web_root": "http://wap.gamersky.com",
+      "icon": "http://www.gamersky.com/favicon.ico",
+      "local_icon": "gamersky.png",
+      "img_web_reg": {
+        "reg": "<h5[^>]+>([^<]+囧图)[\\s\\S]*?<a href=\"([^\"]+/Content-([0-9]+)\\.html)\"",
+        "art_id_idx": 3,
+        "title_idx": 1
+      },
+      "img_web": "http://appapi2.gamersky.com/v5/getArticle",
+      "img_web_2nd": "http://appapi2.gamersky.com/404",
+      "request_body": "{\"os\":\"android\",\"app\":\"GSAPP\",\"osVersion\":\"8.1.0\",\"deviceType\":\"SM-N9600\",\"appVersion\":\"4.5.0\",\"deviceId\":\"\",\"request\":{\"modelFieldNames\":\"Tag,Tag_Index,Subheading,Title,TitleIntact,GameLib,Author,CopyFrom,NewsType,BlockReference,Content,DefaultPicUrl,ThumbnailsPicUrl,Status,UpdateTime\",\"articleId\":\"%1$d\",\"cacheMinutes\":0}}",
+      "img_reg": {
+        "reg": "(href=\\\\\"[^\"]*?\\?(http[^\"]+\\.jpg|jpeg|png|bmp)\\\\\"[\\s\\S]*?)? src=\\\\\"([^\"]+(\\.(jpg|jpeg|png|bmp)))\\\\\"[^>]*?>[^\\\\]*((\\\\r\\\\n)+(<span[^>]+>)?([^<]+)(?=[\\s\\S]*?<))?",
+        "img_real_url_idx": 2,
+        "img_url_idx": 3,
+        "img_ext_idx": 4,
+        "img_title_idx": 9
+      },
+      "title_reg": {
+        "reg": "\"Title\": \"([\\s\\S]*?(?=\",))",
         "title_idx": 1
       }
     },

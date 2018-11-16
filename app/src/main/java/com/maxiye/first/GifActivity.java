@@ -97,8 +97,10 @@ import java.util.regex.Pattern;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okio.BufferedSource;
@@ -133,7 +135,7 @@ public class GifActivity extends AppCompatActivity {
     private boolean gprsContinue = false;//手机网络继续访问
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private final ArrayList<String[]> gifList = new ArrayList<>(60);
-    private JsonObject webCfg;
+    public JsonObject webCfg;
     private String[] webList;
     private HashMap<String, Drawable> iconCacheList;
     private SQLiteDatabase db;
@@ -203,6 +205,17 @@ public class GifActivity extends AppCompatActivity {
         } else {
             mViewPager.setCurrentItem(0, true);
         }
+    }
+
+    @SuppressWarnings("unused")
+    public String getAssetContent(String fName) {
+        try (InputStream is = getAssets().open(fName)) {
+            byte[] bytes = new byte[is.available()];
+            return is.read(bytes) > 0 ? new String(bytes, "utf-8") : "";
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "";
     }
 
     private JsonObject getWebCfg(String webName) {
@@ -499,7 +512,7 @@ public class GifActivity extends AppCompatActivity {
                 .setItemClickListener((pageWin, position) -> viewFav(pageWin.list, position, pageWin.rootView))
                 .setItemLongClickListener((pageWin, position) -> {
                     PopupMenu pMenu = new PopupMenu(this, pageWin.rv.getLayoutManager().findViewByPosition(position));//使用rv.getChildAt只能获取可见的item，0表示当前屏幕可见第一个item
-                    pMenu.getMenuInflater().inflate(R.menu.gif_history_popupmenu, pMenu.getMenu());
+                    pMenu.getMenuInflater().inflate(R.menu.gif_favorite_popupmenu, pMenu.getMenu());
                     pMenu.setOnMenuItemClickListener(item1 -> {
                         switch (item1.getItemId()) {
                             case R.id.delete_fav:
@@ -1218,7 +1231,13 @@ public class GifActivity extends AppCompatActivity {
             try {
                 String url = webPage > 1 ? String.format(activity.webCfg.get("img_web_2nd").getAsString(), artId, webPage) : baseUrl;
                 System.out.println(url);
-                Request req = new Request.Builder().url(url).build();
+                Request req;
+                if (webName.equals("gamersky")) {
+                    RequestBody requestBody = RequestBody.create(MediaType.parse("text/plain"), String.format(activity.webCfg.get("request_body").getAsString(), artId));
+                    req = new Request.Builder().url(url).post(requestBody).build();
+                } else {
+                    req = new Request.Builder().url(url).build();
+                }
                 ResponseBody responseBody = activity.okHttpClient.newCall(req).execute().body();
                 assert responseBody != null;
                 String content = new String(responseBody.bytes(), "utf-8");
@@ -1252,7 +1271,7 @@ public class GifActivity extends AppCompatActivity {
                 ++webPage;
                 activity.tryCount = 0;
             } catch (Exception e) {//java.net.ProtocolException: Too many follow-up requests: 21//java.io.EOFException 返回空内容，responseBody.bytes()
-                if (activity.tryCount++ > 3 && !(e instanceof SocketTimeoutException)) {
+                if (++activity.tryCount > 3 && !(e instanceof SocketTimeoutException)) {
                     endFlg = true;
                     activity.tryCount = 0;
                     if (activity.gifList.size() > 0)

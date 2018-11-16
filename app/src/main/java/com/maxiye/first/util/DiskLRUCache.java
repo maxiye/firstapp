@@ -44,15 +44,17 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
         }
         File diskLru = new File(context.getCacheDir(), "diskLru_" + keyword);
         DiskLRUCache diskLRUCache = new DiskLRUCache(capacity, context);
-        try {
-            JsonObject jsonObject = new Gson().fromJson(new FileReader(diskLru), JsonObject.class);
-            for (String key: jsonObject.keySet()) {
-                diskLRUCache._put(key, jsonObject.get(key).getAsString());
+        if (diskLru.exists()) {
+            try {
+                JsonObject jsonObject = new Gson().fromJson(new FileReader(diskLru), JsonObject.class);
+                for (String key: jsonObject.keySet()) {
+                    diskLRUCache._put(key, jsonObject.get(key).getAsString());
+                }
+                diskLRUCache.now = Integer.parseInt(jsonObject.get("size").getAsString());
+                Log.w("DiskLRU:getInstance", "now:" + diskLRUCache.now);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            diskLRUCache.now = Integer.parseInt(jsonObject.get("size").getAsString());
-            Log.w("DiskLRU:getInstance", "now:" + diskLRUCache.now);
-        } catch (Exception e) {
-            e.printStackTrace();
         }
         diskLRUCache.keyword = keyword;
         return diskLRUCache;
