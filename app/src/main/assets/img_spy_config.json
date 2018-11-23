@@ -139,7 +139,7 @@
       "img_web_2nd": "http://appapi2.gamersky.com/404",
       "request_body": "{\"os\":\"android\",\"app\":\"GSAPP\",\"osVersion\":\"8.1.0\",\"deviceType\":\"SM-N9600\",\"appVersion\":\"4.5.0\",\"deviceId\":\"\",\"request\":{\"modelFieldNames\":\"Tag,Tag_Index,Subheading,Title,TitleIntact,GameLib,Author,CopyFrom,NewsType,BlockReference,Content,DefaultPicUrl,ThumbnailsPicUrl,Status,UpdateTime\",\"articleId\":\"%1$d\",\"cacheMinutes\":0}}",
       "img_reg": {
-        "reg": "(href=\\\\\"[^\"]*?\\?(http[^\"]+\\.jpg|jpeg|png|bmp)\\\\\"[\\s\\S]*?)? src=\\\\\"([^\"]+(\\.(jpg|jpeg|png|bmp)))\\\\\"[^>]*?>[^\\\\]*((\\\\r\\\\n)+(<span[^>]+>)?([^<]+)(?=[\\s\\S]*?<))?",
+        "reg": "(href=\\\\\"[^\"]*?\\?(http[^\"]+\\.jpg|jpeg|png|bmp)\\\\\"[\\s\\S]*?)? src=\\\\\"([^\"]+(\\.(jpg|jpeg|png|bmp)))\\\\\"[^>]*?>[^\\\\]*((\\\\r\\\\n)+(<span[^>]+>)?([^<\\\\]+)(?=[\\s\\S]*?<))?",
         "img_real_url_idx": 2,
         "img_url_idx": 3,
         "img_ext_idx": 4,

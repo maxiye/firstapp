@@ -59,6 +59,8 @@ import com.google.gson.JsonObject;
 import com.maxiye.first.part.CircleProgressDrawable;
 import com.maxiye.first.part.GifWebRvAdapter;
 import com.maxiye.first.part.PageListPopupWindow;
+import com.maxiye.first.spy.BaseSpy;
+import com.maxiye.first.spy.SpyGetter;
 import com.maxiye.first.util.DBHelper;
 import com.maxiye.first.util.DiskLRUCache;
 import com.maxiye.first.util.NetworkUtil;
@@ -88,19 +90,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okio.BufferedSource;
@@ -134,7 +131,7 @@ public class GifActivity extends AppCompatActivity {
     private boolean isGprs = false;//手机网络
     private boolean gprsContinue = false;//手机网络继续访问
     private SectionsPagerAdapter mSectionsPagerAdapter;
-    private final ArrayList<String[]> gifList = new ArrayList<>(60);
+    public final ArrayList<String[]> gifList = new ArrayList<>(60);
     public JsonObject webCfg;
     private String[] webList;
     private HashMap<String, Drawable> iconCacheList;
@@ -145,6 +142,7 @@ public class GifActivity extends AppCompatActivity {
     private NetworkUtil netUtil;
     private MyHandler myHandler;
     private ImgViewTask favViewTask;
+    private SpyGetter spyGetter;
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -169,6 +167,7 @@ public class GifActivity extends AppCompatActivity {
             Log.w("end", getNewFlg ? "true" : "false");
         }
         //网站配置信息
+        spyGetter = new SpyGetter();
         webCfg = getWebCfg(webName);
         if (okHttpClient == null) {
             okHttpClient = new OkHttpClient()
@@ -205,6 +204,10 @@ public class GifActivity extends AppCompatActivity {
         } else {
             mViewPager.setCurrentItem(0, true);
         }
+    }
+
+    public static void setTitle(String title) {
+        GifActivity.title = title;
     }
 
     @SuppressWarnings("unused")
@@ -931,6 +934,7 @@ public class GifActivity extends AppCompatActivity {
         ma.setData(typeList);
         ma.setOnItemClickListener(position -> {
             type = (String) typeList.get(position).get("name");
+            spyGetter.modeFlg = !spyGetter.modeFlg;
             okHttpClient.dispatcher().cancelAll();
             Log.w("typeListRvClick", type);
             webCfg = getWebCfg(webName);
@@ -966,6 +970,78 @@ public class GifActivity extends AppCompatActivity {
             alert(getString(R.string.auto_back_to_first_page));
             mViewPager.setCurrentItem(pages - 1, true);
         }
+    }
+
+
+
+    private boolean loadDbGifList() {
+        Cursor cus = db.query(DBHelper.TB_IMG_WEB, new String[]{"*"}, "art_id = ? and web_name = ?", new String[]{artId + "", webName}, null, null, "id desc", "1");
+        Log.w("db_web", cus.getCount() + "");
+        if (cus.getCount() > 0) {
+            cus.moveToFirst();
+            title = cus.getString(cus.getColumnIndex("title"));
+            int totalPage = cus.getInt(cus.getColumnIndex("pages"));
+            Cursor cus2 = db.query(DBHelper.TB_IMG_WEB_ITEM, new String[]{"page,title,url,ext,real_url"}, "art_id = ? and web_name = ?", new String[]{artId + "", webName}, null, null, "id asc");
+            int count = cus2.getCount();
+            if (count > 0) {
+                Log.w("db_item", count + "");
+                cus2.moveToFirst();
+                for (int i = 0; i < count; i++) {
+                    String[] gifInfo = new String[4];
+                    gifInfo[0] = cus2.getString(cus2.getColumnIndex("url"));
+                    gifInfo[1] = cus2.getString(cus2.getColumnIndex("title"));
+                    gifInfo[2] = cus2.getString(cus2.getColumnIndex("ext"));
+                    gifInfo[3] = cus2.getString(cus2.getColumnIndex("real_url"));
+                    gifList.add(gifInfo);
+                    webPage = cus2.getInt(cus2.getColumnIndex("page"));
+                    cus2.moveToNext();
+                }
+            }
+            cus2.close();
+            if (totalPage == webPage)
+                endFlg = true;
+            ++webPage;
+            return true;
+        }
+        cus.close();
+        return false;
+    }
+
+
+    private void updateDbField(String val) {
+        ContentValues ctv = new ContentValues(1);
+        ctv.put("pages", val);
+        int rows = db.update(DBHelper.TB_IMG_WEB, ctv, "art_id = ? and web_name = ?", new String[]{artId + "", webName});
+        Log.w("db_web_update: ", rows + "");
+    }
+
+    public void saveDbGifList(String dbName, String[] data) {
+        String datetime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+        if (dbName.equals(DBHelper.TB_IMG_WEB)) {
+            ContentValues ctv = new ContentValues(6);
+            ctv.put("art_id", artId);
+            ctv.put("web_url", data[0]);
+            ctv.put("web_name", webName);
+            ctv.put("type", type);
+            ctv.put("title", data[1]);
+            ctv.put("time", datetime);
+            long newId = db.insert(dbName, null, ctv);
+            Log.w("db_web_insert: ", newId + "");
+        } else {
+            ContentValues ctv = new ContentValues(9);
+            ctv.put("art_id", artId);
+            ctv.put("page", webPage);
+            ctv.put("web_name", webName);
+            ctv.put("type", type);
+            ctv.put("title", data[1]);
+            ctv.put("url", data[0]);
+            ctv.put("ext", data[2]);
+            ctv.put("real_url", data[3]);
+            ctv.put("time", datetime);
+            long newId = db.insert(dbName, null, ctv);
+            Log.w("db_web_item_insert: ", newId + "");
+        }
+
     }
 
     /**
@@ -1211,62 +1287,38 @@ public class GifActivity extends AppCompatActivity {
         }
 
         private synchronized void loadGifList() {
+            BaseSpy spy = activity.spyGetter.getSpy(webName, activity.webCfg);
             //数据库获取
             if (webPage == 1) {
-                if (getNewFlg)
-                    getNewArtId();
-                if (loadDbGifList())
+                if (getNewFlg) {
+                    int articleId = spy.getNewArtId(activity.okHttpClient);
+                    if (articleId > 0) {
+                        artId = articleId;
+                        endFlg = false;
+                    }
+                    getNewFlg = false;
+                    Log.w("getNewArtId", title);
+                }
+                if (activity.loadDbGifList())
                     return;
             }
             if (endFlg)
                 return;
             Log.w("start", "loadGifList(lock):" + webPage);
-            String baseUrl = String.format(activity.webCfg.get("img_web").getAsString(), artId);
-            JsonObject regObj = activity.webCfg.getAsJsonObject("img_reg");
-            int urlIdx = regObj.get("img_url_idx").getAsInt();
-            int extIdx = regObj.get("img_ext_idx").getAsInt();
-            int titleIdx = regObj.get("img_title_idx").getAsInt();
-            int realUrlIdx = regObj.get("img_real_url_idx") != null ? regObj.get("img_real_url_idx").getAsInt() : -1;
-            Pattern pt = Pattern.compile(regObj.get("reg").getAsString(), Pattern.CASE_INSENSITIVE);
             try {
-                String url = webPage > 1 ? String.format(activity.webCfg.get("img_web_2nd").getAsString(), artId, webPage) : baseUrl;
-                System.out.println(url);
-                Request req;
-                if (webName.equals("gamersky")) {
-                    RequestBody requestBody = RequestBody.create(MediaType.parse("text/plain"), String.format(activity.webCfg.get("request_body").getAsString(), artId));
-                    req = new Request.Builder().url(url).post(requestBody).build();
-                } else {
-                    req = new Request.Builder().url(url).build();
-                }
+                Request req = spy.buildRequest(artId, webPage);
                 ResponseBody responseBody = activity.okHttpClient.newCall(req).execute().body();
                 assert responseBody != null;
                 String content = new String(responseBody.bytes(), "utf-8");
-                Matcher mt = pt.matcher(content);
-                if (!mt.find()) {
+                if (spy.insertItem(content, activity) == 0) {
                     System.out.print(content);
                     throw new ProtocolException("over");
-                }
-                mt.reset();
-                while (mt.find()) {
-                    String ext = mt.group(extIdx);
-                    String name = getTitle(mt.group(titleIdx)) + ext;
-                    String realUrl = realUrlIdx == -1 ? "" : mt.group(realUrlIdx);
-                    realUrl = realUrl == null ? "" : realUrl;
-                    System.out.println("title: " + name + ";url: " + mt.group(urlIdx) + ";ext: " + ext + ";realUrl: " + realUrl);
-                    String gifUrl = mt.group(urlIdx);
-                    if (webName.contains("duowan")) {
-                        name = Util.unicode2Chinese(name);
-                        gifUrl = gifUrl.replace("\\", "");
-                    }
-                    String[] gifInfo = new String[]{gifUrl, name, ext, realUrl};
-                    activity.gifList.add(gifInfo);
-                    saveDbGifList(DBHelper.TB_IMG_WEB_ITEM, gifInfo);
                 }
                 if (webPage == 1 && activity.gifList.size() > 0) {
                     Log.w("titleGet", title);
                     if (title.equals("动态图"))
-                        getNewTitle(content);
-                    saveDbGifList(DBHelper.TB_IMG_WEB, new String[]{url, title});
+                        spy.getNewTitle(activity.okHttpClient, content, artId);
+                    activity.saveDbGifList(DBHelper.TB_IMG_WEB, new String[]{spy.curUrl, title});
                 }
                 ++webPage;
                 activity.tryCount = 0;
@@ -1275,7 +1327,7 @@ public class GifActivity extends AppCompatActivity {
                     endFlg = true;
                     activity.tryCount = 0;
                     if (activity.gifList.size() > 0)
-                        updateDbField(String.valueOf(webPage - 1));
+                        activity.updateDbField(String.valueOf(webPage - 1));
                     activity.runOnUiThread(() -> activity.checkPageEnd());
                 }
                 e.printStackTrace();
@@ -1283,134 +1335,6 @@ public class GifActivity extends AppCompatActivity {
                 Log.w("end", "loadGifList(unlock):end:" + webPage);
                 System.out.println(activity.gifList.toString());
             }
-        }
-
-        private String getTitle(String group) {
-            boolean notNull = group != null && !group.replaceAll("[\r\n\\s\t]", "").equals("");
-            String title = notNull ? group : UUID.randomUUID().toString();
-            return title.replaceAll("[\r\n\\s\t]", "");
-        }
-
-        private void getNewArtId() {
-            Log.w("getNewArtId", "获取最新内容……");
-            String url = activity.webCfg.get("spy_root").getAsString();
-            JsonObject regObj = activity.webCfg.getAsJsonObject("img_web_reg");
-            int artIdIdx = regObj.get("art_id_idx").getAsInt();
-            int titleIdx = regObj.get("title_idx").getAsInt();
-            Pattern pt = Pattern.compile(regObj.get("reg").getAsString(), Pattern.CASE_INSENSITIVE);
-            try {
-                Request req = new Request.Builder().url(url).build();
-                ResponseBody responseBody = activity.okHttpClient.newCall(req).execute().body();
-                assert responseBody != null;
-                String content = new String(responseBody.bytes(), "utf-8");
-                Matcher mt = pt.matcher(content);
-                if (mt.find()) {
-                    title = mt.group(titleIdx);
-                    artId = Integer.parseInt(mt.group(artIdIdx));
-                    endFlg = false;
-                } else {
-                    System.out.println(content);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                getNewFlg = false;
-                Log.w("getNewArtId", title);
-                System.out.println(title);
-            }
-        }
-
-        private void getNewTitle(String content) {
-            Log.w("getNewTitle", "获取标题...");
-            JsonObject regObj = activity.webCfg.getAsJsonObject("title_reg");
-            int titleIdx = regObj.get("title_idx").getAsInt();
-            Pattern pt = Pattern.compile(regObj.get("reg").getAsString(), Pattern.CASE_INSENSITIVE);
-            if (content == null) {
-                content = "";
-                Request req = new Request.Builder().url(String.format(activity.webCfg.get("img_web").getAsString(), artId)).build();
-                try {
-                    ResponseBody responseBody = activity.okHttpClient.newCall(req).execute().body();
-                    assert responseBody != null;
-                    content = new String(responseBody.bytes(), "utf-8");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            Matcher mt = pt.matcher(content);
-            if (mt.find()) {
-                title = mt.group(titleIdx);
-                Log.w("getNewTitle", title);
-            }
-        }
-
-        private boolean loadDbGifList() {
-            Cursor cus = activity.db.query(DBHelper.TB_IMG_WEB, new String[]{"*"}, "art_id = ? and web_name = ?", new String[]{artId + "", webName}, null, null, "id desc", "1");
-            Log.w("db_web", cus.getCount() + "");
-            if (cus.getCount() > 0) {
-                cus.moveToFirst();
-                title = cus.getString(cus.getColumnIndex("title"));
-                int totalPage = cus.getInt(cus.getColumnIndex("pages"));
-                Cursor cus2 = activity.db.query(DBHelper.TB_IMG_WEB_ITEM, new String[]{"page,title,url,ext,real_url"}, "art_id = ? and web_name = ?", new String[]{artId + "", webName}, null, null, "id asc");
-                int count = cus2.getCount();
-                if (count > 0) {
-                    Log.w("db_item", count + "");
-                    cus2.moveToFirst();
-                    for (int i = 0; i < count; i++) {
-                        String[] gifInfo = new String[4];
-                        gifInfo[0] = cus2.getString(cus2.getColumnIndex("url"));
-                        gifInfo[1] = cus2.getString(cus2.getColumnIndex("title"));
-                        gifInfo[2] = cus2.getString(cus2.getColumnIndex("ext"));
-                        gifInfo[3] = cus2.getString(cus2.getColumnIndex("real_url"));
-                        activity.gifList.add(gifInfo);
-                        webPage = cus2.getInt(cus2.getColumnIndex("page"));
-                        cus2.moveToNext();
-                    }
-                }
-                cus2.close();
-                if (totalPage == webPage)
-                    endFlg = true;
-                ++webPage;
-                return true;
-            }
-            cus.close();
-            return false;
-        }
-
-
-        private void updateDbField(String val) {
-            ContentValues ctv = new ContentValues(1);
-            ctv.put("pages", val);
-            int rows = activity.db.update(DBHelper.TB_IMG_WEB, ctv, "art_id = ? and web_name = ?", new String[]{artId + "", webName});
-            Log.w("db_web_update: ", rows + "");
-        }
-
-        private void saveDbGifList(String dbName, String[] data) {
-            String datetime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
-            if (dbName.equals(DBHelper.TB_IMG_WEB)) {
-                ContentValues ctv = new ContentValues(6);
-                ctv.put("art_id", artId);
-                ctv.put("web_url", data[0]);
-                ctv.put("web_name", webName);
-                ctv.put("type", type);
-                ctv.put("title", data[1]);
-                ctv.put("time", datetime);
-                long newId = activity.db.insert(dbName, null, ctv);
-                Log.w("db_web_insert: ", newId + "");
-            } else {
-                ContentValues ctv = new ContentValues(9);
-                ctv.put("art_id", artId);
-                ctv.put("page", webPage);
-                ctv.put("web_name", webName);
-                ctv.put("type", type);
-                ctv.put("title", data[1]);
-                ctv.put("url", data[0]);
-                ctv.put("ext", data[2]);
-                ctv.put("real_url", data[3]);
-                ctv.put("time", datetime);
-                long newId = activity.db.insert(dbName, null, ctv);
-                Log.w("db_web_item_insert: ", newId + "");
-            }
-
         }
 
         String[] getGifInfo(int offset) {
