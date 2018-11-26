@@ -79,7 +79,6 @@ import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
-import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -785,12 +784,16 @@ public class GifActivity extends AppCompatActivity {
                     byte[] bytes;
                     if (contentLength > 40960 * 2) {
                         publishProgress(0, contentLength);
-                        ByteBuffer buffer = ByteBuffer.allocate(contentLength);
                         BufferedSource source = responseBody.source();
-                        while (source.read(buffer) != -1) {
-                            publishProgress(buffer.position(), contentLength);
+                        bytes = new byte[contentLength];
+                        int chunk = contentLength / 90, threshold = 0, offset = 0, read;
+                        while ((read = source.read(bytes, offset, contentLength - offset)) != -1) {
+                            if ((offset += read) > threshold) {
+                                publishProgress(offset, contentLength);
+                                threshold = offset + chunk;
+                            }
                         }
-                        bytes = buffer.array();
+                        publishProgress(contentLength, contentLength);
                     } else {
                         bytes = responseBody.bytes();
                     }
@@ -1257,12 +1260,16 @@ public class GifActivity extends AppCompatActivity {
                             byte[] bytes;
                             if (contentLength > 40960 * 2) {
                                 send(MSG_TYPE_PRELOAD, nowPos, contentLength, null);
-                                ByteBuffer buffer = ByteBuffer.allocate(contentLength);
                                 BufferedSource source = responseBody.source();
-                                while (source.read(buffer) != -1) {
-                                    send(MSG_TYPE_LOADING, nowPos, buffer.position(), null);
+                                bytes = new byte[contentLength];
+                                int chunk = contentLength / 90, threshold = 0, offset = 0, read;
+                                while ((read = source.read(bytes, offset, contentLength - offset)) != -1) {
+                                    if ((offset += read) > threshold) {
+                                        send(MSG_TYPE_LOADING, nowPos, offset, null);
+                                        threshold = offset + chunk;
+                                    }
                                 }
-                                bytes = buffer.array();
+                                send(MSG_TYPE_LOADING, nowPos, contentLength, null);
                             } else {
                                 bytes = responseBody.bytes();
                             }
