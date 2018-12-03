@@ -3,7 +3,10 @@ package com.maxiye.first;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.database.Cursor;
@@ -443,12 +446,27 @@ public class GifActivity extends AppCompatActivity {
                         switch (item1.getItemId()) {
                             case R.id.delete_fav:
                                 //删除记录
-                                int delArtId = (int) pageWin.ma.getItemData(position).get("art_id");
+                                String delArtId = pageWin.ma.getItemData(position).get("art_id").toString();
                                 String delWebName = (String) pageWin.ma.getItemData(position).get("web_name");
                                 deleteHistory(delArtId, delWebName);
                                 pageWin.list.remove(position);
                                 pageWin.ma.notifyItemRemoved(position);
                                 pageWin.ma.notifyItemRangeChanged(position, pageWin.list.size());
+                                break;
+                            case R.id.copy_fav_artid:
+                                String articleId = pageWin.ma.getItemData(position).get("art_id").toString();
+                                ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                                assert clm != null;
+                                clm.setPrimaryClip(ClipData.newPlainText(null, articleId));
+                                alert(getString(R.string.clip_toast) + "：" + articleId);
+                                break;
+                            case R.id.reload_art:
+                                artId = (int) pageWin.ma.getItemData(position).get("art_id");
+                                webName = (String) pageWin.ma.getItemData(position).get("web_name");
+                                webCfg = getWebCfg(webName);
+                                deleteHistory(Integer.toString(artId), webName);
+                                initPage();
+                                pageWin.popupWindow.dismiss();
                                 break;
                         }
                         return false;
@@ -470,10 +488,10 @@ public class GifActivity extends AppCompatActivity {
         return count;
     }
 
-    private void deleteHistory(int delArtId, String delWebName) {
+    private void deleteHistory(String delArtId, String delWebName) {
         Log.w("deleteHistory", "art_id：" + delArtId + "，web_name：" + delWebName);
-        db.delete(DBHelper.TB_IMG_WEB, "art_id = ? and web_name = ?", new String[]{delArtId + "", delWebName});
-        db.delete(DBHelper.TB_IMG_WEB_ITEM, "art_id = ? and web_name = ?", new String[]{delArtId + "", delWebName});
+        db.delete(DBHelper.TB_IMG_WEB, "art_id = ? and web_name = ?", new String[]{delArtId, delWebName});
+        db.delete(DBHelper.TB_IMG_WEB_ITEM, "art_id = ? and web_name = ?", new String[]{delArtId, delWebName});
     }
 
     private ArrayList<HashMap<String, Object>> getHistoryList(int page, ArrayList<HashMap<String, Object>> historyList) {

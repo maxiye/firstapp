@@ -3,7 +3,7 @@
     <string name="app_name">Maxiye</string>
     <string name="edit_message">包名或应用名</string>
     <string name="setting">设置</string>
-    <string name="clip_toast">包名已复制到剪贴板</string>
+    <string name="clip_toast">已复制到剪贴板</string>
     <string name="not_found">未找到</string>
     <string name="system_app">系统应用</string>
     <string name="create_db">创建数据库</string>
@@ -90,4 +90,6 @@
     <string name="download_err">下载失败</string>
     <string name="auto_back_to_first_page">已自动跳回最后一页……</string>
     <string name="choose_a_backup">选择备份文件</string>
+    <string name="copy_art_id">复制文章Id</string>
+    <string name="reload_art">重新加载内容</string>
 </resources>

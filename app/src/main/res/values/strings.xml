@@ -89,4 +89,6 @@
     <string name="download_err">Download Failed</string>
     <string name="auto_back_to_first_page">Back to the First Page</string>
     <string name="choose_a_backup">Choose a Backup</string>
+    <string name="copy_art_id">Copy Article Id</string>
+    <string name="reload_art">Reload Content</string>
 </resources>

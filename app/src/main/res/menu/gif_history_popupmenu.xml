@@ -2,4 +2,6 @@
 <menu
     xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/delete_fav" android:title="@string/delete"/>
+    <item android:id="@+id/copy_fav_artid" android:title="@string/copy_art_id"/>
+    <item android:id="@+id/reload_art" android:title="@string/reload_art"/>
 </menu>

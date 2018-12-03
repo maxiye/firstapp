@@ -45,7 +45,7 @@
         "img_title_idx": 4
       },
       "title_reg": {
-        "reg": "\"Title\": \"([\\s\\S]*?(?=\",))",
+        "reg": "\"Title\":[\\s]?\"([\\s\\S]*?(?=\",))",
         "title_idx": 1
       }
     },
@@ -69,7 +69,7 @@
         "img_title_idx": 4
       },
       "title_reg": {
-        "reg": "<title>最新一期内涵爆笑动图\\s([^_]+)_游迅网</title>",
+        "reg": "<title>最新一期内涵爆笑动图\\s([^_]+)[_-]游迅网</title>",
         "title_idx": 1
       }
     },
@@ -146,7 +146,7 @@
         "img_title_idx": 9
       },
       "title_reg": {
-        "reg": "\"Title\": \"([\\s\\S]*?(?=\",))",
+        "reg": "\"Title\":[\\s]?\"([\\s\\S]*?(?=\",))",
         "title_idx": 1
       }
     },
@@ -171,7 +171,7 @@
         "img_title_idx": 8
       },
       "title_reg": {
-        "reg": "<title>([^_]+)_游迅网</title>",
+        "reg": "<title>([^_]+)[_-]游迅网</title>",
         "title_idx": 1
       }
     },
