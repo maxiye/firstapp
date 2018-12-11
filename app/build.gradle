@@ -1,13 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 27
     buildToolsVersion '28.0.3'
     defaultConfig {
         applicationId "com.maxiye.first"
         minSdkVersion 24
-        targetSdkVersion 28
-        versionCode 102
+        //noinspection OldTargetApi
+        targetSdkVersion 27
+        versionCode 104
         versionName "1.5"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = false

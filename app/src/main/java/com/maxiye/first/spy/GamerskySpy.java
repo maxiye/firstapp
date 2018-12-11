@@ -18,10 +18,10 @@ public class GamerskySpy extends BaseSpy {
         questBody = webCfg.get("request_body").getAsString();
     }
 
-    public Request buildRequest(int artId, int webPage) {
+    public Request buildRequest(String artId, int webPage) {
         curUrl = webPage > 1 ? String.format(urlTpl2, artId, webPage) : String.format(urlTpl, artId);
         System.out.println(curUrl);
-        RequestBody requestBody = RequestBody.create(MediaType.parse("text/plain"), String.format(questBody, artId));
+        RequestBody requestBody = RequestBody.create(MediaType.parse("text/plain"), String.format(questBody, artId));//app接口post调用
         return new Request.Builder().url(curUrl).post(requestBody).build();
     }
 }

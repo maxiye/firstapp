@@ -28,7 +28,7 @@ public class DuowanSpy extends BaseSpy {
             realUrl = realUrl == null ? "" : realUrl;
             String gifUrl = matcher.group(urlIdx);
             System.out.println("title: " + name + "；url: " + gifUrl + "；ext: " + ext + "；realUrl: " + realUrl);
-            name = Util.unicode2Chinese(name);
+            name = Util.unicode2Chinese(name);//title被unicode转义（exp. \u5168\u7403\u641e\u7b11GIF\u56fe）
             gifUrl = gifUrl.replace("\\", "");
             String[] gifInfo = new String[]{gifUrl, name, ext, realUrl};
             list.add(gifInfo);

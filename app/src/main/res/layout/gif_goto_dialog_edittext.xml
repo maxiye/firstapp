@@ -12,6 +12,6 @@
         android:hint="@string/skip_to"
         android:maxLines="1"
         android:textSize="18sp"
-        android:inputType="number"/>
+        android:inputType="text"/>
 
 </LinearLayout>

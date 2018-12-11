@@ -123,7 +123,7 @@ public class GifActivity extends AppCompatActivity {
     private static String webName = "yxdown";
     private static String type = "bitmap";
     private static String title = "动态图";
-    private static int artId = 1023742;
+    private static String artId = "1023742";
     private static int webPage = 1;
     private final int HISTORY_PAGE_SIZE = 10;
     private final int FAVORITE_PAGE_SIZE = 20;
@@ -367,7 +367,7 @@ public class GifActivity extends AppCompatActivity {
                     if (txt.equals("")) {
                         alert(getString(R.string.artid_can_not_be_empty));
                     } else {
-                        artId = Integer.parseInt(txt);
+                        artId = txt;
                         initPage();
                     }
                 }).setNegativeButton(R.string.cancel, (dialog1, which) -> {
@@ -435,7 +435,7 @@ public class GifActivity extends AppCompatActivity {
                     webName = (String) pageWin.ma.getItemData(position).get("web_name");
                     Log.w("rvClick", webName);
                     webCfg = getWebCfg(webName);
-                    artId = (int) pageWin.ma.getItemData(position).get("art_id");
+                    artId = (String) pageWin.ma.getItemData(position).get("art_id");
                     initPage();
                     pageWin.popupWindow.dismiss();
                 })
@@ -461,10 +461,10 @@ public class GifActivity extends AppCompatActivity {
                                 alert(getString(R.string.clip_toast) + "：" + articleId);
                                 break;
                             case R.id.reload_art:
-                                artId = (int) pageWin.ma.getItemData(position).get("art_id");
+                                artId = (String) pageWin.ma.getItemData(position).get("art_id");
                                 webName = (String) pageWin.ma.getItemData(position).get("web_name");
                                 webCfg = getWebCfg(webName);
-                                deleteHistory(Integer.toString(artId), webName);
+                                deleteHistory(artId, webName);
                                 initPage();
                                 pageWin.popupWindow.dismiss();
                                 break;
@@ -481,7 +481,7 @@ public class GifActivity extends AppCompatActivity {
     }
 
     private int getHistoryCount() {
-        Cursor cus = db.rawQuery("select count(*) from " + DBHelper.TB_IMG_WEB + " where art_id > 0 and type = '" + type + "'", null);
+        Cursor cus = db.rawQuery("select count(*) from " + DBHelper.TB_IMG_WEB + " where art_id <> '' and type = '" + type + "'", null);
         cus.moveToFirst();
         int count = cus.getInt(0);
         cus.close();
@@ -496,7 +496,7 @@ public class GifActivity extends AppCompatActivity {
 
     private ArrayList<HashMap<String, Object>> getHistoryList(int page, ArrayList<HashMap<String, Object>> historyList) {
         int offset = (page - 1) * HISTORY_PAGE_SIZE;
-        String sql = "select * from " + DBHelper.TB_IMG_WEB + " where art_id > 0 and type = '" + type + "' order by id desc limit " + HISTORY_PAGE_SIZE + " offset " + offset;
+        String sql = "select * from " + DBHelper.TB_IMG_WEB + " where art_id <> '' and type = '" + type + "' order by id desc limit " + HISTORY_PAGE_SIZE + " offset " + offset;
         Cursor cus = db.rawQuery(sql, null);
         int count = cus.getCount();
         Log.w("getHistoryList：", count + "");
@@ -512,7 +512,7 @@ public class GifActivity extends AppCompatActivity {
                 String web_name = cus.getString(cus.getColumnIndex("web_name"));
                 item.put("web_name", web_name);
                 item.put("name", cus.getString(cus.getColumnIndex("title")));
-                item.put("art_id", cus.getInt(cus.getColumnIndex("art_id")));
+                item.put("art_id", cus.getString(cus.getColumnIndex("art_id")));
                 //item.put("type", cus.getString(cus.getColumnIndex("type")));
                 //item.put("web_url", cus.getString(cus.getColumnIndex("web_url")));
                 item.put("icon", iconCacheList.get(web_name));
@@ -597,7 +597,7 @@ public class GifActivity extends AppCompatActivity {
             HashMap<String, Object> item = favoriteList.get(favImgPos);
             String name = (String) item.get("title");
             String id = (String) item.get("id");
-            String cacheKey = "favorite_" + item.get("id") + "_" + type;
+            String cacheKey = genCacheKey(item.get("id").toString(), "favorite");
             download(id + "_" + name, cacheKey, v);
             return false;
         });
@@ -750,6 +750,15 @@ public class GifActivity extends AppCompatActivity {
         favViewTask.executeOnExecutor(threadPoolExecutor, title, url, (String) item.get("id"), (String) item.get("path"));
     }
 
+    String genCacheKey(String subfix, String keyType) {
+        switch (keyType) {
+            case "favorite":
+                return "favorite_" + type + "-" + subfix;
+            default:
+                return webName + "_" + artId.replaceAll("[?*:\"\\\\<>/|]", "#") + "-" + subfix;
+        }
+    }
+
     static class ImgViewTask extends AsyncTask<String, Integer, Drawable> {
 
         private WeakReference<GifActivity> gifActivityWR;
@@ -770,7 +779,7 @@ public class GifActivity extends AppCompatActivity {
         @Override
         protected Drawable doInBackground(String... strings) {
             GifActivity activity = gifActivityWR.get();
-            String imgKey = "favorite_" + strings[2] + "_" + type;
+            String imgKey = activity.genCacheKey(strings[2], "favorite");
             String path = strings[3];
             File cache = path.equals("") ? activity.diskLRUCache.get(imgKey) : new File(path);
             if (cache != null) {
@@ -905,7 +914,7 @@ public class GifActivity extends AppCompatActivity {
                 item.put("title", title);
                 item.put("url", cus.getString(cus.getColumnIndex("url")));
                 item.put("real_url", cus.getString(cus.getColumnIndex("real_url")));
-                //item.put("art_id", cus.getInt(cus.getColumnIndex("art_id")));
+                //item.put("art_id", cus.getString(cus.getColumnIndex("art_id")));
                 //item.put("type", cus.getString(cus.getColumnIndex("type")));
                 String name = item.get("id") + "_" + title;
                 cus.moveToNext();
@@ -916,14 +925,14 @@ public class GifActivity extends AppCompatActivity {
                 } else {
                     item.put("path", "");
                     item.put("name", title);
-                    if ((file = diskLRUCache.get("favorite_" + item.get("id") + "_" + type)) == null || !file.exists()) {
+                    if ((file = diskLRUCache.get(genCacheKey(item.get("id").toString(), "favorite"))) == null || !file.exists()) {
                         item.put("icon", iconCacheList.get("default"));
 //                        Log.w("getFavoriteList-fileNotFound", name);
                         continue;
                     }
                 }
                 try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file))) {
-                    bis.mark(1);
+                    bis.mark(1);//fix Resetting to invalid mark
                     BitmapFactory.decodeStream(bis, null, opts);
                     newOpts.inSampleSize = Util.calculateInSampleSize(opts, 50, 50);
                     bis.reset();
@@ -996,13 +1005,13 @@ public class GifActivity extends AppCompatActivity {
 
 
     private boolean loadDbGifList() {
-        Cursor cus = db.query(DBHelper.TB_IMG_WEB, new String[]{"*"}, "art_id = ? and web_name = ?", new String[]{artId + "", webName}, null, null, "id desc", "1");
+        Cursor cus = db.query(DBHelper.TB_IMG_WEB, new String[]{"*"}, "art_id = ? and web_name = ?", new String[]{artId, webName}, null, null, "id desc", "1");
         Log.w("db_web", cus.getCount() + "");
         if (cus.getCount() > 0) {
             cus.moveToFirst();
             title = cus.getString(cus.getColumnIndex("title"));
             int totalPage = cus.getInt(cus.getColumnIndex("pages"));
-            Cursor cus2 = db.query(DBHelper.TB_IMG_WEB_ITEM, new String[]{"page,title,url,ext,real_url"}, "art_id = ? and web_name = ?", new String[]{artId + "", webName}, null, null, "id asc");
+            Cursor cus2 = db.query(DBHelper.TB_IMG_WEB_ITEM, new String[]{"page,title,url,ext,real_url"}, "art_id = ? and web_name = ?", new String[]{artId, webName}, null, null, "id asc");
             int count = cus2.getCount();
             if (count > 0) {
                 Log.w("db_item", count + "");
@@ -1032,7 +1041,7 @@ public class GifActivity extends AppCompatActivity {
     private void updateDbField(String val) {
         ContentValues ctv = new ContentValues(1);
         ctv.put("pages", val);
-        int rows = db.update(DBHelper.TB_IMG_WEB, ctv, "art_id = ? and web_name = ?", new String[]{artId + "", webName});
+        int rows = db.update(DBHelper.TB_IMG_WEB, ctv, "art_id = ? and web_name = ?", new String[]{artId, webName});
         Log.w("db_web_update: ", rows + "");
     }
 
@@ -1139,7 +1148,7 @@ public class GifActivity extends AppCompatActivity {
         }
 
         public void send(int what, int arg1, int arg2, Object obj) {
-            if (page == activity.page && activity.myHandler != null) {
+            if (activity != null && page == activity.page && activity.myHandler != null) {
                 activity.myHandler.sendMessage(activity.myHandler.obtainMessage(what, arg1, arg2, obj));
             }
         }
@@ -1167,7 +1176,7 @@ public class GifActivity extends AppCompatActivity {
                     case 1:
                         long favId = addFav();
                         String[] gifInfo = getGifInfo(getGifOffset(focusedPosition));
-                        String cacheKey = webName + "_" + artId + "-" + getGifOffset(focusedPosition);
+                        String cacheKey = activity.genCacheKey(getGifOffset(focusedPosition) + "", "");
                         activity.download(favId + "_" + gifInfo[1], cacheKey, activity.findViewById(android.R.id.content));
                         break;
                 }
@@ -1178,14 +1187,14 @@ public class GifActivity extends AppCompatActivity {
 
         private long addFav() {
             String[] gifInfo = getGifInfo(getGifOffset(focusedPosition));
-            Cursor cus = activity.db.query(DBHelper.TB_IMG_WEB_ITEM, new String[]{"*"}, "art_id = ? and title = ?", new String[]{artId + "", gifInfo[1]}, null, null, "id desc", "1");
+            Cursor cus = activity.db.query(DBHelper.TB_IMG_WEB_ITEM, new String[]{"*"}, "art_id = ? and title = ?", new String[]{artId, gifInfo[1]}, null, null, "id desc", "1");
             long favId = 0;
             if (cus.getCount() > 0) {
                 cus.moveToFirst();
                 if (cus.getInt(cus.getColumnIndex("fav_flg")) != 1) {
                     ContentValues ctv = new ContentValues(10);
                     ctv.put("item_id", cus.getLong(cus.getColumnIndex("id")));
-                    ctv.put("art_id", cus.getInt(cus.getColumnIndex("art_id")));
+                    ctv.put("art_id", cus.getString(cus.getColumnIndex("art_id")));
                     ctv.put("page", cus.getInt(cus.getColumnIndex("page")));
                     ctv.put("web_name", cus.getString(cus.getColumnIndex("web_name")));
                     ctv.put("type", cus.getString(cus.getColumnIndex("type")));
@@ -1214,7 +1223,7 @@ public class GifActivity extends AppCompatActivity {
         }
 
         void checkLoad() {
-            String imgKey = webName + "_" + artId + "-" + getGifOffset(gifPosition);
+            String imgKey = activity.genCacheKey(getGifOffset(gifPosition) + "", "");
             //移动网络禁止 gif
             if (activity.isGprs && type.equals("gif") && !activity.diskLRUCache.containsKey(imgKey)) {
                 if (!activity.gprsContinue) {
@@ -1243,7 +1252,7 @@ public class GifActivity extends AppCompatActivity {
             String[] gifInfo = getGifInfo(startOffset);
             if (gifInfo == null)
                 return;
-            String imgKey = webName + "_" + artId + "-" + startOffset;
+            String imgKey = activity.genCacheKey(startOffset + "", "");
             File cacheGif = activity.diskLRUCache.get(imgKey);
             send(MSG_TYPE_PRE, nowPos, 0, gifInfo[1]);
             if (cacheGif != null) {
@@ -1316,8 +1325,8 @@ public class GifActivity extends AppCompatActivity {
             //数据库获取
             if (webPage == 1) {
                 if (getNewFlg) {
-                    int articleId = spy.getNewArtId(activity.okHttpClient);
-                    if (articleId > 0) {
+                    String articleId = spy.getNewArtId(activity.okHttpClient);
+                    if (articleId != null && !articleId.equals("")) {
                         artId = articleId;
                         endFlg = false;
                     }
@@ -1447,7 +1456,7 @@ public class GifActivity extends AppCompatActivity {
                     }
                     TextView tv = rootView.findViewById(fragment.getResources().getIdentifier("gtxt_" + msg.arg1, "id", activity.getPackageName()));
                     tv.setText((String) msg.obj);
-                    if (!activity.diskLRUCache.containsKey(webName + "_" + artId + "-" + fragment.getGifOffset(msg.arg1))) {
+                    if (!activity.diskLRUCache.containsKey(activity.genCacheKey(fragment.getGifOffset(msg.arg1) + "", ""))) {
                         imageView.setImageDrawable(activity.iconCacheList.get("loading"));
                         imageView.setMinimumHeight(90);
                         imageView.setMinimumWidth(90);

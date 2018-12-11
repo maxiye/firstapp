@@ -3,11 +3,11 @@ package com.maxiye.first.spy;
 import com.google.gson.JsonObject;
 
 /**
- * 数据库助手
+ * 爬虫助手
  * Created by due on 2018/11/22.
  */
 public class SpyGetter {
-    private BaseSpy base, gamersky, yxdown, duowan;
+    private BaseSpy base, gamersky, yxdown, duowan, w17173;
     public boolean modeFlg = true;
     public BaseSpy getSpy(String web, JsonObject webCfg) {
         BaseSpy spy;
@@ -20,6 +20,9 @@ public class SpyGetter {
                 break;
             case "yxdown":
                 spy = yxdown == null ? yxdown = new YxdownSpy(webCfg, modeFlg) : yxdown;
+                break;
+            case "17173":
+                spy = w17173 == null ? w17173 = new W17173Spy(webCfg, modeFlg) : w17173;
                 break;
             default:
                 spy = base == null ? base = new BaseSpy(webCfg, modeFlg) : base;

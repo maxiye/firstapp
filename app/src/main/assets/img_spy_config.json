@@ -11,8 +11,8 @@
         "art_id_idx": 3,
         "title_idx": 1
       },
-      "img_web": "http://wap.gamersky.com/news/Content-%1$d.html",
-      "img_web_2nd": "http://wap.gamersky.com/news/Content-%1$d_%2$d.html",
+      "img_web": "http://wap.gamersky.com/news/Content-%1$s.html",
+      "img_web_2nd": "http://wap.gamersky.com/news/Content-%1$s_%2$d.html",
       "img_reg": {
         "reg": "src=\"([^\"]+(\\.gif))\"[^>]*?>.*?(<br>\\n([^<]+))?(</p>|<br>)",
         "img_url_idx": 1,
@@ -37,7 +37,7 @@
       },
       "img_web": "http://appapi2.gamersky.com/v5/getArticle",
       "img_web_2nd": "http://appapi2.gamersky.com/404",
-      "request_body": "{\"os\":\"android\",\"app\":\"GSAPP\",\"osVersion\":\"8.1.0\",\"deviceType\":\"SM-N9600\",\"appVersion\":\"4.5.0\",\"deviceId\":\"\",\"request\":{\"modelFieldNames\":\"Tag,Tag_Index,Subheading,Title,TitleIntact,GameLib,Author,CopyFrom,NewsType,BlockReference,Content,DefaultPicUrl,ThumbnailsPicUrl,Status,UpdateTime\",\"articleId\":\"%1$d\",\"cacheMinutes\":0}}",
+      "request_body": "{\"os\":\"android\",\"app\":\"GSAPP\",\"osVersion\":\"8.1.0\",\"deviceType\":\"SM-N9600\",\"appVersion\":\"4.5.0\",\"deviceId\":\"\",\"request\":{\"modelFieldNames\":\"Tag,Tag_Index,Subheading,Title,TitleIntact,GameLib,Author,CopyFrom,NewsType,BlockReference,Content,DefaultPicUrl,ThumbnailsPicUrl,Status,UpdateTime\",\"articleId\":\"%1$s\",\"cacheMinutes\":0}}",
       "img_reg": {
         "reg": " src=\\\\\"([^\"]+(\\.gif))\\\\\"[^>]*?>.*?(<br>\\\\r\\\\n([^<]+))?(</p>|<br>)",
         "img_url_idx": 1,
@@ -50,6 +50,7 @@
       }
     },
     "yxdown": {
+      "type": "gif",
       "web_root": "http://www.yxdown.com",
       "spy_root": "http://www.yxdown.com/newstag/dongtu/",
       "spy_img_web_root": "http://m.yxdown.com",
@@ -60,13 +61,13 @@
         "art_id_idx": 2,
         "title_idx": 4
       },
-      "img_web": "http://m.yxdown.com/news/%1$d.html",
-      "img_web_2nd": "http://m.yxdown.com/news/%1$d_%2$d.html",
+      "img_web": "http://m.yxdown.com/news/%1$s.html",
+      "img_web_2nd": "http://m.yxdown.com/news/%1$s_%2$d.html",
       "img_reg": {
-        "reg": "<img src=\"([^\"]+(\\.gif)[^\"]*)\" />.*?[\r\n]+(<p[^>]+><span[^>]+>([^<]+)</span>)?",
+        "reg": "<img src=\"([^\"]+(\\.(gif|jpg|jpeg|png|bmp))[^\"]*)\" />.*?[\r\n]+(<p[^>]+><span[^>]+>([^<]+)</span>)?",
         "img_url_idx": 1,
         "img_ext_idx": 2,
-        "img_title_idx": 4
+        "img_title_idx": 5
       },
       "title_reg": {
         "reg": "<title>最新一期内涵爆笑动图\\s([^_]+)[_-]游迅网</title>",
@@ -84,7 +85,7 @@
         "art_id_idx": 2,
         "title_idx": 3
       },
-      "img_web": "http://tu.duowan.cn/gallery/%1$d.html",
+      "img_web": "http://tu.duowan.cn/gallery/%1$s.html",
       "img_web_2nd": "http://www.duowan.com/s/404/404.html",
       "img_reg": {
         "reg": "\"title\":\"([^\"]+)\".*?\"source\":\"([^\"]+(\\.gif))\".*?\"add_intro\":\"([^\"]+)\"",
@@ -94,6 +95,54 @@
       },
       "title_reg": {
         "reg": "<title>([^-]+)-多玩图库</title>",
+        "title_idx": 1
+      }
+    },
+    "17173": {
+      "web_root": "http://news.17173.com",
+      "spy_root": "http://news.17173.com/game/gif.shtml",
+      "spy_img_web_root": "http://news.17173.com",
+      "icon": "http://ue.17173cdn.com/images/lib/v1/favicon-hd.ico",
+      "local_icon": "17173.ico",
+      "img_web_reg": {
+        "reg": "<a href=\"([^\"]+content/(\\d+/\\d+)_1\\.shtml)\"[^>]+>(正经GIF囧图\\S+)</a>",
+        "art_id_idx": 2,
+        "title_idx": 3
+      },
+      "img_web": "http://news.17173.com/content/%1$s_1.shtml",
+      "img_web_2nd": "http://news.17173.com/content/404",
+      "img_reg": {
+        "reg": "<p class=\"p-image\"[\\s\\S]*?<img.*?data-src=\"//([^\"]+?(\\.gif))(![^\"]+)?\"[^>]+></p>[\r\n\\s\t]+<p style=\"text-align: center[^>]+>([^<]+)</p>",
+        "img_url_idx": 1,
+        "img_ext_idx": 2,
+        "img_title_idx": 4
+      },
+      "title_reg": {
+        "reg": "<title>([^<]+)</title>",
+        "title_idx": 1
+      }
+    },
+    "ali213": {
+      "web_root": "http://3g.ali213.net",
+      "spy_root": "http://3g.ali213.net/news/bxgif/",
+      "spy_img_web_root": "http://3g.ali213.net",
+      "icon": "http://www.ali213.net/favicon.ico",
+      "local_icon": "ali213.png",
+      "img_web_reg": {
+        "reg": "<div class=\"newsindex_news_title\"><a href=\"([^\"]+?/(\\d+)\\.html)\"[^>]*?>([^<]+)</a>",
+        "art_id_idx": 2,
+        "title_idx": 3
+      },
+      "img_web": "http://3g.ali213.net/news/html/%1$s.html",
+      "img_web_2nd": "http://3g.ali213.net/404.html",
+      "img_reg": {
+        "reg": "<p style=\"text-align: center[^>]+>(<(span|a)[^>]*?>)?<img.*?data-original=\"([^\"]+?(\\.gif))\"[^>]+>(</span>|</a>)?</p>[\r\n\\s\t]+<p style=\"text-align: center[^>]+>([^<]+)</p>",
+        "img_url_idx": 3,
+        "img_ext_idx": 4,
+        "img_title_idx": 6
+      },
+      "title_reg": {
+        "reg": "<title>([^<]+?)[_-]游侠网</title>",
         "title_idx": 1
       }
     }
@@ -110,8 +159,8 @@
         "art_id_idx": 3,
         "title_idx": 1
       },
-      "img_web": "http://wap.gamersky.com/news/Content-%1$d.html",
-      "img_web_2nd": "http://wap.gamersky.com/news/Content-%1$d_%2$d.html",
+      "img_web": "http://wap.gamersky.com/news/Content-%1$s.html",
+      "img_web_2nd": "http://wap.gamersky.com/news/Content-%1$s_%2$d.html",
       "img_reg": {
         "reg": "(href=\"[^\"]*?\\?(http[^\"]+\\.jpg|jpeg|png|bmp)\"[\\s\\S]*?)?src=\"([^\"]+(\\.(jpg|jpeg|png|bmp)))\"[^>]*?>[^\r\n]*([\r\n]+(<span[^>]+>)?([^<]+))?(?=[\\s\\S]*?<div class=\"gs_bot_author\">)",
         "img_real_url_idx": 2,
@@ -137,7 +186,7 @@
       },
       "img_web": "http://appapi2.gamersky.com/v5/getArticle",
       "img_web_2nd": "http://appapi2.gamersky.com/404",
-      "request_body": "{\"os\":\"android\",\"app\":\"GSAPP\",\"osVersion\":\"8.1.0\",\"deviceType\":\"SM-N9600\",\"appVersion\":\"4.5.0\",\"deviceId\":\"\",\"request\":{\"modelFieldNames\":\"Tag,Tag_Index,Subheading,Title,TitleIntact,GameLib,Author,CopyFrom,NewsType,BlockReference,Content,DefaultPicUrl,ThumbnailsPicUrl,Status,UpdateTime\",\"articleId\":\"%1$d\",\"cacheMinutes\":0}}",
+      "request_body": "{\"os\":\"android\",\"app\":\"GSAPP\",\"osVersion\":\"8.1.0\",\"deviceType\":\"SM-N9600\",\"appVersion\":\"4.5.0\",\"deviceId\":\"\",\"request\":{\"modelFieldNames\":\"Tag,Tag_Index,Subheading,Title,TitleIntact,GameLib,Author,CopyFrom,NewsType,BlockReference,Content,DefaultPicUrl,ThumbnailsPicUrl,Status,UpdateTime\",\"articleId\":\"%1$s\",\"cacheMinutes\":0}}",
       "img_reg": {
         "reg": "(href=\\\\\"[^\"]*?\\?(http[^\"]+\\.jpg|jpeg|png|bmp)\\\\\"[\\s\\S]*?)? src=\\\\\"([^\"]+(\\.(jpg|jpeg|png|bmp)))\\\\\"[^>]*?>[^\\\\]*((\\\\r\\\\n)+(<span[^>]+>)?([^<\\\\]+)(?=[\\s\\S]*?<))?",
         "img_real_url_idx": 2,
@@ -151,6 +200,7 @@
       }
     },
     "yxdown": {
+      "type": "bitmap",
       "web_root": "http://www.yxdown.com",
       "spy_root": "http://www.yxdown.com/newstag/jiongtu/",
       "spy_img_web_root": "http://m.yxdown.com",
@@ -161,8 +211,8 @@
         "art_id_idx": 2,
         "title_idx": 3
       },
-      "img_web": "http://m.yxdown.com/news/%1$d.html",
-      "img_web_2nd": "http://m.yxdown.com/news/%1$d_%2$d.html",
+      "img_web": "http://m.yxdown.com/news/%1$s.html",
+      "img_web_2nd": "http://m.yxdown.com/news/%1$s_%2$d.html",
       "img_reg": {
         "reg": "(href=\"([^\"]+\\.jpg|jpeg|png|bmp)\"[\\s\\S]*?)?<img src=\"([^\"]+(\\.(jpg|jpeg|png|bmp))[^\"]*)\" />.*?[\r\n]+(<p[^>]+>(<span[^>]+>)?([^<\\s]+)</)?",
         "img_real_url_idx": 2,
@@ -186,7 +236,7 @@
         "art_id_idx": 2,
         "title_idx": 3
       },
-      "img_web": "http://tu.duowan.cn/gallery/%1$d.html",
+      "img_web": "http://tu.duowan.cn/gallery/%1$s.html",
       "img_web_2nd": "http://www.duowan.com/s/404/404.html",
       "img_reg": {
         "reg": "\"title\":\"([^\"]+)\".*?\"source\":\"([^\"]+(\\.(jpg|jpeg|png|bmp)))\".*?\"add_intro\":\"([^\"]+)\"",
@@ -196,6 +246,54 @@
       },
       "title_reg": {
         "reg": "<title>([^-]+)-多玩图库</title>",
+        "title_idx": 1
+      }
+    },
+    "17173": {
+      "web_root": "http://news.17173.com",
+      "spy_root": "http://news.17173.com/game/jtj.shtml",
+      "spy_img_web_root": "http://news.17173.com/game/jtj.shtml",
+      "icon": "http://ue.17173cdn.com/images/lib/v1/favicon-hd.ico",
+      "local_icon": "17173.ico",
+      "img_web_reg": {
+        "reg": "<a href=\"([^\"]+content/(\\d+/\\d+)_1\\.shtml)\"[^>]+>(\\S+囧图集（\\d+）)</a>",
+        "art_id_idx": 2,
+        "title_idx": 3
+      },
+      "img_web": "http://news.17173.com/content/%1$s_1.shtml",
+      "img_web_2nd": "http://news.17173.com/content/404",
+      "img_reg": {
+        "reg": "<p class=\"p-image\"[\\s\\S]*?<img.*?data-src=\"//([^\"]+?(\\.(jpg|jpeg|png|bmp)))(![^\"]+)?\"[^>]+></p>[\r\n\\s\t]+<p style=\"text-align: center[^>]+>([^<]+)</p>",
+        "img_url_idx": 1,
+        "img_ext_idx": 2,
+        "img_title_idx": 5
+      },
+      "title_reg": {
+        "reg": "<title>([^<]+)</title>",
+        "title_idx": 1
+      }
+    },
+    "ali213": {
+      "web_root": "http://3g.ali213.net",
+      "spy_root": "http://3g.ali213.net/news/jiongtu/",
+      "spy_img_web_root": "http://3g.ali213.net",
+      "icon": "http://www.ali213.net/favicon.ico",
+      "local_icon": "ali213.png",
+      "img_web_reg": {
+        "reg": "<div class=\"newsindex_news_title\"><a href=\"([^\"]+?/(\\d+)\\.html)\"[^>]*?>([^<]+)</a>",
+        "art_id_idx": 2,
+        "title_idx": 3
+      },
+      "img_web": "http://3g.ali213.net/news/html/%1$s.html",
+      "img_web_2nd": "http://3g.ali213.net/404.html",
+      "img_reg": {
+        "reg": "<p style=\"text-align: center[^>]+>(<(span|a)[^>]*?>)?<img.*?data-original=\"([^\"]+?(\\.(png|jpg|jpeg|bmp)))\"[^>]+>(</span>|</a>)?</p>[\r\n\\s\t]+<p style=\"text-align: center[^>]+>([^<]+)</p>",
+        "img_url_idx": 3,
+        "img_ext_idx": 4,
+        "img_title_idx": 7
+      },
+      "title_reg": {
+        "reg": "<title>([^<]+?)[_-]游侠网</title>",
         "title_idx": 1
       }
     }
@@ -210,7 +308,7 @@
         "art_id_idx": 2,
         "title_idx": 3
       },
-      "img_web": "http://3bnbn.net/art/html/%1$d.html",
+      "img_web": "http://3bnbn.net/art/html/%1$s.html",
       "img_web_2nd": "http://www.duowan.com/s/404/404.html",
       "img_reg": {
         "reg": "<img src=\"([^\"]+(\\.(jpg|jpeg|png|bmp)))\"[^>]*?>(.*?)<br",

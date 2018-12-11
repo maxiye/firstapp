@@ -21,7 +21,7 @@ import okhttp3.ResponseBody;
  * Created by due on 2018/11/21.
  */
 public class BaseSpy {
-    private JsonObject webCfg;
+    JsonObject webCfg;
     int urlIdx,extIdx,titleIdx,realUrlIdx;
     public String curUrl;
     String urlTpl, urlTpl2;
@@ -46,7 +46,7 @@ public class BaseSpy {
         pt = Pattern.compile(regObj.get("reg").getAsString(), Pattern.CASE_INSENSITIVE);
     }
 
-    public Request buildRequest(int artId, int webPage) {
+    public Request buildRequest(String artId, int webPage) {
         curUrl = webPage > 1 ? String.format(urlTpl2, artId, webPage) : String.format(urlTpl, artId);
         System.out.println(curUrl);
         return new Request.Builder().url(curUrl).build();
@@ -83,17 +83,16 @@ public class BaseSpy {
      * @param content 文字内容
      * @param artId 文字id
      */
-    public void getNewTitle(OkHttpClient okHttpClient, String content, int artId) {
+    public void getNewTitle(OkHttpClient okHttpClient, String content, String artId) {
         Log.w("getNewTitle", "获取标题...");
         JsonObject regObj = webCfg.getAsJsonObject("title_reg");
         int titleIdx = regObj.get("title_idx").getAsInt();
         Pattern pt = Pattern.compile(regObj.get("reg").getAsString(), Pattern.CASE_INSENSITIVE);
         if (content == null) {
             content = "";
-            Request req = new Request.Builder().url(String.format(urlTpl, artId)).build();
             try {
                 ResponseBody responseBody = okHttpClient
-                        .newCall(req)
+                        .newCall(buildRequest(artId, 1))
                         .execute()
                         .body();
                 assert responseBody != null;
@@ -108,9 +107,10 @@ public class BaseSpy {
             GifActivity.setTitle(title = mt.group(titleIdx));
             Log.w("getNewTitle", title);
         }
+        Log.w("getNewTitleErr", "Null");
     }
 
-    public int getNewArtId(OkHttpClient okHttpClient) {
+    public String getNewArtId(OkHttpClient okHttpClient) {
         Log.w("getNewArtId", "获取最新内容……");
         String url = webCfg.get("spy_root").getAsString();
         JsonObject regObj = webCfg.getAsJsonObject("img_web_reg");
@@ -127,13 +127,13 @@ public class BaseSpy {
                 String title;
                 GifActivity.setTitle(title = mt.group(titleIdx));
                 Log.w("getNewArtId", title);
-                return Integer.parseInt(mt.group(artIdIdx));
+                return mt.group(artIdIdx);
             } else {
                 System.out.println(content);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return 0;
+        return "";
     }
 }

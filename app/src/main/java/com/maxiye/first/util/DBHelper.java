@@ -17,9 +17,13 @@ import com.maxiye.first.SettingActivity;
 import com.maxiye.first.TestActivity;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
 
@@ -44,7 +48,7 @@ public class DBHelper extends SQLiteOpenHelper {
             + "id integer primary key autoincrement,"
             + "web_name text default '', "
             + "type text default '', "//gif|bitmap
-            + "art_id integer default 0, "
+            + "art_id TEXT(35) default 0, "
             + "web_url text default '', "
             + "title text default '', "
             + "pages integer default 0, "
@@ -55,7 +59,7 @@ public class DBHelper extends SQLiteOpenHelper {
             + "id integer primary key autoincrement,"
             + "web_name text default '', "
             + "type text default '', "
-            + "art_id integer default 0, "
+            + "art_id TEXT(35) default 0, "
             + "page integer default 0, "
             + "title text default '', "
             + "url text default '', "
@@ -71,7 +75,7 @@ public class DBHelper extends SQLiteOpenHelper {
             + "item_id integer default 0, "
             + "web_name text default '', "
             + "type text default '', "
-            + "art_id integer default 0, "
+            + "art_id TEXT(35) default 0, "
             + "page integer default 0, "
             + "title text default '', "
             + "url text default '', "
@@ -173,15 +177,11 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL(INDEX_IMG_FAVORITE);
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     public static void backup(Context context) {
         File db = context.getDatabasePath(DB_NAME);
         File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        int i = 0;File bak;
-        do {
-            String fileName = DB_NAME + ".bak" + (i > 0 ? "_" + i : "");
-            i++;
-            bak = new File(downloadDir, fileName);
-        } while (bak.exists());
+        File bak = new File(downloadDir, DB_NAME + ".bak." + new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(new Date()));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
                 Files.copy(db.toPath(), bak.toPath());
@@ -190,6 +190,14 @@ public class DBHelper extends SQLiteOpenHelper {
             } catch (IOException e) {
                 e.printStackTrace();
                 Toast.makeText(context, "Error：" + e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+            }
+            File[] baks = downloadDir.listFiles((file, name) -> name.contains(DB_NAME + ".bak"));
+            Arrays.sort(baks, (o1, o2) -> (int) (o1.lastModified() - o2.lastModified()));
+            Log.w("backdb", Arrays.toString(baks));
+            if (baks.length > 5) {
+                for (int i = 0,k = baks.length - 5; i < k; i++) {
+                    baks[i].delete();
+                }
             }
         }
     }
@@ -214,38 +222,34 @@ public class DBHelper extends SQLiteOpenHelper {
         String datetime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
         for(String type : types) {
             File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);
-            File[] fileList = dir.listFiles();
+            String[] fileList = dir.list((file, s) -> file.isFile());
             if (fileList != null) {
-                for (File file : fileList) {
-                    if (file.isFile()) {
-                        String fName = file.getName();
-                        Cursor cus = db.query(DBHelper.TB_IMG_WEB_ITEM, new String[]{"*"}, "title = ?", new String[]{ fName}, null, null, "id desc", "1");
-                        if (cus.getCount() > 0) {
-                            cus.moveToFirst();
-                            int favFlg = cus.getInt(cus.getColumnIndex("fav_flg"));
-                            if (favFlg != 1) {
-                                ContentValues ctv = new ContentValues(10);
-                                ctv.put("item_id", cus.getInt(cus.getColumnIndex("id")));
-                                ctv.put("art_id", cus.getInt(cus.getColumnIndex("art_id")));
-                                ctv.put("page", cus.getInt(cus.getColumnIndex("page")));
-                                ctv.put("web_name", cus.getString(cus.getColumnIndex("web_name")));
-                                ctv.put("type", cus.getString(cus.getColumnIndex("type")));
-                                ctv.put("title", cus.getString(cus.getColumnIndex("title")));
-                                ctv.put("url", cus.getString(cus.getColumnIndex("url")));
-                                ctv.put("ext", cus.getString(cus.getColumnIndex("ext")));
-                                ctv.put("real_url", cus.getString(cus.getColumnIndex("real_url")));
-                                ctv.put("time", datetime);
-                                long newId = db.insert(TB_IMG_FAVORITE, null, ctv);
-                                Log.w("db_img_fav_insert: ", newId + "");
-                                ContentValues ctv2 = new ContentValues(1);
-                                ctv2.put("fav_flg", 1);
-                                int rows = db.update(DBHelper.TB_IMG_WEB_ITEM, ctv2, "id = ?", new String[]{cus.getString(cus.getColumnIndex("id"))});
-                                Log.w("db_web_item_update: ", rows + "");
-                                count++;
-                            }
-                            cus.close();
+                for (String fName : fileList) {
+                    Cursor cus = db.query(DBHelper.TB_IMG_WEB_ITEM, new String[]{"*"}, "title = ?", new String[]{fName}, null, null, "id desc", "1");
+                    if (cus.getCount() > 0) {
+                        cus.moveToFirst();
+                        int favFlg = cus.getInt(cus.getColumnIndex("fav_flg"));
+                        if (favFlg != 1) {
+                            ContentValues ctv = new ContentValues(10);
+                            ctv.put("item_id", cus.getInt(cus.getColumnIndex("id")));
+                            ctv.put("art_id", cus.getInt(cus.getColumnIndex("art_id")));
+                            ctv.put("page", cus.getInt(cus.getColumnIndex("page")));
+                            ctv.put("web_name", cus.getString(cus.getColumnIndex("web_name")));
+                            ctv.put("type", cus.getString(cus.getColumnIndex("type")));
+                            ctv.put("title", cus.getString(cus.getColumnIndex("title")));
+                            ctv.put("url", cus.getString(cus.getColumnIndex("url")));
+                            ctv.put("ext", cus.getString(cus.getColumnIndex("ext")));
+                            ctv.put("real_url", cus.getString(cus.getColumnIndex("real_url")));
+                            ctv.put("time", datetime);
+                            long newId = db.insert(TB_IMG_FAVORITE, null, ctv);
+                            Log.w("db_img_fav_insert: ", newId + "");
+                            ContentValues ctv2 = new ContentValues(1);
+                            ctv2.put("fav_flg", 1);
+                            int rows = db.update(DBHelper.TB_IMG_WEB_ITEM, ctv2, "id = ?", new String[]{cus.getString(cus.getColumnIndex("id"))});
+                            Log.w("db_web_item_update: ", rows + "");
+                            count++;
                         }
-
+                        cus.close();
                     }
                 }
             }
@@ -260,21 +264,18 @@ public class DBHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         for(String type : types) {
             File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);
-            File[] fileList = dir.listFiles();
+            File[] fileList = dir.listFiles(File::isFile);
             if (fileList != null) {
                 for (File file : fileList) {
-                    if (file.isFile()) {
-                        String fName = file.getName();
-                        Cursor cus = db.query(DBHelper.TB_IMG_FAVORITE, new String[]{"id"}, "title = ?", new String[]{ fName}, null, null, "id desc", "1");
-                        if (cus.getCount() > 0) {
-                            cus.moveToFirst();
-                            String favId = cus.getString(cus.getColumnIndex("id"));
-                            if (file.renameTo(new File(dir, favId + "_" + fName))) {
-                                count++;
-                            }
-                            cus.close();
+                    String fName = file.getName();
+                    Cursor cus = db.query(DBHelper.TB_IMG_FAVORITE, new String[]{"id"}, "title = ?", new String[]{fName}, null, null, "id desc", "1");
+                    if (cus.getCount() > 0) {
+                        cus.moveToFirst();
+                        String favId = cus.getString(cus.getColumnIndex("id"));
+                        if (file.renameTo(new File(dir, favId + "_" + fName))) {
+                            count++;
                         }
-
+                        cus.close();
                     }
                 }
             }
