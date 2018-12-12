@@ -21,6 +21,7 @@ import okhttp3.ResponseBody;
  * Created by due on 2018/11/21.
  */
 public class BaseSpy {
+    String webName;
     JsonObject webCfg;
     int urlIdx,extIdx,titleIdx,realUrlIdx;
     public String curUrl;
@@ -129,7 +130,8 @@ public class BaseSpy {
                 Log.w("getNewArtId", title);
                 return mt.group(artIdIdx);
             } else {
-                System.out.println(content);
+//                System.out.println(content);
+                Log.w("getNewArtId", "err");
             }
         } catch (Exception e) {
             e.printStackTrace();

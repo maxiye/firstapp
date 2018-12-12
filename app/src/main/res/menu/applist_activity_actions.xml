@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:first="http://schemas.android.com/apk/res-auto">
+    <!-- 搜索, 应该作为动作按钮展示-->
+    <item
+        android:id="@+id/main_action_search"
+        android:icon="@drawable/ic_search_black_24dp"
+        android:title="@string/search"
+        first:showAsAction="always"
+        first:actionViewClass="android.widget.SearchView"/>
+    <!-- 设置, 应该作为动作按钮展示-->
+    <item
+        android:id="@+id/main_action_setting"
+        android:icon="@drawable/ic_settings_black_24dp"
+        android:title="@string/setting"
+        first:showAsAction="collapseActionView"/>
+</menu>

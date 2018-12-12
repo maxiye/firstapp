@@ -55,7 +55,7 @@
       "spy_root": "http://www.yxdown.com/newstag/dongtu/",
       "spy_img_web_root": "http://m.yxdown.com",
       "icon": "http://www.yxdown.com/favicon.ico",
-      "local_icon": "yxdown.ico",
+      "local_icon": "yxdown.png",
       "img_web_reg": {
         "reg": "href=\"([^\"]+/([0-9]+)\\.html)\"[^>]*?>(最新一期内涵爆笑动图\\s([^<]+))<",
         "art_id_idx": 2,
@@ -76,12 +76,12 @@
     },
     "duowan": {
       "web_root": "http://tu.duowan.cn",
-      "spy_root": "http://tu.duowan.cn",
+      "spy_root": "http://tu.duowan.com/m/bxgif",
       "spy_img_web_root": "http://tu.duowan.cn",
       "icon": "http://tu.duowan.com/favicon.ico",
-      "local_icon": "duowan.ico",
+      "local_icon": "duowan.jpg",
       "img_web_reg": {
-        "reg": "<a href=\"([^\"]+/([0-9]+)\\.html)\"[^\u4e00-\u9fa5]+<span class=\"ui-picContentItem__title\">(全球搞笑GIF\\S+)\\s+",
+        "reg": "<a.*?href=\"([^\"]+?/([0-9]+)\\.html)\"[^>]*>(全球搞笑GIF\\S+)</a>",
         "art_id_idx": 2,
         "title_idx": 3
       },
@@ -136,13 +136,37 @@
       "img_web": "http://3g.ali213.net/news/html/%1$s.html",
       "img_web_2nd": "http://3g.ali213.net/404.html",
       "img_reg": {
-        "reg": "<p style=\"text-align: center[^>]+>(<(span|a)[^>]*?>)?<img.*?data-original=\"([^\"]+?(\\.gif))\"[^>]+>(</span>|</a>)?</p>[\r\n\\s\t]+<p style=\"text-align: center[^>]+>([^<]+)</p>",
-        "img_url_idx": 3,
-        "img_ext_idx": 4,
-        "img_title_idx": 6
+        "reg": "<img.*?data-original=\"([^\"]+?(\\.(gif|jpg|jpeg|png|bmp)))\"[^>]+>.*?</p>[\r\n\\s\t]+<p style=\"text-align:\\s?center[^>]+>([^<]+)</p>",
+        "img_url_idx": 1,
+        "img_ext_idx": 2,
+        "img_title_idx": 4
       },
       "title_reg": {
         "reg": "<title>([^<]+?)[_-]游侠网</title>",
+        "title_idx": 1
+      }
+    },
+    "3dm": {
+      "web_root": "https://m.3dmgame.com",
+      "spy_root": "https://m.3dmgame.com/bagua_65_1/",
+      "spy_img_web_root": "https://m.3dmgame.com",
+      "icon": "https://m.3dmgame.com/favicon.ico",
+      "local_icon": "3dm.png",
+      "img_web_reg": {
+        "reg": "<a href=\"([^\"]+?/(\\d+)\\.html)\"[^>]*?>([^<]+?囧图云飞[^<]+)</a>",
+        "art_id_idx": 2,
+        "title_idx": 3
+      },
+      "img_web": "https://m.3dmgame.com/bagua/%1$s.html",
+      "img_web_2nd": "https://m.3dmgame.com/bagua/%1$s_%2$d.html",
+      "img_reg": {
+        "reg": "<p[^>]*>[\r\n\\s\t]*<img.*?src=\"([^\"]+?(\\.(gif|jpg|jpeg|png|bmp)))\"[^>]*>[\r\n\\s\t]*</p>([\r\n\\s\t]*<p style=\"text-align:\\s?center[^>]+>[\r\n\\s\t]*<span>([^<]+)</span>[\r\n\\s\t]*</p>)?",
+        "img_url_idx": 1,
+        "img_ext_idx": 2,
+        "img_title_idx": 5
+      },
+      "title_reg": {
+        "reg": "<title>([^<]+?)[_-]3DM单机</title>",
         "title_idx": 1
       }
     }
@@ -205,9 +229,9 @@
       "spy_root": "http://www.yxdown.com/newstag/jiongtu/",
       "spy_img_web_root": "http://m.yxdown.com",
       "icon": "http://www.yxdown.com/favicon.ico",
-      "local_icon": "yxdown.ico",
+      "local_icon": "yxdown.png",
       "img_web_reg": {
-        "reg": "href=\"([^\"]+/([0-9]+)\\.html)\"[^>]*?>(([^>]+)爆笑内涵囧图[^<]+)<",
+        "reg": "href=\"([^\"]+/([0-9]+)\\.html)\"[^>]*>(([^>]+)爆笑内涵囧图[^<]+)<",
         "art_id_idx": 2,
         "title_idx": 3
       },
@@ -227,12 +251,12 @@
     },
     "duowan": {
       "web_root": "http://tu.duowan.cn",
-      "spy_root": "http://tu.duowan.cn",
+      "spy_root": "http://tu.duowan.com/tu",
       "spy_img_web_root": "http://tu.duowan.cn/",
       "icon": "http://tu.duowan.com/favicon.ico",
-      "local_icon": "duowan.ico",
+      "local_icon": "duowan.jpg",
       "img_web_reg": {
-        "reg": "<a href=\"([^\"]+/([0-9]+)\\.html)\"[^\u4e00-\u9fa5]+<span class=\"ui-picContentItem__title\">((今日囧图|吐槽囧图)\\S+)\\s+",
+        "reg": "<a href=\"([^\"]+/([0-9]+)\\.html)\"[^>]*>((今日囧图|吐槽囧图)[^<]+)</a>",
         "art_id_idx": 2,
         "title_idx": 3
       },
@@ -263,7 +287,7 @@
       "img_web": "http://news.17173.com/content/%1$s_1.shtml",
       "img_web_2nd": "http://news.17173.com/content/404",
       "img_reg": {
-        "reg": "<p class=\"p-image\"[\\s\\S]*?<img.*?data-src=\"//([^\"]+?(\\.(jpg|jpeg|png|bmp)))(![^\"]+)?\"[^>]+></p>[\r\n\\s\t]+<p style=\"text-align: center[^>]+>([^<]+)</p>",
+        "reg": "<p class=\"p-image\"[\\s\\S]*?<img.*?data-src=\"//([^\"]+?(\\.(jpg|jpeg|png|bmp)))(![^\"]+)?\"[^>]+></p>[\r\n\\s\t]+<p style=\"text-align:\\s?center[^>]+>([^<]+)</p>",
         "img_url_idx": 1,
         "img_ext_idx": 2,
         "img_title_idx": 5
@@ -287,10 +311,10 @@
       "img_web": "http://3g.ali213.net/news/html/%1$s.html",
       "img_web_2nd": "http://3g.ali213.net/404.html",
       "img_reg": {
-        "reg": "<p style=\"text-align: center[^>]+>(<(span|a)[^>]*?>)?<img.*?data-original=\"([^\"]+?(\\.(png|jpg|jpeg|bmp)))\"[^>]+>(</span>|</a>)?</p>[\r\n\\s\t]+<p style=\"text-align: center[^>]+>([^<]+)</p>",
-        "img_url_idx": 3,
-        "img_ext_idx": 4,
-        "img_title_idx": 7
+        "reg": "<img.*?data-original=\"([^\"]+?(\\.(png|jpg|jpeg|bmp)))\"[^>]*>.*?</p>[\r\n\\s\t]+<p style=\"text-align:\\s?center[^>]+>([^<]+)</p>",
+        "img_url_idx": 1,
+        "img_ext_idx": 2,
+        "img_title_idx": 4
       },
       "title_reg": {
         "reg": "<title>([^<]+?)[_-]游侠网</title>",

@@ -31,7 +31,7 @@ public class WebViewActivity extends AppCompatActivity {
         assert ab != null;
         ab.hide();
         Intent intent = getIntent();
-        String url = intent.getStringExtra(MainActivity.EXTRA_URL);
+        String url = intent.getStringExtra(ApplistActivity.EXTRA_URL);
         webview = findViewById(R.id.webView);
         web_progress = findViewById(R.id.webview_progress);
         WebSettings webSettings = webview.getSettings();

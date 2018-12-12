@@ -1,13 +1,96 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:orientation="vertical"
-              android:paddingTop="0dp">
-    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                 android:id="@+id/applist_fragment"
-                 android:layout_width="match_parent"
-                 android:layout_height="match_parent"/>
-</LinearLayout>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context="com.maxiye.first.MainActivity">
 
+    <LinearLayout
+        android:id="@+id/main_ll1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="3dp">
 
+        <Button
+            style="@style/MyButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:drawableTop="@drawable/ic_format_list_bulleted_black_24dp"
+            android:onClick="openApplist"
+            android:text="@string/app_list"/>
+
+        <Button
+            style="@style/MyButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:drawableTop="@drawable/ic_save_black_24dp"
+            android:onClick="showDbPopup"
+            android:text="@string/db_action"/>
+
+        <Button
+            style="@style/MyButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:drawableTop="@drawable/ic_open_in_new_black_24dp"
+            android:onClick="sentIntent"
+            android:text="@string/send_intent"/>
+
+        <Button
+            style="@style/MyButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:drawableTop="@drawable/ic_nfc_black_24dp"
+            android:onClick="testNFC"
+            android:text="@string/test_nfc"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/main_ll2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/main_ll1"
+        android:padding="3dp">
+
+        <Button
+            style="@style/MyButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="testAudio"
+            android:drawableTop="@drawable/ic_music_note_black_24dp"
+            android:text="@string/test_audio"/>
+
+        <Button
+            style="@style/MyButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="capture"
+            android:drawableTop="@drawable/ic_camera_enhance_black_24dp"
+            android:text="@string/test_camera"/>
+
+        <Button
+            style="@style/MyButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="getGif"
+            android:drawableTop="@drawable/ic_image_black_24dp"
+            android:text="@string/get_gif"/>
+
+        <Button
+            style="@style/MyButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="testApi"
+            android:drawableTop="@drawable/ic_cloud_queue_black_24dp"
+            android:text="@string/free_api"/>
+    </LinearLayout>
+</android.support.constraint.ConstraintLayout>

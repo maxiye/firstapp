@@ -14,16 +14,13 @@ import android.widget.Toast;
 
 import com.maxiye.first.R;
 import com.maxiye.first.SettingActivity;
-import com.maxiye.first.TestActivity;
+import com.maxiye.first.MainActivity;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
 
@@ -202,10 +199,10 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public static void restore(TestActivity activity) {
+    public static void restore(MainActivity activity) {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*");
-        activity.startActivityForResult(Intent.createChooser(intent, activity.getString(R.string.choose_a_backup)), TestActivity.INTENT_PICK_DB_BAK_REQCODE);
+        activity.startActivityForResult(Intent.createChooser(intent, activity.getString(R.string.choose_a_backup)), MainActivity.INTENT_PICK_DB_BAK_REQCODE);
     }
 
     private void checkBakup() {

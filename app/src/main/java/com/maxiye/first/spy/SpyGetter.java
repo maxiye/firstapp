@@ -26,8 +26,10 @@ public class SpyGetter {
                 break;
             default:
                 spy = base == null ? base = new BaseSpy(webCfg, modeFlg) : base;
+                if (spy.webName != null && !spy.webName.equals(web)) spy.modeFlg = !modeFlg;
                 break;
         }
+        spy.webName = web;
         if (spy.modeFlg != modeFlg)
             spy.applyCfg(webCfg);
         return spy;

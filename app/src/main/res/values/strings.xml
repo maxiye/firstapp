@@ -91,4 +91,5 @@
     <string name="choose_a_backup">Choose a Backup</string>
     <string name="copy_art_id">Copy Article Id</string>
     <string name="reload_art">Reload Content</string>
+    <string name="app_list">APP List</string>
 </resources>

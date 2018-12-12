@@ -232,8 +232,8 @@ public class GifActivity extends AppCompatActivity {
             is.close();
             webCfg = cfgs.getAsJsonObject(webName);
             if (webList == null) {
+                iconCacheList = new HashMap<>(8);
                 webList = new String[cfgs.size()];
-                iconCacheList = new HashMap<>(5);
                 int index = 0;
                 for (String key : cfgs.keySet()) {
                     webList[index++] = key;
@@ -249,6 +249,25 @@ public class GifActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         return webCfg;
+    }
+
+    private void loadWebList() {
+        try {
+            AssetManager am = getAssets();
+            InputStream is = am.open("img_spy_config.json");
+            JsonObject cfgs = new Gson().fromJson(new InputStreamReader(is), JsonObject.class).getAsJsonObject(type);
+            is.close();
+            webList = new String[cfgs.size()];
+            int index = 0;
+            for (String key : cfgs.keySet()) {
+                webList[index++] = key;
+                iconCacheList.putIfAbsent(key, BitmapDrawable.createFromStream(is = am.open(cfgs.getAsJsonObject(key).get("local_icon").getAsString()), null));
+                is.close();
+            }
+            Log.w("loadWebList", Arrays.toString(webList));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -595,10 +614,10 @@ public class GifActivity extends AppCompatActivity {
         imgView.setImageDrawable(iconCacheList.get("default"));
         imgView.setOnLongClickListener(v -> {
             HashMap<String, Object> item = favoriteList.get(favImgPos);
-            String name = (String) item.get("title");
             String id = (String) item.get("id");
+            String name = id + "_" + item.get("title");
             String cacheKey = genCacheKey(item.get("id").toString(), "favorite");
-            download(id + "_" + name, cacheKey, v);
+            download(item.get("type") + "/" + name, cacheKey, v);//混合图网页（3dm）
             return false;
         });
         imgView.setOnTouchListener(new View.OnTouchListener() {
@@ -689,10 +708,16 @@ public class GifActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void download(String name, String cacheKey, View view) {
+    /**
+     *
+     * @param pathname dir/name
+     * @param cacheKey key
+     * @param view view
+     */
+    private void download(String pathname, String cacheKey, View view) {
         PermissionUtil.req(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PermissionUtil.PER_REQ_STORAGE_WRT, () -> {
             Toast.makeText(this, R.string.downloading, Toast.LENGTH_SHORT).show();
-            File img = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type + "/" + name);
+            File img = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + pathname);
             Log.w("download", "path:" + img.getAbsolutePath());
             try {
                 if (!img.getParentFile().exists() && !img.getParentFile().mkdirs()) {
@@ -915,7 +940,7 @@ public class GifActivity extends AppCompatActivity {
                 item.put("url", cus.getString(cus.getColumnIndex("url")));
                 item.put("real_url", cus.getString(cus.getColumnIndex("real_url")));
                 //item.put("art_id", cus.getString(cus.getColumnIndex("art_id")));
-                //item.put("type", cus.getString(cus.getColumnIndex("type")));
+                item.put("type", cus.getString(cus.getColumnIndex("type")));
                 String name = item.get("id") + "_" + title;
                 cus.moveToNext();
                 File file = new File(dir + name);
@@ -970,6 +995,7 @@ public class GifActivity extends AppCompatActivity {
             webCfg = getWebCfg(webName);
             if (webCfg == null)
                 webCfg = getWebCfg("gamersky");
+            loadWebList();
             getNewFlg = true;
             diskLRUCache.serialize();
             diskLRUCache = DiskLRUCache.getInstance(this, type);
@@ -1062,7 +1088,7 @@ public class GifActivity extends AppCompatActivity {
             ctv.put("art_id", artId);
             ctv.put("page", webPage);
             ctv.put("web_name", webName);
-            ctv.put("type", type);
+            ctv.put("type", data[2].equals(".gif") ? "gif" : "bitmap");//动位混合处理（3dm）
             ctv.put("title", data[1]);
             ctv.put("url", data[0]);
             ctv.put("ext", data[2]);
@@ -1177,7 +1203,8 @@ public class GifActivity extends AppCompatActivity {
                         long favId = addFav();
                         String[] gifInfo = getGifInfo(getGifOffset(focusedPosition));
                         String cacheKey = activity.genCacheKey(getGifOffset(focusedPosition) + "", "");
-                        activity.download(favId + "_" + gifInfo[1], cacheKey, activity.findViewById(android.R.id.content));
+                        String dir = gifInfo[2].equals(".gif") ? "gif" : "bitmap";//混合图网页（3dm）
+                        activity.download(dir + "/" + favId + "_" + gifInfo[1], cacheKey, activity.findViewById(android.R.id.content));
                         break;
                 }
                 listMenu.dismiss();
@@ -1258,7 +1285,7 @@ public class GifActivity extends AppCompatActivity {
             if (cacheGif != null) {
                 try {
                     FileInputStream fis = null;
-                    Drawable imgDrawable = type.equals("gif") ? new GifDrawable(cacheGif) : Drawable.createFromStream(fis = new FileInputStream(cacheGif), null);
+                    Drawable imgDrawable = gifInfo[2].equals(".gif") ? new GifDrawable(cacheGif) : Drawable.createFromStream(fis = new FileInputStream(cacheGif), null);
                     if (fis != null)
                         fis.close();
                     send(MSG_TYPE_LOAD, nowPos, 0, imgDrawable);
@@ -1300,7 +1327,7 @@ public class GifActivity extends AppCompatActivity {
                             } else {
                                 bytes = responseBody.bytes();
                             }
-                            Drawable imgDrawable = type.equals("gif") ? new GifDrawable(bytes) : Drawable.createFromStream(new ByteArrayInputStream(bytes), null);
+                            Drawable imgDrawable = gifInfo[2].equals(".gif") ? new GifDrawable(bytes) : Drawable.createFromStream(new ByteArrayInputStream(bytes), null);
                             if (imgDrawable == null)
                                 throw new Exception("get image err");
                             send(MSG_TYPE_LOAD, nowPos, 0, imgDrawable);
@@ -1345,7 +1372,7 @@ public class GifActivity extends AppCompatActivity {
                 assert responseBody != null;
                 String content = new String(responseBody.bytes(), "utf-8");
                 if (spy.insertItem(content, activity) == 0) {
-                    System.out.print(content);
+//                    System.out.print(content);
                     throw new ProtocolException("over");
                 }
                 if (webPage == 1 && activity.gifList.size() > 0) {
@@ -1421,7 +1448,7 @@ public class GifActivity extends AppCompatActivity {
 
         @Override
         public int getCount() {
-            return 60;
+            return 80;
         }
 
         @Override
@@ -1485,7 +1512,7 @@ public class GifActivity extends AppCompatActivity {
                 case PlaceholderFragment.MSG_TYPE_LOAD:
                     imageView.clearAnimation();
                     Drawable imgDrawable = (Drawable) msg.obj;
-                    float scale = type.equals("gif") ? 2.5f : 4.5f;
+                    float scale = imgDrawable instanceof GifDrawable ? 2.5f : 4.5f;
                     imageView.setImageDrawable(imgDrawable);
                     int width = Math.round(imgDrawable.getIntrinsicWidth() * scale);
                     int height = Math.round(imgDrawable.getIntrinsicHeight() * scale);

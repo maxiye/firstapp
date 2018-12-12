@@ -92,4 +92,5 @@
     <string name="choose_a_backup">选择备份文件</string>
     <string name="copy_art_id">复制文章Id</string>
     <string name="reload_art">重新加载内容</string>
+    <string name="app_list">应用列表</string>
 </resources>
