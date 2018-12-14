@@ -46,6 +46,9 @@ import com.maxiye.first.util.DBHelper;
 import com.maxiye.first.util.PermissionUtil;
 import com.maxiye.first.util.Util;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -55,6 +58,11 @@ import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
 
 public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
     private final int INTENT_CONTACT_PICK_REQCODE = 100;
@@ -69,6 +77,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         handleItt();//图片intent
+//        startActivity(new Intent(this, GifActivity.class));
     }
 
     @Override
@@ -113,6 +122,9 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 return true;
             case R.id.test_action_net_set:
                 addShortcut();
+                return true;
+            case R.id.main_action_setting:
+                startActivity(new Intent(this, SettingActivity.class));
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -484,14 +496,14 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 case R.id.restore_db:
                     DBHelper.restore(this);
                     break;
-                case R.id.scan_into_fav_db:
+                /*case R.id.scan_into_fav_db:
                     int count = new DBHelper(this).scanIntoFav();
                     alert(getString(R.string.scan_fav_tips, count));
                     break;
                 case R.id.fix_fav_file:
                     int count2 = new DBHelper(this).fixFavFile();
                     alert(getString(R.string.fix_fav_tips, count2));
-                    break;
+                    break;*/
             }
             return false;
         });
@@ -541,5 +553,21 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 }
             }
         });
+    }
+
+    public void test() {
+        try {
+            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(getAssets().open("test.txt"));
+            XPath xPath = XPathFactory.newInstance().newXPath();
+            Object res = xPath.evaluate("//div[@class='art-bd']/div/p[@class='p-image']/img", doc, XPathConstants.NODESET);
+            if (res instanceof NodeList) {
+                NodeList nodeList = (NodeList) res;
+                for (int i = 0; i < nodeList.getLength(); i++) {
+                    System.out.println(nodeList.item(i).getAttributes().getNamedItem("data-src").getNodeValue());
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

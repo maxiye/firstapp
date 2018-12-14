@@ -81,7 +81,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:onClick="getGif"
-            android:drawableTop="@drawable/ic_image_black_24dp"
+            android:drawableTop="@drawable/ic_filter_vintage_black_24dp"
             android:text="@string/get_gif"/>
 
         <Button

@@ -11,5 +11,11 @@
         android:id="@+id/test_action_net_set"
         android:icon="@drawable/ic_perm_data_setting_black_24dp"
         android:title="@string/net_set"
-        first:showAsAction="ifRoom"/>
+        first:showAsAction="collapseActionView"/>
+    <!-- 设置, 应该作为动作按钮展示-->
+    <item
+        android:id="@+id/main_action_setting"
+        android:icon="@drawable/ic_settings_black_24dp"
+        android:title="@string/setting"
+        first:showAsAction="collapseActionView"/>
 </menu>

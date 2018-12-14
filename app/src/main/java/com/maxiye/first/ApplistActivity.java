@@ -9,8 +9,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.SearchView;
 import android.widget.TextView;
@@ -23,7 +21,6 @@ public class ApplistActivity extends AppCompatActivity implements ApplistFragmen
     public static final String EXTRA_URL = "com.maxiye.first.URL";
 
     private ApplistFragment frg;
-    private SearchView mSearchView;
     private ActionBar ab;
 
     @Override
@@ -53,14 +50,8 @@ public class ApplistActivity extends AppCompatActivity implements ApplistFragmen
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // 为ActionBar扩展菜单项
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.applist_activity_actions, menu);
-        mSearchView = (SearchView) menu.findItem(R.id.main_action_search).getActionView();
-        setupSearchView();
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    private void setupSearchView() {
+        getMenuInflater().inflate(R.menu.applist_activity_actions, menu);
+        SearchView mSearchView = (SearchView) menu.findItem(R.id.main_action_search).getActionView();
         mSearchView.setIconifiedByDefault(true);
         mSearchView.setOnQueryTextListener(this);
         mSearchView.setOnCloseListener(() -> {
@@ -68,6 +59,7 @@ public class ApplistActivity extends AppCompatActivity implements ApplistFragmen
             return false;
         });
         mSearchView.setQueryHint(getString(R.string.edit_message));
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
@@ -80,22 +72,6 @@ public class ApplistActivity extends AppCompatActivity implements ApplistFragmen
     public boolean onQueryTextSubmit(String query) {
         search(query);
         return false;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.main_action_setting:
-                setting();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
-
-    //设置
-    private void setting() {
-        startActivity(new Intent(this, SettingActivity.class));
     }
 
     /**
@@ -129,13 +105,12 @@ public class ApplistActivity extends AppCompatActivity implements ApplistFragmen
 
     @Override
     public void onListScroll(boolean flg) {
-        if (flg) {
-            //上滑
-            if (ab.isShowing())
-                ab.hide();
-        } else {
-            if (!ab.isShowing())
-                ab.show();
+        //上滑
+        if (flg && ab.isShowing())
+            ab.hide();
+        //下滑
+        if (!flg && !ab.isShowing()) {
+            ab.show();
         }
     }
 

@@ -8,10 +8,4 @@
         android:title="@string/search"
         first:showAsAction="always"
         first:actionViewClass="android.widget.SearchView"/>
-    <!-- 设置, 应该作为动作按钮展示-->
-    <item
-        android:id="@+id/main_action_setting"
-        android:icon="@drawable/ic_settings_black_24dp"
-        android:title="@string/setting"
-        first:showAsAction="collapseActionView"/>
 </menu>

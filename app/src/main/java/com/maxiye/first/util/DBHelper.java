@@ -27,7 +27,7 @@ import java.util.Locale;
 /**数据库助手
  * Created by Administrator on 2017-05-25.
  */
-
+@SuppressWarnings("unused")
 public class DBHelper extends SQLiteOpenHelper {
     public final static String DB_NAME = "first.db";
     private final static int DB_VERSION = 5;
