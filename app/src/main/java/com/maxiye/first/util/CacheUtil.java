@@ -15,6 +15,7 @@ import java.util.Arrays;
  * 清除缓存
  *
  */
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class CacheUtil {
 
     public static final String UNIT_KB = "KB";

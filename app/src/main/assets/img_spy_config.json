@@ -35,6 +35,8 @@
         "art_id_idx": 3,
         "title_idx": 1
       },
+      "url": "http://wap.gamersky.com/news/Content-%1$s.html",
+      "url_2nd": "http://wap.gamersky.com/news/Content-%1$s_%2$d.html",
       "img_web": "http://appapi2.gamersky.com/v5/getArticle",
       "img_web_2nd": "http://appapi2.gamersky.com/404",
       "request_body": "{\"os\":\"android\",\"app\":\"GSAPP\",\"osVersion\":\"8.1.0\",\"deviceType\":\"SM-N9600\",\"appVersion\":\"4.5.0\",\"deviceId\":\"\",\"request\":{\"modelFieldNames\":\"Tag,Tag_Index,Subheading,Title,TitleIntact,GameLib,Author,CopyFrom,NewsType,BlockReference,Content,DefaultPicUrl,ThumbnailsPicUrl,Status,UpdateTime\",\"articleId\":\"%1$s\",\"cacheMinutes\":0}}",
@@ -208,6 +210,8 @@
         "art_id_idx": 3,
         "title_idx": 1
       },
+      "url": "http://wap.gamersky.com/news/Content-%1$s.html",
+      "url_2nd": "http://wap.gamersky.com/news/Content-%1$s_%2$d.html",
       "img_web": "http://appapi2.gamersky.com/v5/getArticle",
       "img_web_2nd": "http://appapi2.gamersky.com/404",
       "request_body": "{\"os\":\"android\",\"app\":\"GSAPP\",\"osVersion\":\"8.1.0\",\"deviceType\":\"SM-N9600\",\"appVersion\":\"4.5.0\",\"deviceId\":\"\",\"request\":{\"modelFieldNames\":\"Tag,Tag_Index,Subheading,Title,TitleIntact,GameLib,Author,CopyFrom,NewsType,BlockReference,Content,DefaultPicUrl,ThumbnailsPicUrl,Status,UpdateTime\",\"articleId\":\"%1$s\",\"cacheMinutes\":0}}",

@@ -1,6 +1,7 @@
 package com.maxiye.first.spy;
 
 import com.google.gson.JsonObject;
+import com.maxiye.first.GifActivity;
 
 /**
  * 爬虫助手
@@ -9,6 +10,7 @@ import com.google.gson.JsonObject;
 public class SpyGetter {
     private BaseSpy base, gamersky, yxdown, duowan, w17173;
     public boolean modeFlg = true;
+
     public BaseSpy getSpy(String web, JsonObject webCfg) {
         BaseSpy spy;
         switch (web) {

@@ -19,6 +19,7 @@ import pl.droidsonroids.gif.GifImageView;
  * 适配器
  * Created by due on 2018/10/08.
  */
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class WeatherRetRvAdapter extends RecyclerView.Adapter {
     private List<String[]> mData;
     private OnItemClickListener clickListener;

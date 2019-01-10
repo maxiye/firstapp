@@ -189,9 +189,9 @@ public class DBHelper extends SQLiteOpenHelper {
                 Toast.makeText(context, "Error：" + e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
             }
             File[] baks = downloadDir.listFiles((file, name) -> name.contains(DB_NAME + ".bak"));
-            Arrays.sort(baks, (o1, o2) -> (int) (o1.lastModified() - o2.lastModified()));
-            Log.w("backdb", Arrays.toString(baks));
-            if (baks.length > 5) {
+            if (baks != null && baks.length > 5) {
+                Arrays.sort(baks, (o1, o2) -> (int) (o1.lastModified() - o2.lastModified()));
+                Log.w("backdb", Arrays.toString(baks));
                 for (int i = 0,k = baks.length - 5; i < k; i++) {
                     baks[i].delete();
                 }

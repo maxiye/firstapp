@@ -24,4 +24,9 @@ public class GamerskySpy extends BaseSpy {
         RequestBody requestBody = RequestBody.create(MediaType.parse("text/plain"), String.format(questBody, artId));//app接口post调用
         return new Request.Builder().url(curUrl).post(requestBody).build();
     }
+
+    @Override
+    public String getUrl(String artId, Integer page) {
+        return String.format(webCfg.get("url").getAsString(), artId);
+    }
 }

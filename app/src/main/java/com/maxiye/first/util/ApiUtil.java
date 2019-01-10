@@ -32,6 +32,7 @@ import okhttp3.Response;
  * 接口请求助手
  * Created by due on 2018/10/8.
  */
+@SuppressWarnings("FieldCanBeLocal")
 public class ApiUtil {
     private static ApiUtil instance;
     private OkHttpClient okHttpClient = new OkHttpClient();

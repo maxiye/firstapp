@@ -1,7 +1,5 @@
 package com.maxiye.first.spy;
 
-import android.util.Log;
-
 import com.google.gson.JsonObject;
 import com.maxiye.first.GifActivity;
 import com.maxiye.first.util.DBHelper;
@@ -84,8 +82,7 @@ public class BaseSpy {
      * @param content 文字内容
      * @param artId 文字id
      */
-    public void getNewTitle(OkHttpClient okHttpClient, String content, String artId) {
-        Log.w("getNewTitle", "获取标题...");
+    public String getNewTitle(OkHttpClient okHttpClient, String content, String artId) {
         JsonObject regObj = webCfg.getAsJsonObject("title_reg");
         int titleIdx = regObj.get("title_idx").getAsInt();
         Pattern pt = Pattern.compile(regObj.get("reg").getAsString(), Pattern.CASE_INSENSITIVE);
@@ -103,16 +100,13 @@ public class BaseSpy {
             }
         }
         Matcher mt = pt.matcher(content);
-        String title;
         if (mt.find()) {
-            GifActivity.setTitle(title = mt.group(titleIdx));
-            Log.w("getNewTitle", title);
+            return mt.group(titleIdx);
         }
-        Log.w("getNewTitleErr", "Null");
+        return null;
     }
 
-    public String getNewArtId(OkHttpClient okHttpClient) {
-        Log.w("getNewArtId", "获取最新内容……");
+    public String[] getNewArticle(OkHttpClient okHttpClient) {
         String url = webCfg.get("spy_root").getAsString();
         JsonObject regObj = webCfg.getAsJsonObject("img_web_reg");
         int artIdIdx = regObj.get("art_id_idx").getAsInt();
@@ -125,17 +119,23 @@ public class BaseSpy {
             String content = new String(responseBody.bytes(), "utf-8");
             Matcher mt = pt.matcher(content);
             if (mt.find()) {
-                String title;
-                GifActivity.setTitle(title = mt.group(titleIdx));
-                Log.w("getNewArtId", title);
-                return mt.group(artIdIdx);
+                String title = mt.group(titleIdx);
+                String artId = mt.group(artIdIdx);
+                return new String[]{artId, title};
             } else {
-//                System.out.println(content);
-                Log.w("getNewArtId", "err");
+                System.out.println(content);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return "";
+        return null;
+    }
+
+    public String getUrl(String artId, Integer page) {
+        if (page == null) {
+            return String.format(urlTpl, artId);
+        } else {
+            return page > 2 ? String.format(urlTpl2, artId, page - 1) : String.format(urlTpl, artId);
+        }
     }
 }

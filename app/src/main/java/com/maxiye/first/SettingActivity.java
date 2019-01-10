@@ -12,6 +12,7 @@ public class SettingActivity extends AppCompatActivity {
     public final static String SETTING = "com.maxiye.first.SETTING";
     public final static String SHOW_SYSTEM = "show_system_apps";
     public final static String BACKUP_TIME = "backup_time";
+    public final static String BOOKMARK = "bookmark";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -66,7 +66,7 @@
     <string name="scan_into_fav_db">Scan Files Into Favorite</string>
     <string name="scan_fav_tips">Scanned %1$d Item(s)</string>
     <string name="add_to_fav">Add to Favorites</string>
-    <string name="added_to_fav">Added to Favorites</string>
+    <string name="add_successfully">Add Successfully</string>
     <string name="already_in_fav">Already in Favorites</string>
     <string name="favorite">Favorite</string>
     <string name="no_more">No More</string>
@@ -87,9 +87,19 @@
     <string name="download_success">Download Successfully</string>
     <string name="open">Open</string>
     <string name="download_err">Download Failed</string>
-    <string name="auto_back_to_first_page">Back to the First Page</string>
+    <string name="back_to_last_page">Back to the Last Page</string>
     <string name="choose_a_backup">Choose a Backup</string>
     <string name="copy_art_id">Copy Article Id</string>
     <string name="reload_art">Reload Content</string>
     <string name="app_list">APP List</string>
+    <string name="one_key_get">Get All Instantly</string>
+    <string name="all">All</string>
+    <string name="current_type">Current Type</string>
+    <string name="bookmark">Bookmark</string>
+    <string name="add_bookmark">Add Bookmark</string>
+    <string name="not_existed_bookmark">Bookmark Is not Existed!</string>
+    <string name="back">Back</string>
+    <string name="error_tip">Error： %1$d</string>
+    <string name="get_all">Get All</string>
+    <string name="success_tip">Success： %1$d</string>
 </resources>

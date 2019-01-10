@@ -129,6 +129,7 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
         super.put(key, value);
     }
 
+    @SuppressWarnings("SameParameterValue")
     private void _remove(String key) {
         super.remove(key);
     }

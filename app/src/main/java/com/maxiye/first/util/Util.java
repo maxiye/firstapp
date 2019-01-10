@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
  * 函数助手
  * Created by due on 2018/5/16.
  */
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class Util {
     /**
      * unicode字符串(\\uxxxx)转为中文
@@ -59,7 +60,6 @@ public class Util {
         return inSampleSize;
     }
 
-    @SuppressWarnings("unused")
     public static int predictInSampleSize(long fileSize, String type) {
         if (type.equals("gif"))
             return 4;

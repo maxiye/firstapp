@@ -15,7 +15,7 @@ import android.support.annotation.Nullable;
  * 自定义环形进度条
  * Created by 91287 on 2018/5/27.
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class CircleProgressDrawable extends Drawable {
     private Paint mPaint;
     private boolean gradual_flg = true;
