@@ -8,8 +8,8 @@ android {
         minSdkVersion 24
         //noinspection OldTargetApi
         targetSdkVersion 27
-        versionCode 107
-        versionName "1.5.2"
+        versionCode 108
+        versionName "1.5.3"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = false
         resConfigs "en", "zh"
@@ -32,7 +32,7 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'com.squareup.okhttp3:okhttp:3.12.0'
+    implementation 'com.squareup.okhttp3:okhttp:3.12.1'
     implementation 'com.google.code.gson:gson:2.8.5'
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.16'
     implementation 'com.android.support:design:27.1.1'

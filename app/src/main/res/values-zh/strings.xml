@@ -93,14 +93,16 @@
     <string name="copy_art_id">复制文章Id</string>
     <string name="reload_art">重新加载内容</string>
     <string name="app_list">应用列表</string>
-    <string name="one_key_get">一键获取</string>
+    <string name="one_key_get">一网打尽</string>
     <string name="all">全部</string>
     <string name="current_type">当前类型</string>
     <string name="bookmark">书签</string>
-    <string name="add_bookmark">添加书签</string>
+    <string name="add_bookmark">流连</string>
     <string name="not_existed_bookmark">书签不存在</string>
     <string name="back">返回</string>
-    <string name="error_tip">失败个数： %1$d</string>
-    <string name="get_all">获取所有</string>
-    <string name="success_tip">操作成功： %1$d</string>
+    <string name="error_tip">覆水难收： %1$d</string>
+    <string name="get_all">一览无余</string>
+    <string name="success_tip">凯旋奏鸣： %1$d</string>
+    <string name="go_to_last_mark">回溯</string>
+    <string name="bookmark_opration">朝花夕拾</string>
 </resources>

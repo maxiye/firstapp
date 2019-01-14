@@ -48,8 +48,8 @@
     <item
         android:orderInCategory="100"
         android:icon="@drawable/ic_bookmark_border_black_24dp"
-        android:title="@string/bookmark"
-        android:onClick="listBookmark"
+        android:title="@string/bookmark_opration"
+        android:onClick="bookmarkOperation"
         app:showAsAction="ifRoom"/>
     <item
         android:orderInCategory="100"

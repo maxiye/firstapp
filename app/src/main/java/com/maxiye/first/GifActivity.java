@@ -50,6 +50,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -105,6 +106,7 @@ import java.util.stream.Collectors;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -133,13 +135,13 @@ public class GifActivity extends AppCompatActivity {
     private static String artId = "1023742";
     private static int webPage = 1;
     private final int HISTORY_PAGE_SIZE = 10;
-    private final int FAVORITE_PAGE_SIZE = 20;
+    private final int FAVORITE_PAGE_SIZE = 15;
     private int favImgPos = 0;//收藏图片浏览位置
     private int page = 1;
     private volatile int tryCount = 0;//loadGifList错误计数器
     private boolean isGprs = false;//手机网络
     private boolean gprsContinue = false;//手机网络继续访问
-    private SectionsPagerAdapter mSectionsPagerAdapter;
+    PlaceholderFragment currentFragment;
     public volatile ArrayList<String[]> gifList = new ArrayList<>(60);
     public JsonObject webCfg;
     private String[] webList;
@@ -151,7 +153,7 @@ public class GifActivity extends AppCompatActivity {
     private NetworkUtil netUtil;
     private MyHandler myHandler;
     private ImgViewTask favViewTask;
-    private SpyGetter spyGetter;
+    private Dialog loading;
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -163,7 +165,7 @@ public class GifActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_get_gif);
         // Create the adapter that will return a fragment
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(), this);
+        SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(), this);
         // Set up the ViewPager with the sections adapter.
         mViewPager = findViewById(R.id.gif_activity_viewpager);
         mViewPager.setAdapter(mSectionsPagerAdapter);
@@ -176,7 +178,6 @@ public class GifActivity extends AppCompatActivity {
             Log.w("end", getNewFlg ? "true" : "false");
         }
         //网站配置信息
-        spyGetter = new SpyGetter();
         webCfg = getWebCfg(webName);
         if (okHttpClient == null) {
             okHttpClient = new OkHttpClient()
@@ -200,7 +201,6 @@ public class GifActivity extends AppCompatActivity {
         okHttpClient.dispatcher().cancelAll();
         okHttpClient = null;
         netUtil = null;
-        spyGetter = null;
     }
 
     @Override
@@ -255,7 +255,7 @@ public class GifActivity extends AppCompatActivity {
 
     private BaseSpy getSpy()
     {
-        return spyGetter.getSpy(webName, webCfg);
+        return SpyGetter.getInstance().getSpy(webName, webCfg);
     }
 
     private void initPage() {
@@ -265,7 +265,7 @@ public class GifActivity extends AppCompatActivity {
         endFlg = false;
         gifList.clear();
         if (mViewPager.getCurrentItem() == 0) {
-            if (mSectionsPagerAdapter.currentFragment != null) {
+            if (currentFragment != null) {
                 for (int i = 1; i < 4; i++) {
                     GifImageView giv = findViewById(getResources().getIdentifier("gif_" + i, "id", getPackageName()));
                     giv.clearAnimation();
@@ -273,7 +273,7 @@ public class GifActivity extends AppCompatActivity {
                     giv.setMinimumHeight(90);
                     giv.setMinimumWidth(90);
                 }
-                mSectionsPagerAdapter.currentFragment.refresh();
+                currentFragment.refresh();
             }
         } else {
             mViewPager.setCurrentItem(0, true);
@@ -308,11 +308,15 @@ public class GifActivity extends AppCompatActivity {
     }
 
     public void fetchAll(MenuItem item) {
+        loading();
         threadPoolExecutor.execute(() -> {
             int oldPage = page;
             getGifInfo(9999);
             mViewPager.setCurrentItem(oldPage - 1, true);
-            runOnUiThread(() -> alert(getString(R.string.success_tip, gifList.size())));
+            runOnUiThread(() -> {
+                loading.dismiss();
+                alert(getString(R.string.success_tip, gifList.size()));
+            });
         });
     }
 
@@ -411,7 +415,7 @@ public class GifActivity extends AppCompatActivity {
             if (webCfg == null) {//3dm切换，一键获取问题
                 Log.w("setTypeErr", t + "；" + webName);
             }
-            spyGetter.modeFlg = !spyGetter.modeFlg;
+            SpyGetter.modeFlg = !SpyGetter.modeFlg;
             loadWebList();
             diskLRUCache.serialize();
             diskLRUCache = DiskLRUCache.getInstance(this, type);
@@ -500,15 +504,25 @@ public class GifActivity extends AppCompatActivity {
     }
 
     public void refresh(MenuItem item) {
-        item.setEnabled(false);
-        mSectionsPagerAdapter.currentFragment.refresh();
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } finally {
-            item.setEnabled(true);
-        }
+        loading();
+        currentFragment.refresh();
+        threadPoolExecutor.execute(() -> {
+            int t = 0;
+            try {
+                ConnectionPool conPool = okHttpClient.connectionPool();
+                while (t < 30) {
+                    Log.w("connectPool", "idle:" + conPool.idleConnectionCount() + ";total:" + conPool.connectionCount());
+                    ++t;
+                    Thread.sleep(300);
+                    if (conPool.idleConnectionCount() == conPool.connectionCount()) {
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            runOnUiThread(loading::dismiss);
+        });
     }
 
     @SuppressLint("InflateParams")
@@ -561,7 +575,7 @@ public class GifActivity extends AppCompatActivity {
 
     @SuppressLint("InflateParams")
     public void switchWeb(MenuItem item) {
-        PopupWindow popupWindow = new PopupWindow(400, ViewGroup.LayoutParams.WRAP_CONTENT);
+        PopupWindow popupWindow = new PopupWindow(450, ViewGroup.LayoutParams.WRAP_CONTENT);
         popupWindow.setContentView(LayoutInflater.from(this).inflate(R.layout.gif_history_popupwindow_view, null));
         popupWindow.setOutsideTouchable(true);
         RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
@@ -573,7 +587,7 @@ public class GifActivity extends AppCompatActivity {
         ArrayList<HashMap<String, Object>> listData = new ArrayList<>(webList.length);
         for (String web : webList) {
             HashMap<String, Object> webItem = new HashMap<>(2);
-            String actived = webName.equals(web) ? "<span style='color: #13b294'>&emsp;☯</span>" : "";//⊙◎☉●✪☯⊕¤❤☺☻۞
+            String actived = webName.equals(web) ? "<span style='color: #13b294'>&emsp;&emsp;&emsp;☯</span>" : "";//⊙◎☉●✪☯⊕¤❤☺☻۞
             webItem.put("name", web + actived);
             webItem.put("web", web);
             webItem.put("icon", iconCacheList.get(web));
@@ -587,7 +601,7 @@ public class GifActivity extends AppCompatActivity {
             popupWindow.dismiss();
         });
         rv.setAdapter(ma);
-        popupWindow.showAtLocation(findViewById(R.id.get_img_ll), Gravity.TOP | Gravity.END, 0, 210);
+        popupWindow.showAtLocation(findViewById(R.id.gif_activity_main_content), Gravity.TOP | Gravity.END, 0, 0);
     }
 
     public void browserOpen(MenuItem item) {
@@ -608,20 +622,22 @@ public class GifActivity extends AppCompatActivity {
                 .create()
                 .show();
     }
-    @SuppressWarnings("unused")
-    private Dialog loading() {
-        Dialog loading = new Dialog(this, android.R.style.Theme_Material_Dialog_Alert);
-        GifImageView imgView = new GifImageView(this);
-        imgView.setImageDrawable(iconCacheList.get("loading"));
-        imgView.setMinimumHeight(240);
-        imgView.setMinimumWidth(240);
-        imgView.setAnimation(AnimationUtils.loadAnimation(this, R.anim.load_rotate));
-        Objects.requireNonNull(loading.getWindow()).setBackgroundDrawable(new ColorDrawable(0));
-        loading.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        loading.setContentView(imgView);
-        loading.setCanceledOnTouchOutside(false);loading.cancel();
+
+    private void loading() {
+        if (loading == null) {
+            loading = new Dialog(this, android.R.style.Theme_Material_Dialog_Alert);
+            GifImageView imgView = new GifImageView(this);
+            imgView.setImageDrawable(iconCacheList.get("loading"));
+            imgView.setMinimumHeight(180);
+            imgView.setMinimumWidth(180);
+            Animation anim = AnimationUtils.loadAnimation(this, R.anim.load_rotate);
+            Objects.requireNonNull(loading.getWindow()).setBackgroundDrawable(new ColorDrawable(0));
+            loading.requestWindowFeature(Window.FEATURE_NO_TITLE);
+            loading.setContentView(imgView);
+            loading.setCancelable(false);//back不消失
+            loading.setOnShowListener(dialog -> imgView.startAnimation(anim));
+        }
         loading.show();
-        return loading;
     }
 
     public void oneKey(MenuItem item) {
@@ -629,9 +645,9 @@ public class GifActivity extends AppCompatActivity {
                 .setTitle(R.string.one_key_get)
                 .setIcon(R.drawable.ic_flash_on_black_24dp)
                 .setPositiveButton(R.string.all, (dialog, which) -> {
-                    mark();
                     dialog.dismiss();
-                    Dialog loading = loading();
+                    loading();
+                    mark();
                     threadPoolExecutor.execute(() -> {
                         String[] types = getTypeList();
                         int count = 0;
@@ -642,8 +658,7 @@ public class GifActivity extends AppCompatActivity {
                         final int count1 = count;
                         runOnUiThread(() -> {
                             loading.dismiss();
-                            seek(0);
-                            removeMark(0);
+                            seek(0, true);
                             alert(getString(R.string.error_tip, count1));
                         });
                     });
@@ -651,13 +666,12 @@ public class GifActivity extends AppCompatActivity {
                 .setNegativeButton(R.string.current_type, (dialog, which) -> {
                     mark();
                     dialog.dismiss();
-                    Dialog loading = loading();
+                    loading();
                     threadPoolExecutor.execute(() -> {
                         int count = fetchAllWeb();
                         runOnUiThread(() -> {
                             loading.dismiss();
-                            seek(0);
-                            removeMark(0);
+                            seek(0, true);
                             alert(getString(R.string.error_tip, count));
                         });
                     });
@@ -669,7 +683,7 @@ public class GifActivity extends AppCompatActivity {
 
     @SuppressLint("InflateParams")
     public void switchType(MenuItem item) {
-        PopupWindow popupWindow = new PopupWindow(360, ViewGroup.LayoutParams.WRAP_CONTENT);
+        PopupWindow popupWindow = new PopupWindow(450, ViewGroup.LayoutParams.WRAP_CONTENT);
         popupWindow.setContentView(LayoutInflater.from(this).inflate(R.layout.gif_history_popupwindow_view, null));
         popupWindow.setOutsideTouchable(true);
         RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
@@ -681,7 +695,7 @@ public class GifActivity extends AppCompatActivity {
         ArrayList<HashMap<String, Object>> typeList = new ArrayList<>();
         for (String t : getTypeList()) {
             HashMap<String, Object> typeItem = new HashMap<>(2);
-            String actived = type.equals(t) ? "<span style='color: #13b294'>&emsp;☯</span>" : "";//⊙◎☉●✪☯⊕¤❤☺☻۞
+            String actived = type.equals(t) ? "<span style='color: #13b294'>&emsp;&emsp;&emsp;&emsp;☯</span>" : "";//⊙◎☉●✪☯⊕¤❤☺☻۞
             typeItem.put("name", t + actived);
             typeItem.put("type", t);
             typeItem.put("icon", iconCacheList.get("default"));
@@ -695,10 +709,35 @@ public class GifActivity extends AppCompatActivity {
             popupWindow.dismiss();
         });
         rv.setAdapter(ma);
-        popupWindow.showAtLocation(findViewById(R.id.get_img_ll), Gravity.TOP | Gravity.END, 0, 210);
+        popupWindow.showAtLocation(findViewById(R.id.gif_activity_main_content), Gravity.TOP | Gravity.END, 0, 0);
     }
 
-    public void listBookmark(MenuItem item) {
+    public void bookmarkOperation(MenuItem item) {
+        ListPopupWindow bookmarkMenu = new ListPopupWindow(this);
+        bookmarkMenu.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new
+                String[]{getString(R.string.bookmark), getString(R.string.add_bookmark), getString(R.string.go_to_last_mark)}));
+        bookmarkMenu.setAnchorView(findViewById(R.id.gif_tpl_hidden_top));
+        bookmarkMenu.setModal(true);
+        bookmarkMenu.setWidth(450);
+        bookmarkMenu.setDropDownGravity(Gravity.END);
+        bookmarkMenu.setOnItemClickListener((parent1, view2, position2, id1) -> {
+            switch (position2) {
+                case 0:
+                    this.listBookmark();
+                    break;
+                case 1:
+                    this.mark();
+                    break;
+                case 2:
+                    this.seek(0, false);
+                    break;
+            }
+            bookmarkMenu.dismiss();
+        });
+        bookmarkMenu.show();
+    }
+
+    public void listBookmark() {
         List<String> mData = getBookmark().stream()
                 .map(hm -> hm.get("title") + "，" + hm.get("web_name") + "，" + hm.get("type") + "，" + hm.get("art_id") + "，" + hm.get("page"))
                 .collect(Collectors.toList());
@@ -707,25 +746,20 @@ public class GifActivity extends AppCompatActivity {
             return;
         }
         ListPopupWindow listWin = new ListPopupWindow(this);
-        listWin.setAnchorView(findViewById(R.id.gif_activity_viewpager));
+        listWin.setAnchorView(findViewById(R.id.gif_tpl_hidden_top));
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, mData);
         listWin.setAdapter(adapter);
-        DisplayMetrics dm = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(dm);
-        listWin.setWidth(dm.widthPixels * 4 / 5);
-        listWin.setHorizontalOffset(dm.widthPixels / 10);
-        listWin.setVerticalOffset(dm.heightPixels / 2);
         listWin.setModal(true);
         listWin.setOnItemClickListener((parent, view, position, id) -> {
             ListPopupWindow tips = new ListPopupWindow(this);
             tips.setAnchorView(view);
             tips.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new String[]{getString(R.string.open), getString(R.string.delete)}));
             tips.setModal(true);//获取焦点，点击外部不会让上层消失
-            tips.setWidth(350);
+            tips.setWidth(500);
             tips.setOnItemClickListener((parent1, view1, position1, id1) -> {
                 switch (position1) {
                     case 0:
-                        seek(position);
+                        seek(position, false);
                         listWin.dismiss();
                         break;
                     case 1:
@@ -752,10 +786,7 @@ public class GifActivity extends AppCompatActivity {
     }
 
     private void mark() {
-        SharedPreferences sp = getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
-        Gson gson = new Gson();
-        Type _type = new TypeToken<LinkedList<HashMap<String,String>>>(){}.getType();
-        LinkedList<HashMap<String,String>> bookmark = gson.fromJson(sp.getString(SettingActivity.BOOKMARK, "[]"), _type);
+        LinkedList<HashMap<String,String>> bookmark = getBookmark();
         HashMap<String, String> mark = new HashMap<>(5);
         mark.put("type", type);
         mark.put("web_name", webName);
@@ -765,11 +796,14 @@ public class GifActivity extends AppCompatActivity {
         bookmark.addFirst(mark);
         if (bookmark.size() > 8)
             bookmark.removeLast();
-        sp.edit().putString(SettingActivity.BOOKMARK, gson.toJson(bookmark, _type)).apply();
+        Type _type = new TypeToken<LinkedList<HashMap<String,String>>>(){}.getType();
+        getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE).edit()
+                .putString(SettingActivity.BOOKMARK, new Gson().toJson(bookmark, _type))
+                .apply();
         alert(getString(R.string.add_successfully));
     }
 
-    private void seek(int index) {
+    private void seek(int index, boolean del) {
         LinkedList<HashMap<String,String>> bookmark = getBookmark();
         if (index < bookmark.size()) {
             HashMap<String, String> mark = bookmark.get(index);
@@ -783,9 +817,16 @@ public class GifActivity extends AppCompatActivity {
             }
             int newPage = Integer.parseInt(mark.get("page"));
             if (page == newPage) {
-                mSectionsPagerAdapter.currentFragment.refresh();
+                currentFragment.refresh();
             } else {
                 mViewPager.setCurrentItem(newPage - 1, true);
+            }
+            if (del) {
+                bookmark.remove(index);
+                Type _type = new TypeToken<LinkedList<HashMap<String,String>>>(){}.getType();
+                getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE).edit()
+                        .putString(SettingActivity.BOOKMARK, new Gson().toJson(bookmark, _type))
+                        .apply();
             }
         } else {
             alert(getString(R.string.not_existed_bookmark));
@@ -794,16 +835,16 @@ public class GifActivity extends AppCompatActivity {
 
     @SuppressWarnings("SameParameterValue")
     private void removeMark(int index) {
-        SharedPreferences sp = getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
-        Gson gson = new Gson();
-        Type _type = new TypeToken<LinkedList<HashMap<String,String>>>(){}.getType();
-        LinkedList<HashMap<String,String>> bookmark = gson.fromJson(sp.getString(SettingActivity.BOOKMARK, "[]"), _type);
+        LinkedList<HashMap<String,String>> bookmark = getBookmark();
         if (index < bookmark.size()) {
             bookmark.remove(index);
+            Type _type = new TypeToken<LinkedList<HashMap<String,String>>>(){}.getType();
+            getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE).edit()
+                    .putString(SettingActivity.BOOKMARK, new Gson().toJson(bookmark, _type))
+                    .apply();
         } else {
             alert(getString(R.string.not_existed_bookmark));
         }
-        sp.edit().putString(SettingActivity.BOOKMARK, gson.toJson(bookmark, _type)).apply();
     }
 
     @SuppressLint({"InflateParams", "SetTextI18n"})
@@ -950,7 +991,7 @@ public class GifActivity extends AppCompatActivity {
                     return true;
                 }).setPageSize(FAVORITE_PAGE_SIZE)
                 .setTotal(getFavoriteCount())
-                .setWindowHeight(1600)
+                .setWindowHeight(ViewGroup.LayoutParams.MATCH_PARENT)
                 .build();
         pageWindow.showAtLocation(findViewById(R.id.gif_activity_fab), Gravity.BOTTOM, 0, 0);
     }
@@ -1308,9 +1349,9 @@ public class GifActivity extends AppCompatActivity {
                 } else {
                     item.put("path", "");
                     item.put("name", title);
-                    if ((file = diskLRUCache.get(genCacheKey(item.get("id").toString(), "favorite"))) == null || !file.exists()) {
+                    file = diskLRUCache.get(genCacheKey(item.get("id").toString(), "favorite"));
+                    if (file == null) {
                         item.put("icon", iconCacheList.get("default"));
-//                        Log.w("getFavoriteList-fileNotFound", name);
                         continue;
                     }
                 }
@@ -1502,9 +1543,10 @@ public class GifActivity extends AppCompatActivity {
             DisplayMetrics dm = new DisplayMetrics();
             activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
             listMenu.setAnchorView(view);
-            listMenu.setWidth(dm.widthPixels * 2 / 3);
-            listMenu.setHorizontalOffset(dm.widthPixels / 6);
-            listMenu.setVerticalOffset(dm.heightPixels / 2);
+            int width = dm.widthPixels / 2, offsetX = dm.widthPixels / 4, offsetY = dm.heightPixels * 2 / 3;
+            listMenu.setWidth(width);
+            listMenu.setHorizontalOffset(offsetX);
+            listMenu.setVerticalOffset(offsetY);
             listMenu.setOnItemClickListener((parent, view1, position1, id) -> {
                 switch (position1) {
                     case 0:
@@ -1677,7 +1719,6 @@ public class GifActivity extends AppCompatActivity {
      * one of the sections/tabs/pages.
      */
     class SectionsPagerAdapter extends FragmentPagerAdapter {
-        PlaceholderFragment currentFragment;
         GifActivity activity;
 
         SectionsPagerAdapter(FragmentManager fm, GifActivity activity) {
@@ -1701,7 +1742,7 @@ public class GifActivity extends AppCompatActivity {
         @Override
         public void setPrimaryItem(ViewGroup container, int position, Object object) {
             currentFragment = (PlaceholderFragment) object;
-            activity.page = currentFragment.page;
+            page = currentFragment.page;
             super.setPrimaryItem(container, position, object);
         }
     }
@@ -1717,7 +1758,7 @@ public class GifActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             GifActivity activity = activityWR.get();
-            PlaceholderFragment fragment = activity.mSectionsPagerAdapter.currentFragment;
+            PlaceholderFragment fragment = activity.currentFragment;
             View rootView = fragment.getView();
             if (rootView == null)
                 return;
@@ -1760,7 +1801,7 @@ public class GifActivity extends AppCompatActivity {
                     imageView.clearAnimation();
                     Drawable imgDrawable = (Drawable) msg.obj;
                     float scale = imgDrawable instanceof GifDrawable ? 2.5f : 4.5f;
-                    imageView.setImageDrawable(imgDrawable);
+                    imageView.setImageDrawable(imgDrawable);//todo fix
                     int width = Math.round(imgDrawable.getIntrinsicWidth() * scale);
                     int height = Math.round(imgDrawable.getIntrinsicHeight() * scale);
                     int layoutWidth = rootView.getWidth();
