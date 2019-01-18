@@ -28,7 +28,7 @@ public class GifWebRvAdapter extends RecyclerView.Adapter {
     public void setData(ArrayList<HashMap<String, Object>> data) {
         mData = data;
     }
-
+    @SuppressWarnings("unused")
     public ArrayList<HashMap<String, Object>> getData() {
         return mData;
     }

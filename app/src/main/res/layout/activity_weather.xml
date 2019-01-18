@@ -13,6 +13,7 @@
     <EditText
         android:id="@+id/weaid"
         android:hint="@string/city"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintHorizontal_chainStyle="spread"
         app:layout_constraintLeft_toLeftOf="parent"
         android:layout_width="140dp"
@@ -21,6 +22,7 @@
         android:autofillHints="1"
         tools:ignore="UnusedAttribute"/>
     <Button
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toRightOf="@id/weaid"
         app:layout_constraintRight_toRightOf="parent"
         android:text="@string/search"

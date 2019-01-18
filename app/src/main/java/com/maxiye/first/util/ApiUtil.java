@@ -26,7 +26,7 @@ import java.util.List;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 /**
  * 接口请求助手
@@ -35,17 +35,17 @@ import okhttp3.Response;
 @SuppressWarnings("FieldCanBeLocal")
 public class ApiUtil {
     private static ApiUtil instance;
-    private OkHttpClient okHttpClient = new OkHttpClient();
-    private String appKey = "37185";
-    private String sign = "0c74aa000b3b57398e386b872ab67412";
-    private String exchangeRateApi = "http://api.k780.com/?app=finance.rate&scur=%s&tcur=%s&appkey=%s&sign=%s";
-    private String weatherApi = "http://api.k780.com/?app=weather.future&weaid=%s&&appkey=%s&sign=%s";
-    private String IPAddressApi = "http://api.k780.com/?app=ip.get&ip=%s&appkey=%s&sign=%s&format=json";
-    private String PhoneAddressApi = "http://api.k780.com/?app=phone.get&phone=%s&appkey=%s&sign=%s&format=json";
-    private String IDAddressApi = "http://api.k780.com/?app=idcard.get&idcard=%s&appkey=%s&sign=%s&format=json";
-    private String PostcodeApi = "http://api.k780.com/?app=life.postcode&areaname=%s&appkey=%s&sign=%s&format=json";
-    private String BJTimeApi = "http://api.k780.com/?app=life.time&appkey=%s&sign=%s&format=json";
-    private String WorkdayApi = "http://api.k780.com/?app=life.workday&date=%s&appkey=%s&sign=%s&format=json";
+    private final OkHttpClient okHttpClient = new OkHttpClient();
+    private final String appKey = "37185";
+    private final String sign = "0c74aa000b3b57398e386b872ab67412";
+    private final String exchangeRateApi = "http://api.k780.com/?app=finance.rate&scur=%s&tcur=%s&appkey=%s&sign=%s";
+    private final String weatherApi = "http://api.k780.com/?app=weather.future&weaid=%s&&appkey=%s&sign=%s";
+    private final String IPAddressApi = "http://api.k780.com/?app=ip.get&ip=%s&appkey=%s&sign=%s&format=json";
+    private final String PhoneAddressApi = "http://api.k780.com/?app=phone.get&phone=%s&appkey=%s&sign=%s&format=json";
+    private final String IDAddressApi = "http://api.k780.com/?app=idcard.get&idcard=%s&appkey=%s&sign=%s&format=json";
+    private final String PostcodeApi = "http://api.k780.com/?app=life.postcode&areaname=%s&appkey=%s&sign=%s&format=json";
+    private final String BJTimeApi = "http://api.k780.com/?app=life.time&appkey=%s&sign=%s&format=json";
+    private final String WorkdayApi = "http://api.k780.com/?app=life.workday&date=%s&appkey=%s&sign=%s&format=json";
 
     public static ApiUtil getInstance() {
         if (instance == null) {
@@ -100,9 +100,11 @@ public class ApiUtil {
         String ret = "";
         Log.w("ApiUtil_url:", url);
         try {
-            Response response = okHttpClient.newCall(new Request.Builder().url(url).build()).execute();
-            assert response.body() != null;
-            ret = response.body().string();
+            ResponseBody resBody = okHttpClient.newCall(new Request.Builder().url(url).build())
+                    .execute()
+                    .body();
+            assert resBody != null;
+            ret = resBody.string();
         } catch (IOException e) {
             e.printStackTrace();
         }

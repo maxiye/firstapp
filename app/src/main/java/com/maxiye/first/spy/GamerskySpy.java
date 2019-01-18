@@ -11,7 +11,7 @@ import okhttp3.RequestBody;
  * Created by due on 2018/11/22.
  */
 public class GamerskySpy extends BaseSpy {
-    private String questBody;
+    private final String questBody;
 
     GamerskySpy(JsonObject webCfg, boolean modeFlg) {
         super(webCfg, modeFlg);

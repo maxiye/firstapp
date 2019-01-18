@@ -10,6 +10,7 @@
     <EditText
         android:id="@+id/id_input"
         android:hint="@string/idcard"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintHorizontal_chainStyle="spread"
         app:layout_constraintLeft_toLeftOf="parent"
         android:layout_width="140dp"
@@ -18,6 +19,7 @@
         android:autofillHints="1"
         tools:ignore="UnusedAttribute"/>
     <Button
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toRightOf="@id/id_input"
         app:layout_constraintRight_toRightOf="parent"
         android:text="@string/search"

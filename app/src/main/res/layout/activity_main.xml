@@ -8,6 +8,7 @@
     tools:context="com.maxiye.first.MainActivity">
 
     <LinearLayout
+        app:layout_constraintTop_toTopOf="parent"
         android:id="@+id/main_ll1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

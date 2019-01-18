@@ -63,7 +63,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
-
+//@SuppressWarnings({"unused", "WeakerAccess"})  SameParameterValue unchecked FieldCanBeLocal deprecation(过时)   UnusedParameters
 public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
     private final int INTENT_CONTACT_PICK_REQCODE = 100;
     private final int INTENT_IMG_VIEW_REQCODE = 101;
@@ -76,6 +76,10 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        /*if (BuildConfig.DEBUG) {
+            StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectAll().penaltyLog().build());
+            StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().detectAll().penaltyLog().build());
+        }*/
         handleItt();//图片intent
 //        startActivity(new Intent(this, GifActivity.class));
     }
@@ -273,9 +277,8 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
 
     //创建数据库
     @SuppressWarnings("unused")
-    public void createDB(View view) {
-        DBHelper dbh = new DBHelper(this);
-        SQLiteDatabase db = dbh.getWritableDatabase();//此时创建数据库,生成.db文件
+    private void createDB() {
+        SQLiteDatabase db = DBHelper.getDB(this);//此时创建数据库,生成.db文件
         //增
         ContentValues ctv = new ContentValues();
         ctv.put("author", "zzz");
@@ -488,7 +491,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
             int item_id = item.getItemId();
             switch (item_id) {
                 case R.id.create_db:
-                    createDB(view);
+                    createDB();
                     break;
                 case R.id.backup_db:
                     DBHelper.backup(this);
@@ -554,7 +557,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
             }
         });
     }
-
+    @SuppressWarnings({"unused"})
     public void test() {
         try {
             Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(getAssets().open("test.txt"));

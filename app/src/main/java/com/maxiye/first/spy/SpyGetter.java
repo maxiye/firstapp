@@ -9,7 +9,7 @@ import com.google.gson.JsonObject;
 public class SpyGetter {
     private BaseSpy base, gamersky, yxdown, duowan, w17173;
     public static boolean modeFlg = true;
-    private static SpyGetter instance = new SpyGetter();//饿汉
+    private static final SpyGetter instance = new SpyGetter();//饿汉
 
     public static SpyGetter getInstance() {
         return instance;

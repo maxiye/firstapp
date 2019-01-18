@@ -1,19 +1,13 @@
 package com.maxiye.first.spy;
 
-import android.util.Log;
-
 import com.google.gson.JsonObject;
 import com.maxiye.first.GifActivity;
 import com.maxiye.first.util.DBHelper;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.ResponseBody;
 
 /**
  * 17173爬手

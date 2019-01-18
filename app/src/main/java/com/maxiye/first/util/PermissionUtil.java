@@ -15,6 +15,8 @@ public class PermissionUtil {
     public static final int PER_REQ_CAPTURE = 202;
     public static final int PER_REQ_STORAGE_WRT = 203;
     private static CB cb;
+
+    @SuppressWarnings("UnusedParameters")
     public static void res(@NonNull Activity activity, int reqCode, @NonNull String[] pers, @NonNull int[] res) {
         if (res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED) {
             cb.callback();

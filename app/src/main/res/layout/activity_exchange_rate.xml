@@ -11,6 +11,7 @@
         android:id="@+id/scur"
         android:hint="@string/source_currency"
         app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@id/exchRate"
         android:layout_width="90dp"
@@ -19,6 +20,7 @@
         android:autofillHints="1"
         tools:ignore="UnusedAttribute"/>
     <Button
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toRightOf="@id/scur"
         app:layout_constraintRight_toLeftOf="@id/tcur"
         android:id="@+id/exchRate"
@@ -28,6 +30,7 @@
         android:layout_height="50dp"/>
     <EditText
         android:id="@+id/tcur"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toRightOf="@id/exchRate"
         app:layout_constraintRight_toRightOf="parent"
         android:hint="@string/target_currency"

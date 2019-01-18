@@ -27,7 +27,7 @@ import java.util.Locale;
 /**数据库助手
  * Created by Administrator on 2017-05-25.
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class DBHelper extends SQLiteOpenHelper {
     public final static String DB_NAME = "first.db";
     private final static int DB_VERSION = 5;
@@ -90,6 +90,10 @@ public class DBHelper extends SQLiteOpenHelper {
         super(context, DB_NAME, null, DB_VERSION);
         mCont = context;
         checkBakup();
+    }
+
+    public static SQLiteDatabase getDB(Context context) {
+        return new DBHelper(context).getWritableDatabase();
     }
 
     @Override

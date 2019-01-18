@@ -18,10 +18,10 @@ import java.util.LinkedHashMap;
  */
 public class DiskLRUCache extends LinkedHashMap<String, String> {
     private static final long serialVersionUID = 2244286267665222070L;
-    private int capacity;
+    private final int capacity;
     private long now = 0;
     private String keyword;
-    private Context context;
+    private final Context context;
 
     private DiskLRUCache(int capacity, Context context) {
         super(1000, 1, true);
@@ -45,8 +45,8 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
         File diskLru = new File(context.getCacheDir(), "diskLru_" + keyword);
         DiskLRUCache diskLRUCache = new DiskLRUCache(capacity, context);
         if (diskLru.exists()) {
-            try {
-                JsonObject jsonObject = new Gson().fromJson(new FileReader(diskLru), JsonObject.class);
+            try (FileReader fr = new FileReader(diskLru)) {
+                JsonObject jsonObject = new Gson().fromJson(fr, JsonObject.class);
                 for (String key: jsonObject.keySet()) {
                     diskLRUCache._put(key, jsonObject.get(key).getAsString());
                 }
@@ -62,13 +62,11 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
 
     public void serialize() {
         File diskLru = new File(context.getCacheDir(), "diskLru_" + keyword);
-        try {
+        try (FileWriter fw = new FileWriter(diskLru)) {
             put("size", now + "");
             String json = new Gson().toJson(this);
             _remove("size");
-            FileWriter fw = new FileWriter(diskLru);
             fw.write(json);
-            fw.close();
             Log.w("DiskLRU:serialize", json);
         } catch (Exception e) {
             e.printStackTrace();

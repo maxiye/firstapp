@@ -15,6 +15,7 @@ import okhttp3.ResponseBody;
  * 数据库助手
  * Created by due on 2018/8/6.
  */
+@SuppressWarnings("unused")
 public class NetworkUtil {
 
     private ConnectivityManager.NetworkCallback netCB;
@@ -47,7 +48,6 @@ public class NetworkUtil {
      * @param context context
      * @return boolean
      */
-    @SuppressWarnings("unused")
     public static boolean isWifi(Context context) {
         ConnectivityManager connMgr = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         assert connMgr != null;
@@ -73,14 +73,18 @@ public class NetworkUtil {
             connMgr.registerDefaultNetworkCallback(netCB);
         }
     }
-
+    @SuppressWarnings("WeakerAccess")
     public static String download(String url, File path) {
         try {
             if (path.exists()) {
                 return path.getAbsolutePath();
             }
             Request request = new Request.Builder().url(url).build();
-            ResponseBody responseBody = new OkHttpClient().newBuilder().build().newCall(request).execute().body();
+            ResponseBody responseBody = new OkHttpClient().newBuilder()
+                    .build()
+                    .newCall(request)
+                    .execute()
+                    .body();
             assert responseBody != null;
             byte[] bytes = responseBody.bytes();
             RandomAccessFile raf = new RandomAccessFile(path, "rwd");

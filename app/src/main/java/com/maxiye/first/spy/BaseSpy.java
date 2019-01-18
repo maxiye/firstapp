@@ -94,7 +94,7 @@ public class BaseSpy {
                         .execute()
                         .body();
                 assert responseBody != null;
-                content = new String(responseBody.bytes(), "utf-8");
+                content = responseBody.string();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -116,7 +116,7 @@ public class BaseSpy {
             Request req = new Request.Builder().url(url).build();
             ResponseBody responseBody = okHttpClient.newCall(req).execute().body();
             assert responseBody != null;
-            String content = new String(responseBody.bytes(), "utf-8");
+            String content = responseBody.string();
             Matcher mt = pt.matcher(content);
             if (mt.find()) {
                 String title = mt.group(titleIdx);

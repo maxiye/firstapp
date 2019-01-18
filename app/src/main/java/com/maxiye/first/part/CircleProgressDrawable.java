@@ -135,8 +135,8 @@ public class CircleProgressDrawable extends Drawable {
             case STYLE_BORDER:
                 // 绘制圆环
                 mPaint.setStrokeWidth(0.6f);
-                canvas.drawCircle(pX, pY, radius + circleWidth / 2, mPaint);
-                canvas.drawCircle(pX, pY, radius - circleWidth / 2, mPaint);
+                canvas.drawCircle(pX, pY, radius + (circleWidth >> 1), mPaint);
+                canvas.drawCircle(pX, pY, radius - (circleWidth >> 1), mPaint);
                 mPaint.setStrokeWidth(circleWidth);
                 break;
             case STYLE_SHADOW:

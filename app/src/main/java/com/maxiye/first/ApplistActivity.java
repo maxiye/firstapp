@@ -97,10 +97,15 @@ public class ApplistActivity extends AppCompatActivity implements ApplistFragmen
     public void onItemLongClick(View view) {
         onItemClick(view);
         ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        String url = "https://m.downloadatoz.com/search.html?q=" + (clm != null ? clm.getPrimaryClip().getItemAt(0).getText() : null);
-        Intent intent = new Intent(this, WebViewActivity.class);
-        intent.putExtra(EXTRA_URL, url);
-        startActivity(intent);
+        ClipData clipData;
+        if (clm != null && (clipData = clm.getPrimaryClip()) != null) {
+            String url = "https://m.downloadatoz.com/search.html?q=" + clipData.getItemAt(0).getText();
+            Intent intent = new Intent(this, WebViewActivity.class);
+            intent.putExtra(EXTRA_URL, url);
+            startActivity(intent);
+        } else {
+            alert("Clipboard Is Empty");
+        }
     }
 
     @Override

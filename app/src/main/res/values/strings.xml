@@ -99,9 +99,10 @@
     <string name="add_bookmark">Add Bookmark</string>
     <string name="not_existed_bookmark">Bookmark Is not Existed!</string>
     <string name="back">Back</string>
-    <string name="error_tip">Error： %1$d</string>
+    <string name="error_tip">Error： %1$s</string>
     <string name="get_all">Get All</string>
     <string name="success_tip">Success： %1$d</string>
     <string name="go_to_last_mark">Reset Location</string>
     <string name="bookmark_opration">Go to Bookmark</string>
+    <string name="success">Success</string>
 </resources>

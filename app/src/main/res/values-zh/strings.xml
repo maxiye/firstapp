@@ -100,9 +100,10 @@
     <string name="add_bookmark">流连</string>
     <string name="not_existed_bookmark">书签不存在</string>
     <string name="back">返回</string>
-    <string name="error_tip">覆水难收： %1$d</string>
+    <string name="error_tip">覆水难收： %1$s</string>
     <string name="get_all">一览无余</string>
     <string name="success_tip">凯旋奏鸣： %1$d</string>
     <string name="go_to_last_mark">回溯</string>
     <string name="bookmark_opration">朝花夕拾</string>
+    <string name="success">操作成功</string>
 </resources>

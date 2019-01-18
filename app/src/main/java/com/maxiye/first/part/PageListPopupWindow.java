@@ -31,7 +31,7 @@ public class PageListPopupWindow {
     public GifWebRvAdapter ma;
     public PopupWindow popupWindow;
     public View rootView;
-    private Context context;
+    private final Context context;
     private ListGetter listGetter;
     private ItemClickListener itemClickListener;
     private ItemLongClickListener itemLongClickListener;

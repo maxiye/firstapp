@@ -120,7 +120,7 @@ public class ApplistFragment extends Fragment {
     }
 
     static class GetAppsTask extends AsyncTask<String, Void, List<Map<String, Object>>> {
-        private WeakReference<ApplistFragment> frag;
+        private final WeakReference<ApplistFragment> frag;
 
         GetAppsTask(ApplistFragment applistFragment) {
             frag = new WeakReference<>(applistFragment);

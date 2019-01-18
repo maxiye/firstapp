@@ -137,7 +137,7 @@ public class CacheUtil {
             cacheSize += getFolderSize(context.getExternalCacheDir());
         }
         if (unit == null) return cacheSize;
-        double kiloByte = cacheSize / 1024;
+        double kiloByte = cacheSize >> 10;// / 10
         if (unit.equals(UNIT_KB)) return fix2(kiloByte);
         double megaByte = kiloByte / 1024;
         if (unit.equals(UNIT_MB)) return fix2(megaByte);
