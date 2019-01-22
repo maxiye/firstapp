@@ -2,10 +2,11 @@ package com.maxiye.first.spy;
 
 import com.google.gson.JsonObject;
 import com.maxiye.first.GifActivity;
-import com.maxiye.first.util.DBHelper;
+import com.maxiye.first.util.MyLog;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,10 +22,10 @@ import okhttp3.ResponseBody;
 public class BaseSpy {
     String webName;
     JsonObject webCfg;
-    int urlIdx,extIdx,titleIdx,realUrlIdx;
+    private int urlIdx,extIdx,titleIdx,realUrlIdx;
     public String curUrl;
     String urlTpl, urlTpl2;
-    Pattern pt;
+    private Pattern pt;
     boolean modeFlg;
 
     BaseSpy(JsonObject web_cfg, boolean flg) {
@@ -47,13 +48,13 @@ public class BaseSpy {
 
     public Request buildRequest(String artId, int webPage) {
         curUrl = webPage > 1 ? String.format(urlTpl2, artId, webPage) : String.format(urlTpl, artId);
-        System.out.println(curUrl);
+        MyLog.println(curUrl);
         return new Request.Builder().url(curUrl).build();
     }
 
     public int insertItem(String content, GifActivity activity) {
         Matcher matcher = pt.matcher(content);
-        ArrayList<String[]> list = activity.gifList;
+        ArrayList<HashMap<String, String>> list = activity.imgList;
         int count = 0;
         while (matcher.find()) {
             String ext = matcher.group(extIdx);
@@ -61,16 +62,23 @@ public class BaseSpy {
             String realUrl = realUrlIdx == -1 ? "" : matcher.group(realUrlIdx);
             realUrl = realUrl == null ? "" : realUrl;
             String gifUrl = matcher.group(urlIdx);
-            System.out.println("title: " + name + "；url: " + gifUrl + "；ext: " + ext + "；realUrl: " + realUrl);
-            String[] gifInfo = new String[]{gifUrl, name, ext, realUrl};
-            list.add(gifInfo);
-            activity.saveDbGifList(DBHelper.TB_IMG_WEB_ITEM, gifInfo);
+            MyLog.println("title: " + name + "；url: " + gifUrl + "；ext: " + ext + "；realUrl: " + realUrl);
+            HashMap<String, String> imgInfo = new HashMap<>();
+            imgInfo.put("url", gifUrl);
+            imgInfo.put("title", name);
+            imgInfo.put("ext", ext);
+            imgInfo.put("real_url", realUrl);
+            handleImgInfo(imgInfo);
+            list.add(imgInfo);
+            activity.saveDbImgList(imgInfo);
             ++count;
         }
         return count;
     }
 
-    String handleTitle(String group) {
+    void handleImgInfo(HashMap<String, String> imgInfo) {}
+
+    private String handleTitle(String group) {
         boolean notNull = group != null && !group.replaceAll("[\r\n\\s\t]", "").equals("");
         String title = notNull ? group : UUID.randomUUID().toString();
         return title.replaceAll("[\r\n\\s\t]", "");
@@ -123,7 +131,7 @@ public class BaseSpy {
                 String artId = mt.group(artIdIdx);
                 return new String[]{artId, title};
             } else {
-                System.out.println(content);
+                MyLog.println(content);
             }
         } catch (Exception e) {
             e.printStackTrace();

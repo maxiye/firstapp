@@ -43,6 +43,7 @@ import android.widget.Toast;
 
 import com.maxiye.first.util.ApiUtil;
 import com.maxiye.first.util.DBHelper;
+import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.PermissionUtil;
 import com.maxiye.first.util.Util;
 
@@ -566,7 +567,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
             if (res instanceof NodeList) {
                 NodeList nodeList = (NodeList) res;
                 for (int i = 0; i < nodeList.getLength(); i++) {
-                    System.out.println(nodeList.item(i).getAttributes().getNamedItem("data-src").getNodeValue());
+                    MyLog.println(nodeList.item(i).getAttributes().getNamedItem("data-src").getNodeValue());
                 }
             }
         } catch (Exception e) {

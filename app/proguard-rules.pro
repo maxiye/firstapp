@@ -33,3 +33,12 @@
 -dontwarn org.apache.commons.logging.**
 -ignorewarnings
 #-keep class * { public private *; }#注释后减少巨大
+-assumenosideeffects class com.maxiye.first.util.MyLog {
+    public static *** d(...);
+    public static *** e(...);
+    public static *** i(...);
+    public static *** v(...);
+    public static *** println(...);
+    public static *** w(...);
+    public static *** wtf(...);
+}

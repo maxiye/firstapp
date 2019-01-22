@@ -2,7 +2,6 @@ package com.maxiye.first.util;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.util.Log;
 import android.view.View;
 import android.widget.PopupMenu;
 
@@ -98,7 +97,7 @@ public class ApiUtil {
 
     private String callApi(String url) {
         String ret = "";
-        Log.w("ApiUtil_url:", url);
+        MyLog.w("ApiUtil_url:", url);
         try {
             ResponseBody resBody = okHttpClient.newCall(new Request.Builder().url(url).build())
                     .execute()

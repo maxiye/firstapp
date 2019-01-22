@@ -9,7 +9,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Build;
 import android.os.Environment;
 import android.support.annotation.NonNull;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.maxiye.first.R;
@@ -120,8 +119,8 @@ public class DBHelper extends SQLiteOpenHelper {
     private void update1to2(@NonNull SQLiteDatabase db) {
         Cursor cur1 = db.rawQuery("select * from gif_web where art_id > 1000000", new String[]{});
         Cursor cur2 = db.rawQuery("select * from gif_web_item where art_id > 1000000", new String[]{});
-        Log.w("dd", cur1.getCount() + "");
-        Log.w("dd", cur2.getCount() + "");
+        MyLog.w("dd", cur1.getCount() + "");
+        MyLog.w("dd", cur2.getCount() + "");
         db.execSQL(DROP_BOOK);
         db.execSQL(DROP_IMG_WEB);
         db.execSQL(DROP_IMG_WEB_ITEM);
@@ -136,7 +135,7 @@ public class DBHelper extends SQLiteOpenHelper {
             ctv.put("title", cur1.getString(cur1.getColumnIndex("title")));
             ctv.put("time", cur1.getString(cur1.getColumnIndex("time")));
             long newId = db.insert(TB_IMG_WEB, null, ctv);
-            Log.w("dd", newId + "");
+            MyLog.w("dd", newId + "");
             cur1.moveToNext();
         }
         cur1.close();
@@ -149,7 +148,7 @@ public class DBHelper extends SQLiteOpenHelper {
             ctv.put("url", cur2.getString(cur2.getColumnIndex("url")));
             ctv.put("title", cur2.getString(cur2.getColumnIndex("title")));
             long newId = db.insert(TB_IMG_WEB_ITEM, null, ctv);
-            Log.w("dd", newId + "");
+            MyLog.w("dd", newId + "");
             cur2.moveToNext();
         }
         cur2.close();
@@ -195,7 +194,7 @@ public class DBHelper extends SQLiteOpenHelper {
             File[] baks = downloadDir.listFiles((file, name) -> name.contains(DB_NAME + ".bak"));
             if (baks != null && baks.length > 5) {
                 Arrays.sort(baks, (o1, o2) -> (int) (o1.lastModified() - o2.lastModified()));
-                Log.w("backdb", Arrays.toString(baks));
+                MyLog.w("backdb", Arrays.toString(baks));
                 for (int i = 0,k = baks.length - 5; i < k; i++) {
                     baks[i].delete();
                 }
@@ -243,11 +242,11 @@ public class DBHelper extends SQLiteOpenHelper {
                             ctv.put("real_url", cus.getString(cus.getColumnIndex("real_url")));
                             ctv.put("time", datetime);
                             long newId = db.insert(TB_IMG_FAVORITE, null, ctv);
-                            Log.w("db_img_fav_insert: ", newId + "");
+                            MyLog.w("db_img_fav_insert: ", newId + "");
                             ContentValues ctv2 = new ContentValues(1);
                             ctv2.put("fav_flg", 1);
                             int rows = db.update(DBHelper.TB_IMG_WEB_ITEM, ctv2, "id = ?", new String[]{cus.getString(cus.getColumnIndex("id"))});
-                            Log.w("db_web_item_update: ", rows + "");
+                            MyLog.w("db_web_item_update: ", rows + "");
                             count++;
                         }
                         cus.close();

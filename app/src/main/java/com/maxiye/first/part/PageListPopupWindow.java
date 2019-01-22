@@ -5,7 +5,6 @@ import android.content.Context;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +15,7 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import com.maxiye.first.R;
+import com.maxiye.first.util.MyLog;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -130,7 +130,7 @@ public class PageListPopupWindow {
                 nowPageStr = nowPageStr.equals("") ? "1" : nowPageStr;
                 int nowPage = Integer.parseInt(nowPageStr);
                 nowPage = nowPage > pages ? pages : nowPage;
-                Log.w("FavoriteGoPage", "page:" + nowPage);
+                MyLog.w("FavoriteGoPage", "page:" + nowPage);
                 page.setText(nowPage + "");
                 ma.setData(listGetter.getList(nowPage, list));
                 ma.notifyDataSetChanged();

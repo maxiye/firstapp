@@ -1,7 +1,6 @@
 package com.maxiye.first.util;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -51,7 +50,7 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
                     diskLRUCache._put(key, jsonObject.get(key).getAsString());
                 }
                 diskLRUCache.now = Integer.parseInt(jsonObject.get("size").getAsString());
-                Log.w("DiskLRU:getInstance", "now:" + diskLRUCache.now);
+                MyLog.w("DiskLRU:getInstance", "now:" + diskLRUCache.now);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -67,7 +66,7 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
             String json = new Gson().toJson(this);
             _remove("size");
             fw.write(json);
-            Log.w("DiskLRU:serialize", json);
+            MyLog.w("DiskLRU:serialize", json);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -75,7 +74,7 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
 
     public File get(String key) {
         String val = super.get(key);
-//        Log.w("DiskLRU:get", "key:" + key + ";val:" + val + ";now:" + now);
+//        MyLog.w("DiskLRU:get", "key:" + key + ";val:" + val + ";now:" + now);
         if (val != null) {
             File f = new File(context.getCacheDir(), val);
             if (f.exists() && f.isFile()) {
@@ -91,7 +90,7 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
     public synchronized void put(String key, String value, long fzise) {
         removeEldest();
         now += fzise;
-//        Log.w("DiskLRU:put", "key:" + key + ";val:" + value + ";size:" + fzise + ";now:" + now);
+//        MyLog.w("DiskLRU:put", "key:" + key + ";val:" + value + ";size:" + fzise + ";now:" + now);
         super.put(key, value);
     }
 
@@ -103,7 +102,7 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
 
     @Override
     public void clear() {
-        Log.w("DiskLRU:clear", "now:" + now);
+        MyLog.w("DiskLRU:clear", "now:" + now);
         CacheUtil.clearAllCache(context);
         now = 0;
         super.clear();
@@ -119,7 +118,7 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
                 now -= len;
             }
         }
-//        Log.w("DiskLRU:remove", "string:" + toString() + "key:" + key + ";now:" + now);
+//        MyLog.w("DiskLRU:remove", "string:" + toString() + "key:" + key + ";now:" + now);
         return val;
     }
 
