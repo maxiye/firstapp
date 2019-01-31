@@ -17,12 +17,11 @@
       "img_web_2nd": "http://appapi2.gamersky.com/404",
       "headers": {
         "Content-Type": "text/plain; charset=utf-8",
-        "Accept-Encoding": "gzip",
         "User-Agent": "okhttp/3.3.0"
       },
       "request_body": "{\"os\":\"android\",\"app\":\"GSAPP\",\"osVersion\":\"8.1.0\",\"deviceType\":\"SM-N9600\",\"appVersion\":\"4.7.1\",\"deviceId\":\"\",\"request\":{\"pageIndex\":1,\"contentId\":\"%1$s\"}}",
       "img_reg": {
-        "reg": " src=\\\\\"([^\"]+(\\.gif))\\\\\"[^>]*?>.*?(<br>\\\\r\\\\n([^<]+))?(</p>|<br>)",
+        "reg": " src=\"([^\"]+(\\.gif))\"[^>]*?>.*?(<br>\\\\r\\\\n([^<]+))?(</p>|<br>)",
         "img_url_idx": 1,
         "img_ext_idx": 2,
         "img_title_idx": 4
@@ -116,16 +115,20 @@
         "art_id_idx": 2,
         "title_idx": 3
       },
-      "img_web": "http://3g.ali213.net/news/html/%1$s.html",
+      "headers": {
+        "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 8.0.0; S8032 Build/1.2.A.2.12)"
+      },
+      "url": "http://3g.ali213.net/news/html/%1$s.html",
+      "img_web": "http://3g.ali213.net/app/news/newsdetail/%1$s",
       "img_web_2nd": "http://3g.ali213.net/404.html",
       "img_reg": {
-        "reg": "<img.*?data-original=\"([^\"]+?(\\.(gif|jpg|jpeg|png|bmp)))\"[^>]+>.*?</p>[\r\n\\s\t]+<p style=\"text-align:\\s?center[^>]+>([^<]+)</p>",
+        "reg": "<img.*?data-original=\"([^\"]+?(\\.(gif|jpg|jpeg|png|bmp)))\"[^>]+>.*?</(p|div)>(\\\\r\\\\n)*<p style=\"text-align:\\s?center[^>]+>([^<]+)</p>",
         "img_url_idx": 1,
         "img_ext_idx": 2,
-        "img_title_idx": 4
+        "img_title_idx": 6
       },
       "title_reg": {
-        "reg": "<title>([^<]+?)[_-]游侠网</title>",
+        "reg": "\"Title\":[\\s]?\"([\\s\\S]*?(?=\",))",
         "title_idx": 1
       }
     },
@@ -172,12 +175,11 @@
       "img_web_2nd": "http://appapi2.gamersky.com/404",
       "headers": {
         "Content-Type": "text/plain; charset=utf-8",
-        "Accept-Encoding": "gzip",
         "User-Agent": "okhttp/3.3.0"
       },
       "request_body": "{\"os\":\"android\",\"app\":\"GSAPP\",\"osVersion\":\"8.1.0\",\"deviceType\":\"SM-N9600\",\"appVersion\":\"4.7.1\",\"deviceId\":\"\",\"request\":{\"pageIndex\":1,\"contentId\":\"%1$s\"}}",
       "img_reg": {
-        "reg": "(href=\\\\\"[^\"]*?\\?(http[^\"]+\\.jpg|jpeg|png|bmp)\\\\\"[\\s\\S]*?)? src=\\\\\"([^\"]+(\\.(jpg|jpeg|png|bmp)))\\\\\"[^>]*?>[^\\\\]*((\\\\r\\\\n)+(<span[^>]+>)?([^<\\\\]+)(?=[\\s\\S]*?<))?",
+        "reg": "(href=\"[^\"]*?\\?(http[^\"]+\\.jpg|jpeg|png|bmp)\"[\\s\\S]*?)? src=\"([^\"]+(\\.(jpg|jpeg|png|bmp)))\"[^>]*?>[^\\\\]*((\\\\r\\\\n)+(<span[^>]+>)?([^<\\\\]+)(?=[\\s\\S]*?<))?",
         "img_real_url_idx": 2,
         "img_url_idx": 3,
         "img_ext_idx": 4,
@@ -273,16 +275,20 @@
         "art_id_idx": 2,
         "title_idx": 3
       },
-      "img_web": "http://3g.ali213.net/news/html/%1$s.html",
+      "headers": {
+        "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 8.0.0; S8032 Build/1.2.A.2.12)"
+      },
+      "url": "http://3g.ali213.net/news/html/%1$s.html",
+      "img_web": "http://3g.ali213.net/app/news/newsdetail/%1$s",
       "img_web_2nd": "http://3g.ali213.net/404.html",
       "img_reg": {
-        "reg": "<img.*?data-original=\"([^\"]+?(\\.(png|jpg|jpeg|bmp)))\"[^>]*>.*?</p>[\r\n\\s\t]+<p style=\"text-align:\\s?center[^>]+>([^<]+)</p>",
+        "reg": "<img.*?data-original=\"([^\"]+?(\\.(png|jpg|jpeg|bmp)))\"[^>]*>.*?</(p|div)>(\\\\r\\\\n)*<p style=\"text-align:\\s?center[^>]+>([^<]+)</p>",
         "img_url_idx": 1,
         "img_ext_idx": 2,
-        "img_title_idx": 4
+        "img_title_idx": 6
       },
       "title_reg": {
-        "reg": "<title>([^<]+?)[_-]游侠网</title>",
+        "reg": "\"Title\":[\\s]?\"([\\s\\S]*?(?=\",))",
         "title_idx": 1
       }
     }

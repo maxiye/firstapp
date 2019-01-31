@@ -7,10 +7,10 @@
               android:background="@android:color/transparent"
               android:orientation="vertical">
     <EditText
-        android:id="@+id/gif_dialog_input"
+        android:id="@+id/dialog_input"
         android:layout_width="match_parent"
         android:layout_height="65dp"
-        android:hint="@string/skip_to"
+        android:hint="@string/input"
         android:maxLines="1"
         android:textSize="18sp"
         android:inputType="text"

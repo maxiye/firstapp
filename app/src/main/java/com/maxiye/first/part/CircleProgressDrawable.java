@@ -11,6 +11,8 @@ import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.maxiye.first.util.BitmapUtil;
+
 /**
  * 自定义环形进度条
  * Created by 91287 on 2018/5/27.
@@ -35,7 +37,7 @@ public class CircleProgressDrawable extends Drawable {
 
     private CircleProgressDrawable () {
         setBounds(0, 0, 90, 90);
-        circleWidth = Math.min(getBounds().width(), getBounds().height()) / 8;
+        circleWidth = Math.min(getBounds().width(), getBounds().height()) >> 3;
     }
     //建造者模式
     public static class Builder {
@@ -103,10 +105,10 @@ public class CircleProgressDrawable extends Drawable {
         percent = curProgress * 1.0f / maxProgress;
         final Rect bounds = getBounds();
         int width = bounds.width();int height = bounds.height();
-        radius = (Math.min(width, height) - circleWidth) / 2;
+        radius = (Math.min(width, height) - circleWidth) >> 1;
         // 1. 计算矩形位置.
-        pX = width / 2;
-        pY = height / 2;
+        pX = width >> 1;
+        pY = height >> 1;
         rectF = new RectF(pX - radius, pY - radius,pX + radius,pY + radius);
     }
 
@@ -145,15 +147,15 @@ public class CircleProgressDrawable extends Drawable {
                 canvas.drawCircle(pX, pY, radius, mPaint);
                 break;
         }
+        // 计算角度.
+        int angle = (int) (percent * 360);
         //颜色渐变
         if (gradual_flg) {
-            int Offset = (int) ((1- percent) * 150);
-            mPaint.setColor(circleColor + Offset);
+//            int Offset = (int) ((1- percent) * 150);
+            mPaint.setColor(BitmapUtil.gradualColor(circleColor, (360 - angle)));
         } else {
             mPaint.setColor(circleColor);
         }
-        // 计算角度.
-        int angle = (int) (percent * 360);
         // 2. 绘制进度条.
         canvas.drawArc(rectF, -90, angle, false, mPaint);
     }

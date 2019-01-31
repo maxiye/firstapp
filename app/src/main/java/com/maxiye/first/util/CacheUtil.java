@@ -180,7 +180,7 @@ public class CacheUtil {
 
     public static void checkClear(Context context) {
         double cacheSize = CacheUtil.getSize(context, null);
-        if (cacheSize > 400 * 1024 * 1024)
-            CacheUtil.clearOld(context.getCacheDir(), cacheSize - 250 * 1024 * 1024);
+        if (cacheSize > 400 << 10 << 10)
+            CacheUtil.clearOld(context.getCacheDir(), cacheSize - (250 << 10 << 10));
     }
 }

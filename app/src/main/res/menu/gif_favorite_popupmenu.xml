@@ -5,4 +5,5 @@
     <item android:id="@+id/delete_fav" android:title="@string/delete"/>
     <item android:id="@+id/delete_fav_file" android:title="@string/delete_file"/>
     <item android:id="@+id/delete_fav_and_file" android:title="@string/delete_fav_and_file"/>
+    <item android:id="@+id/find_repeated_files" android:title="@string/find_repeated_files"/>
 </menu>

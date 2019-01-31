@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
@@ -33,55 +34,87 @@ public class PageListPopupWindow {
     public View rootView;
     private final Context context;
     private ListGetter listGetter;
+    private ListCountGetter listCountGetter;
     private ItemClickListener itemClickListener;
     private ItemLongClickListener itemLongClickListener;
     private int total;
     private int pageSize;
+    private int pages;
+    private int page;
+    public String where;//筛选条件
     private int windowHeight;
 
     private PageListPopupWindow(Context ctx) {
         context = ctx;
     }
 
+    private int calcPages() {
+        return total % pageSize == 0 ? total / pageSize : total / pageSize + 1;
+    }
+
+    public void reset() {
+        total = listCountGetter.getListCount(where);
+        pages = calcPages();
+        page = 1;
+        if (pages > 1) {
+            EditText pageEdit = rootView.findViewById(R.id.popup_page);
+            TextView totalPage = rootView.findViewById(R.id.popup_total_page);
+            Button prev = rootView.findViewById(R.id.popup_prev_page);
+            Button next = rootView.findViewById(R.id.popup_next_page);
+            pageEdit.setText(String.valueOf(page));
+            prev.setVisibility(View.GONE);
+            next.setVisibility(pages > 1 ? View.VISIBLE : View.GONE);
+            totalPage.setText(String.valueOf(pages));
+        }
+        ma.setData(listGetter.getList(page, list, where));
+        ma.notifyDataSetChanged();
+    }
+
+    public void remove(int position) {
+        list.remove(position);
+        ma.notifyItemRemoved(position);
+        ma.notifyItemRangeChanged(position, list.size());
+    }
+
     public static class Builder {
-        private final PageListPopupWindow page;
+        private final PageListPopupWindow pagePopup;
 
         public Builder(Context context) {
-            page = new PageListPopupWindow(context);
+            pagePopup = new PageListPopupWindow(context);
         }
 
         public Builder setListGetter(ListGetter mlistGetter) {
-            page.listGetter = mlistGetter;
+            pagePopup.listGetter = mlistGetter;
+            return this;
+        }
+
+        public Builder setListCountGetter(ListCountGetter listCountGetter) {
+            pagePopup.listCountGetter = listCountGetter;
             return this;
         }
 
         public Builder setItemClickListener(ItemClickListener itemClickListener) {
-            page.itemClickListener = itemClickListener;
+            pagePopup.itemClickListener = itemClickListener;
             return this;
         }
 
         public Builder setItemLongClickListener(ItemLongClickListener itemLongClickListener) {
-            page.itemLongClickListener = itemLongClickListener;
-            return this;
-        }
-
-        public Builder setTotal(int total) {
-            page.total = total;
+            pagePopup.itemLongClickListener = itemLongClickListener;
             return this;
         }
 
         public Builder setPageSize(int pageSize) {
-            page.pageSize = pageSize;
+            pagePopup.pageSize = pageSize;
             return this;
         }
 
         public Builder setWindowHeight(int windowHeight) {
-            page.windowHeight = windowHeight;
+            pagePopup.windowHeight = windowHeight;
             return this;
         }
 
         public PopupWindow build() {
-            return page.build();
+            return pagePopup.build();
         }
     }
 
@@ -99,56 +132,55 @@ public class PageListPopupWindow {
         rv.addItemDecoration(divider);//分隔线
         ma = new GifWebRvAdapter();
         //设置页面相关
-        EditText page = rootView.findViewById(R.id.popup_page);
-        page.setText("1");
+        EditText pageEdit = rootView.findViewById(R.id.popup_page);
+        page = 1;
+        pageEdit.setText("1");
+        total = listCountGetter.getListCount(where);
         if (total > pageSize) {
             TextView totalPage = rootView.findViewById(R.id.popup_total_page);
+            LinearLayout pageCtrl = rootView.findViewById(R.id.page_popup_control);
             Button prev = rootView.findViewById(R.id.popup_prev_page);
             Button next = rootView.findViewById(R.id.popup_next_page);
-            int pages = total % pageSize == 0 ? total / pageSize : total / pageSize + 1;
+            pages = calcPages();
             prev.setOnClickListener(v -> {
-                int nowPage = Integer.parseInt(page.getText().toString());
-                if (nowPage > 1) {
-                    int pre = nowPage - 1;
-                    ma.setData(listGetter.getList(pre, list));
+                if (page > 1) {
+                    --page;
+                    ma.setData(listGetter.getList(page, list, where));
                     ma.notifyDataSetChanged();
-                    page.setText(pre + "");
+                    pageEdit.setText(page + "");
                     next.setVisibility(View.VISIBLE);
-                    prev.setVisibility(pre == 1 ? View.GONE : View.VISIBLE);
+                    prev.setVisibility(page == 1 ? View.GONE : View.VISIBLE);
                 }
             });
             next.setOnClickListener(v -> {
-                int nxt = Integer.parseInt(page.getText().toString()) + 1;
-                ma.setData(listGetter.getList(nxt, list));
+                ++page;
+                ma.setData(listGetter.getList(page, list, where));
                 ma.notifyDataSetChanged();
-                page.setText(nxt + "");
+                pageEdit.setText(page + "");
                 prev.setVisibility(View.VISIBLE);
-                next.setVisibility(nxt < pages ? View.VISIBLE : View.GONE);
+                next.setVisibility(page < pages ? View.VISIBLE : View.GONE);
             });
-            page.setOnEditorActionListener((textView, i, keyEvent) -> {
-                String nowPageStr = page.getText().toString();
-                nowPageStr = nowPageStr.equals("") ? "1" : nowPageStr;
-                int nowPage = Integer.parseInt(nowPageStr);
-                nowPage = nowPage > pages ? pages : nowPage;
-                MyLog.w("FavoriteGoPage", "page:" + nowPage);
-                page.setText(nowPage + "");
-                ma.setData(listGetter.getList(nowPage, list));
+            pageEdit.setOnEditorActionListener((textView, i, keyEvent) -> {
+                String nowPageStr = pageEdit.getText().toString();
+                int nowPage = nowPageStr.equals("") ? 1 : Integer.parseInt(nowPageStr);
+                page = nowPage > pages ? pages : nowPage;
+                MyLog.w("FavoriteGoPage", "pagePopup:" + page);
+                pageEdit.setText(page + "");
+                ma.setData(listGetter.getList(page, list, where));
                 ma.notifyDataSetChanged();
-                prev.setVisibility(nowPage > 1 ? View.VISIBLE : View.GONE);
-                next.setVisibility(nowPage < pages ? View.VISIBLE : View.GONE);
+                prev.setVisibility(page > 1 ? View.VISIBLE : View.GONE);
+                next.setVisibility(page < pages ? View.VISIBLE : View.GONE);
                 InputMethodManager imm = ((InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE));
                 if (imm != null)
                     imm.toggleSoftInput(InputMethodManager.RESULT_UNCHANGED_SHOWN, InputMethodManager.HIDE_NOT_ALWAYS);
-                page.clearFocus();
+                pageEdit.clearFocus();
                 return true;
             });
-            page.setVisibility(View.VISIBLE);
-            totalPage.setVisibility(View.VISIBLE);
-            totalPage.setText(" / " + pages);
-            next.setVisibility(View.VISIBLE);
+            pageCtrl.setVisibility(View.VISIBLE);
+            totalPage.setText(String.valueOf(pages));
         }
         list = new ArrayList<>(pageSize);
-        ma.setData(listGetter.getList(1, list));
+        ma.setData(listGetter.getList(1, list, where));
         if (itemClickListener != null) ma.setOnItemClickListener(position -> itemClickListener.onClick(this, position));
         if (itemLongClickListener != null) ma.setOnItemLongClickListener(position -> itemLongClickListener.onLongClick(this, position));
         rv.setAdapter(ma);
@@ -156,7 +188,11 @@ public class PageListPopupWindow {
     }
 
     public interface ListGetter {
-        ArrayList<HashMap<String, Object>> getList(int page, ArrayList<HashMap<String, Object>> list);
+        ArrayList<HashMap<String, Object>> getList(int page, ArrayList<HashMap<String, Object>> list, String where);
+    }
+
+    public interface ListCountGetter {
+        int getListCount(String where);
     }
 
     public interface ItemClickListener {

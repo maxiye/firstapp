@@ -14,6 +14,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Icon;
 import android.media.AudioManager;
 import android.net.Uri;
@@ -29,19 +30,24 @@ import android.provider.OpenableColumns;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.content.FileProvider;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import com.maxiye.first.util.ApiUtil;
+import com.maxiye.first.util.BitmapUtil;
 import com.maxiye.first.util.DBHelper;
 import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.PermissionUtil;
@@ -51,6 +57,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -59,18 +66,24 @@ import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.UUID;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
-//@SuppressWarnings({"unused", "WeakerAccess"})  SameParameterValue unchecked FieldCanBeLocal deprecation(过时)   UnusedParameters
+
+//@SuppressWarnings({"unused", "WeakerAccess"})  SameParameterValue unchecked FieldCanBeLocal deprecation(过时)   UnusedParameters  InflateParams
 public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
     private final int INTENT_CONTACT_PICK_REQCODE = 100;
     private final int INTENT_IMG_VIEW_REQCODE = 101;
     private final int INTENT_IMG_PICK_REQCODE = 102;
     private final int INTENT_IMG_CAPTURE_REQCODE = 103;
     public static final int INTENT_PICK_DB_BAK_REQCODE = 104;
+    public static final int INTENT_IMG_GRAY_REQCODE = 105;
+    public static final int INTENT_IMG_DOT_REQCODE = 106;
+    public static final int INTENT_IMG_REVERSE_REQCODE = 107;
     private long last_press_time = 0;
 
     @Override
@@ -224,6 +237,33 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                             alert("Error：" + e.getMessage());
                         }
                     }
+                }
+                break;
+            case INTENT_IMG_GRAY_REQCODE:
+                if (resCode == RESULT_OK && data != null) {
+                    String fname = UUID.randomUUID().toString() + "_gray.png";
+                    File img = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/gray/" + fname);
+                    showBitmap(data, BitmapUtil::convertGray, img);
+                } else {
+                    alert("bad res!");
+                }
+                break;
+            case INTENT_IMG_DOT_REQCODE:
+                if (resCode == RESULT_OK && data != null) {
+                    String fname = UUID.randomUUID().toString() + "_dot.png";
+                    File img = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/dot/" + fname);
+                    showBitmap(data, BitmapUtil::convertDot, img);
+                } else {
+                    alert("bad res!");
+                }
+                break;
+            case INTENT_IMG_REVERSE_REQCODE:
+                if (resCode == RESULT_OK && data != null) {
+                    String fname = UUID.randomUUID().toString() + "_reverse.png";
+                    File img = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/reverse/" + fname);
+                    showBitmap(data, BitmapUtil::convertReverse, img);
+                } else {
+                    alert("bad res!");
                 }
                 break;
         }
@@ -573,5 +613,112 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @SuppressLint("InflateParams")
+    public void genGradualColor(View view) {
+        //实例化布局
+        View view2 = LayoutInflater.from(this).inflate(R.layout.dialog_edittext, null);
+        EditText editText = view2.findViewById(R.id.dialog_input);
+        editText.setHint("13ba94 1080*1920");
+        //创建对话框
+        AlertDialog dialog2 = new AlertDialog.Builder(this)
+                .setIcon(R.drawable.ic_info_black_24dp)//设置图标
+                .setTitle(R.string.gradual_color)//设置标题
+                .setView(view2)//添加布局
+                .setPositiveButton(R.string.confirm, (dialog1, which) -> {
+                    ImageView imgView = BitmapUtil.loadImg(this);
+                    new Thread(() -> {
+                        String txt = editText.getText().toString();
+                        int color, w, h;
+                        try {
+                            if (txt.equals("")) {
+                                color = 0x13ba94;w = 1080;h = 1920;
+                            } else {
+                                if (txt.charAt(0) == '#') {
+                                    txt = txt.substring(1);
+                                }
+                                if (txt.contains(" ")) {
+                                    String[] set = txt.split(" ");
+                                    color = Integer.parseInt(set[0], 16);
+                                    String[] wh = set[1].split("\\*");
+                                    w = Integer.parseInt(wh[0]);
+                                    h = Integer.parseInt(wh[1]);
+                                } else {
+                                    color = Integer.parseInt(txt, 16);
+                                    w = 1080;
+                                    h = 1920;
+                                }
+                            }
+                        } catch (Exception e) {
+                            runOnUiThread(() -> alert(e.getLocalizedMessage()));
+                            e.printStackTrace();
+                            return;
+                        }
+                        Bitmap bitmap = BitmapUtil.gradualBitmap(color, w, h);
+                        imgView.setOnLongClickListener(v -> {
+                            String fname = "#" + Integer.toHexString(color) + "_" + Integer.toString(w) + "×" + Integer.toString(h) + "_" + (int) (10000 * Math.random()) + ".png";
+                            File img = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/gradual/" + fname);
+                            BitmapUtil.saveBitmap(this, img, bitmap);
+                            return false;
+                        });
+                        runOnUiThread(() -> {
+                            imgView.clearAnimation();
+                            imgView.setImageDrawable(new BitmapDrawable(null, bitmap));
+                            imgView.setMinimumHeight(bitmap.getHeight() << 1);
+                            imgView.setMinimumWidth(bitmap.getWidth() << 1);
+                        });
+                    }).start();
+                }).setNegativeButton(R.string.cancel, (dialog1, which) -> {
+                })
+                .create();
+        dialog2.show();
+        Objects.requireNonNull(dialog2.getWindow()).setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+    }
+
+    public void grayBitmap(View view) {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*");
+        startActivityForResult(intent, INTENT_IMG_GRAY_REQCODE);
+    }
+
+    public void dotBitmap(View view) {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*");
+        startActivityForResult(intent, INTENT_IMG_DOT_REQCODE);
+    }
+
+    public void reverseBitmap(View view) {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*");
+        startActivityForResult(intent, INTENT_IMG_REVERSE_REQCODE);
+    }
+
+    private interface BitmapHandler {
+        Bitmap handle(Bitmap bitmap);
+    }
+
+    private void showBitmap(Intent data, BitmapHandler handler, File saveFile) {
+        ImageView imgView = BitmapUtil.loadImg(this);
+        new Thread(() -> {
+            try {
+                FileDescriptor fd = Util.getFileDescriptor(this, data);
+                Bitmap bitmap = handler != null ?
+                        handler.handle(BitmapFactory.decodeFileDescriptor(fd)) : BitmapFactory.decodeFileDescriptor(fd);
+                imgView.setOnLongClickListener(v -> {
+                    BitmapUtil.saveBitmap(this, saveFile, bitmap);
+                    return false;
+                });
+                runOnUiThread(() -> {
+                    imgView.clearAnimation();
+                    imgView.setImageDrawable(new BitmapDrawable(null, bitmap));
+                    imgView.setMinimumHeight(bitmap.getHeight() << 1);
+                    imgView.setMinimumWidth(bitmap.getWidth() << 1);
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> alert(e.getLocalizedMessage()));
+                e.printStackTrace();
+            }
+        }).start();
     }
 }

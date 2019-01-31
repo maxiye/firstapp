@@ -53,7 +53,7 @@ public class BaseSpy {
     }
 
     public int insertItem(String content, GifActivity activity) {
-        Matcher matcher = pt.matcher(content);
+        Matcher matcher = pt.matcher(handleContent(content));
         ArrayList<HashMap<String, String>> list = activity.imgList;
         int count = 0;
         while (matcher.find()) {
@@ -76,12 +76,16 @@ public class BaseSpy {
         return count;
     }
 
+    String handleContent(String content) {
+        return content;
+    }
+
     void handleImgInfo(HashMap<String, String> imgInfo) {}
 
     private String handleTitle(String group) {
         boolean notNull = group != null && !group.replaceAll("[\r\n\\s\t]", "").equals("");
         String title = notNull ? group : UUID.randomUUID().toString();
-        return title.replaceAll("[\r\n\\s\t]", "");
+        return title.replaceAll("[\r\n\\s\t\\\\/]", "");
     }
 
     /**
@@ -107,7 +111,7 @@ public class BaseSpy {
                 e.printStackTrace();
             }
         }
-        Matcher mt = pt.matcher(content);
+        Matcher mt = pt.matcher(handleContent(content));
         if (mt.find()) {
             return mt.group(titleIdx);
         }

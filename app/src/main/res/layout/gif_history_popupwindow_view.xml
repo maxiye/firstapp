@@ -6,10 +6,11 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent">
     <LinearLayout
-        android:id="@+id/popupwindow_view_ll"
+        android:id="@+id/page_popup_control"
         android:orientation="horizontal"
         android:focusable="true"
         android:focusableInTouchMode="true"
+        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <Button
@@ -29,15 +30,21 @@
             android:layout_height="match_parent"
             android:maxLines="1"
             android:gravity="center"
-            android:visibility="gone"
             android:imeOptions="actionGo"
             android:inputType="number"
             tools:ignore="Autofill"/>
         <TextView
+            android:id="@+id/popup_total_page_div"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="/"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            tools:ignore="HardcodedText"/>
+        <TextView
             android:id="@+id/popup_total_page"
             android:layout_weight="1"
             android:gravity="center"
-            android:visibility="gone"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"/>
         <Button
@@ -45,7 +52,6 @@
             style="@style/MyButtonStyle"
             android:text="@string/next_page"
             android:layout_weight="4"
-            android:visibility="gone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
     </LinearLayout>

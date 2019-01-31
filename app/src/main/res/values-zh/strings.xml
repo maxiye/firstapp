@@ -106,4 +106,10 @@
     <string name="go_to_last_mark">回溯</string>
     <string name="bookmark_opration">朝花夕拾</string>
     <string name="success">操作成功</string>
+    <string name="gradual_color">渐变色</string>
+    <string name="input">输入</string>
+    <string name="gray_bitmap">怀旧</string>
+    <string name="find_repeated_files">查重</string>
+    <string name="dot_bitmap">点阵</string>
+    <string name="reverse_bitmap">反转</string>
 </resources>

@@ -32,13 +32,13 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
         int capacity;
         switch (keyword) {
             case "bitmap":
-                capacity = 50 * 1024 * 1024;
+                capacity = 50 << 10 << 10;
                 break;
             case "gif":
-                capacity = 400 * 1024 * 1024;
+                capacity = 400 << 10 << 10;
                 break;
             default:
-                capacity = 100 * 1024 * 1024;
+                capacity = 100 << 10 << 10;
                 break;
         }
         File diskLru = new File(context.getCacheDir(), "diskLru_" + keyword);
