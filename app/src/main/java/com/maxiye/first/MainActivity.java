@@ -84,6 +84,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     public static final int INTENT_IMG_GRAY_REQCODE = 105;
     public static final int INTENT_IMG_DOT_REQCODE = 106;
     public static final int INTENT_IMG_REVERSE_REQCODE = 107;
+    public static final int INTENT_IMG_DOT_TXT_REQCODE = 108;
     private long last_press_time = 0;
 
     @Override
@@ -262,6 +263,13 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                     String fname = UUID.randomUUID().toString() + "_reverse.png";
                     File img = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/reverse/" + fname);
                     showBitmap(data, BitmapUtil::convertReverse, img);
+                } else {
+                    alert("bad res!");
+                }
+                break;
+            case INTENT_IMG_DOT_TXT_REQCODE:
+                if (resCode == RESULT_OK && data != null) {
+                    saveDotTxt(data);
                 } else {
                     alert("bad res!");
                 }
@@ -694,6 +702,12 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         startActivityForResult(intent, INTENT_IMG_REVERSE_REQCODE);
     }
 
+    public void dotBitmapTxt(View view) {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*");
+        startActivityForResult(intent, INTENT_IMG_DOT_TXT_REQCODE);
+    }
+
     private interface BitmapHandler {
         Bitmap handle(Bitmap bitmap);
     }
@@ -720,5 +734,13 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 e.printStackTrace();
             }
         }).start();
+    }
+
+    private void saveDotTxt(Intent data) {
+        FileDescriptor fd = Util.getFileDescriptor(this, data);
+        String dotTxt = BitmapUtil.convertDotTxt(BitmapFactory.decodeFileDescriptor(fd));
+        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "bitmap_txt/" + UUID.randomUUID().toString() + "_dot.txt");
+        Util.saveFileEx(file, dotTxt);
+        alert(getString(R.string.success));
     }
 }

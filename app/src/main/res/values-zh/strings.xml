@@ -112,4 +112,5 @@
     <string name="find_repeated_files">查重</string>
     <string name="dot_bitmap">点阵</string>
     <string name="reverse_bitmap">反转</string>
+    <string name="dot_bitmap_txt">点阵文字图</string>
 </resources>

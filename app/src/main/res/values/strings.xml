@@ -111,4 +111,5 @@
     <string name="find_repeated_files">Find Repeated Files</string>
     <string name="dot_bitmap">Dot Bitmap</string>
     <string name="reverse_bitmap">Reverse Bitmap</string>
+    <string name="dot_bitmap_txt">Dot Bitmap Text</string>
 </resources>

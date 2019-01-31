@@ -6,6 +6,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.drawable.ColorDrawable;
 import android.media.ThumbnailUtils;
 import android.view.Window;
@@ -129,6 +130,12 @@ public class BitmapUtil {
 
     /**
      * 转换为反色
+     * 原型
+     * int alpha = 0xFF << 24;
+     * int r = (color & 0xFF0000) >> 16;
+     * int g = (color & 0xFF00) >> 8;
+     * int b = color & 0xFF;
+     * int rgb = alpha | ((255 - r) << 16) | ((255 - g) << 8) | (255 - b);
      * @param bitmap Bitmap
      * @return Bitmap
      */
@@ -137,15 +144,75 @@ public class BitmapUtil {
         int height = bitmap.getHeight();
         int[] pixels = new int[width * height];
         bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
-        int alpha = 0xFF << 24;
+        for (int i = 0; i < pixels.length; i++) {
+            pixels[i] ^= 0xFFFFFF;
+        }
+        return Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888);
+    }
+
+    /**
+     * 转换为只有黑白色的位图
+     * @param bitmap Bitmap
+     * @return Bitmap
+     */
+    public static Bitmap convertDot(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+        int avg = 0;
         for (int i = 0; i < pixels.length; i++) {
             int color = pixels[i];
             int r = (color & 0xFF0000) >> 16;
             int g = (color & 0xFF00) >> 8;
             int b = color & 0xFF;
-            pixels[i] = alpha | ((255 - r) << 16) | ((255 - g) << 8) | (255 - b);//todo 待优化性能
+            pixels[i] = (r * 306 + g * 601 + b * 117) >> 10;//转灰度
+            avg += pixels[i];
         }
-        return Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888);
+        avg = avg / (width * height);
+        long meta = 0;
+        for (int i = 0; i < pixels.length; i++) {
+            pixels[i] = pixels[i] > avg ? 0xFFFFFFFF : 0xFF000000;
+        }
+        return Bitmap.createBitmap(pixels, width, height, Bitmap.Config.RGB_565);
+    }
+
+    /**
+     * 转换为只有黑白色的文本
+     * @param bitmap Bitmap
+     * @return String
+     */
+    public static String convertDotTxt(Bitmap bitmap) {
+        // 取得想要缩放的matrix參數
+        Matrix matrix = new Matrix();
+        int w = bitmap.getWidth(), h = bitmap.getHeight();
+        float scale = 150f / Math.max(w , h);
+        matrix.postScale(scale, scale);
+        // 得到新的圖片
+        bitmap = Bitmap.createBitmap(bitmap, 0, 0, w, h, matrix, true);
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+        int avg = 0;
+        for (int i = 0; i < pixels.length; i++) {
+            int color = pixels[i];
+            int r = (color & 0xFF0000) >> 16;
+            int g = (color & 0xFF00) >> 8;
+            int b = color & 0xFF;
+            pixels[i] = (r * 306 + g * 601 + b * 117) >> 10;//转灰度
+            avg += pixels[i];
+        }
+        avg = avg / (width * height);
+        long meta = 0;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < pixels.length; i++) {
+            sb.append(pixels[i] > avg ? "  " : "**");
+            if ((i + 1) % width == 0) {
+                sb.append("\r\n");
+            }
+        }
+        return sb.toString();
     }
 
     /**
@@ -320,8 +387,8 @@ public class BitmapUtil {
 
     /**
      * 计算图片信息meta值,long
-     * 第一步，缩小尺寸：图片缩小到8x8的尺寸，总共64个像素
-     * 第二步，简化色彩：将缩小后的图片，转为64级灰度。
+     * 第一步，缩小尺寸：图片缩小到8x8的尺寸，总共64个像素 {@link #calculateInSampleSize(BitmapFactory.Options, int, int)}
+     * 第二步，简化色彩：将缩小后的图片，转为64级灰度 {@link #convertGray(Bitmap)}
      * 第三步，计算平均值：计算所有64个像素的灰度平均值
      * 第四步，比较像素的灰度：将每个像素的灰度，与平均值进行比较。大于或等于平均值，记为1；小于平均值，记为0。
      * 第五步，计算哈希值：将上一步的比较结果，组合在一起，就构成了一个64位的整数
@@ -418,32 +485,5 @@ public class BitmapUtil {
                 e.printStackTrace();
             }
         });
-    }
-
-    /**
-     * 转换为只有黑白色的位图
-     * @param bitmap Bitmap
-     * @return Bitmap
-     */
-    public static Bitmap convertDot(Bitmap bitmap) {
-        int width = bitmap.getWidth();
-        int height = bitmap.getHeight();
-        int[] pixels = new int[width * height];
-        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
-        int avg = 0;
-        for (int i = 0; i < pixels.length; i++) {
-            int color = pixels[i];
-            int r = (color & 0xFF0000) >> 16;
-            int g = (color & 0xFF00) >> 8;
-            int b = color & 0xFF;
-            pixels[i] = (r * 306 + g * 601 + b * 117) >> 10;//转灰度
-            avg += pixels[i];
-        }
-        avg = avg / (width * height);
-        long meta = 0;
-        for (int i = 0; i < pixels.length; i++) {
-            pixels[i] = pixels[i] > avg ? 0xFFFFFFFF : 0xFF000000;
-        }
-        return Bitmap.createBitmap(pixels, width, height, Bitmap.Config.RGB_565);
     }
 }

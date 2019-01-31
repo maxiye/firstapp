@@ -9,7 +9,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -23,12 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.maxiye.first.part.AppLvAdapter;
-import com.maxiye.first.util.Util;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -161,7 +155,7 @@ public class ApplistFragment extends Fragment {
                         })
                         .collect(Collectors.toList());
                 //写入文件
-                //SaveAppListEx("app_list.txt", app_list);
+                //saveFileEx("app_list.txt", app_list);
                 return ai_list.size() > 0 ? ai_list : null;
             }
             return null;
@@ -198,50 +192,6 @@ public class ApplistFragment extends Fragment {
                 }
             }
         }
-    }
-
-    /**
-     * 保存applist到内部存储
-     *
-     * @param fname   Filename
-     * @param content File content
-     */
-    @SuppressWarnings("unused")
-    public void SaveAppList(String fname, String content) {
-        FileOutputStream fos;
-        try {
-            fos = getActivity().openFileOutput(fname, Context.MODE_PRIVATE);
-            fos.write(content.getBytes());
-            fos.flush();
-            fos.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * 保存applist到外部存储
-     *
-     * @param fname   Filename
-     * @param content File content
-     */
-    @SuppressWarnings("unused")
-    private void SaveAppListEx(String fname, String content) {
-        if (Util.isExternalStorageWritable()) {
-            File file = new File(getActivity().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fname);
-            try {
-                if (!file.exists() && !file.createNewFile()) {
-                    throw new IOException();
-                }
-                RandomAccessFile raf = new RandomAccessFile(file, "rwd");
-                //raf.seek(file.length());//追加模式
-                raf.write(content.getBytes());
-                raf.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
     }
 
     @Override

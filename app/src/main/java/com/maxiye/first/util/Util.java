@@ -2,13 +2,16 @@ package com.maxiye.first.util;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 
+import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -72,5 +75,54 @@ public class Util {
             e.printStackTrace();
         }
         return null;
+    }
+
+
+
+    /**
+     * 保存到内部存储
+     *
+     * @param filename Filename
+     * @param content File content
+     */
+    @SuppressWarnings("unused")
+    public void saveFileIn(Context context, String filename, String content) {
+        FileOutputStream fos;
+        try {
+            fos = context.openFileOutput(filename, Context.MODE_PRIVATE);
+            fos.write(content.getBytes());
+            fos.flush();
+            fos.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 保存到外部存储
+     *
+     * @param file   File
+     * @param content File content
+     */
+    public static void saveFileEx(File file, String content) {
+        if (isExternalStorageWritable()) {
+            try {
+                if (!file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
+                    throw new IOException("create dir error");
+                }
+                if (!file.exists() && !file.createNewFile()) {
+                    throw new IOException("create file error");
+                }
+                RandomAccessFile raf = new RandomAccessFile(file, "rwd");
+                //raf.seek(file.length());//追加模式
+                raf.write(content.getBytes());
+                raf.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            MyLog.w("saveFileEx", "Permission denied!");
+        }
+
     }
 }

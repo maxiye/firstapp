@@ -135,4 +135,19 @@
             android:text="@string/reverse_bitmap"/>
 
     </LinearLayout>
+    <LinearLayout
+        android:id="@+id/main_ll4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/main_ll3"
+        android:padding="3dp">
+        <Button
+            style="@style/MyButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="dotBitmapTxt"
+            android:drawableTop="@drawable/ic_blur_circular_black_24dp"
+            android:text="@string/dot_bitmap_txt"/>
+    </LinearLayout>
 </android.support.constraint.ConstraintLayout>
