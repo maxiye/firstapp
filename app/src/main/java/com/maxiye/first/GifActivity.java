@@ -107,7 +107,6 @@ import java.util.stream.Collectors;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.ConnectionPool;
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -878,14 +877,14 @@ public class GifActivity extends AppCompatActivity {
                     pMenu.getMenuInflater().inflate(R.menu.gif_history_popupmenu, pMenu.getMenu());
                     pMenu.setOnMenuItemClickListener(item1 -> {
                         switch (item1.getItemId()) {
-                            case R.id.delete_fav:
+                            case R.id.delete_history:
                                 //删除记录
                                 String delArtId = pageWin.ma.getItemData(position).get("art_id").toString();
                                 String delWebName = (String) pageWin.ma.getItemData(position).get("web_name");
                                 deleteHistory(delArtId, delWebName);
                                 pageWin.remove(position);
                                 break;
-                            case R.id.copy_fav_artid:
+                            case R.id.copy_history_artid:
                                 String articleId = pageWin.ma.getItemData(position).get("art_id").toString();
                                 ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                                 assert clm != null;
@@ -999,6 +998,9 @@ public class GifActivity extends AppCompatActivity {
                                 deleteFavorite(id2, itemId2);
                                 pageWin.remove(position);
                                 break;
+                            case R.id.filter_where:
+                                showFilterInput(pageWin);
+                                break;
                             case R.id.find_repeated_files:
                                 loading();
                                 threadPoolExecutor.execute(() -> {
@@ -1027,6 +1029,37 @@ public class GifActivity extends AppCompatActivity {
                 .setWindowHeight(ViewGroup.LayoutParams.MATCH_PARENT)
                 .build();
         pageWindow.showAtLocation(findViewById(R.id.gif_activity_fab), Gravity.BOTTOM, 0, 0);
+    }
+
+    @SuppressLint("InflateParams")
+    private void showFilterInput(PageListPopupWindow pageWin) {
+        //实例化布局
+        View view2 = LayoutInflater.from(this).inflate(R.layout.dialog_edittext, null);
+        EditText where = view2.findViewById(R.id.dialog_input);
+        where.setHint(R.string.filter_where);
+        where.setText(pageWin.where);
+        //创建对话框
+        AlertDialog dialog2 = new AlertDialog.Builder(this)
+                .setIcon(R.drawable.ic_info_black_24dp)//设置图标
+                .setTitle(R.string.filter_where)//设置标题
+                .setView(view2)//添加布局
+                .setPositiveButton(R.string.confirm, (dialog1, which) -> {
+                    pageWin.where = where.getText().toString();
+                    try {
+                        pageWin.reset();
+                        if (pageWin.getTotal() == 0)
+                            throw new Exception("no data");
+                    } catch (Exception e) {
+                        alert(e.getLocalizedMessage());
+                        pageWin.where = null;
+                        pageWin.reset();
+                        e.printStackTrace();
+                    }
+                }).setNegativeButton(R.string.cancel, (dialog1, which) -> {
+                })
+                .create();
+        dialog2.show();
+        Objects.requireNonNull(dialog2.getWindow()).setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
     }
 
     @SuppressWarnings("unused")
@@ -1547,7 +1580,7 @@ public class GifActivity extends AppCompatActivity {
         ctv.put("title", name);
         ctv.put("type", ext.equals(".gif") ? "gif" : "bitmap");//动位混合处理（3dm）
         db.update(DBHelper.TB_IMG_WEB_ITEM, ctv, "art_id = ? and url = ?", new String[]{artId, imgInfo.get("url")});
-        MyLog.w("db_web_item_update: ", name + "；" + ext + "；" + imgInfo.get("url"));
+        MyLog.w("db_item_update_ext: ", name + "；" + ext + "；" + imgInfo.get("url"));
     }
 
     private void saveDbWeb(String title, String url) {
@@ -1814,10 +1847,9 @@ public class GifActivity extends AppCompatActivity {
                             } else {
                                 bytes = responseBody.bytes();
                             }
-                            MediaType mediaType = responseBody.contentType();
-                            String ext = "";
-                            if (mediaType != null && !imgInfo.get("ext").equals(ext = "." + mediaType.subtype())) {
-                                imgInfo.put("ext", ext);
+                            String ext = imgInfo.get("ext");
+                            if (BitmapUtil.isGif(bytes) && !ext.equals(".gif")) {
+                                imgInfo.put("ext", ext = ".gif");
                                 activity.updateExt(imgInfo);
                             }
                             Drawable imgDrawable = ext.equals(".gif") ? new GifDrawable(bytes) : Drawable.createFromStream(new ByteArrayInputStream(bytes), null);

@@ -486,4 +486,14 @@ public class BitmapUtil {
             }
         });
     }
+
+    /**
+     * 判断数据是否为gif图片数据
+     * 根据 文件头 的 Signature （3B） 判断，应为 GIF 三个字符的ascii码
+     * @param data byte[]
+     * @return boolean
+     */
+    public static boolean isGif(byte[] data) {
+        return data[0] == 71 && data[1] == 73 && data[2] == 70;//71=>G 73=>I 70=>F
+    }
 }

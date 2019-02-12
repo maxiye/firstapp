@@ -76,6 +76,10 @@ public class PageListPopupWindow {
         ma.notifyItemRangeChanged(position, list.size());
     }
 
+    public int getTotal() {
+        return total;
+    }
+
     public static class Builder {
         private final PageListPopupWindow pagePopup;
 
