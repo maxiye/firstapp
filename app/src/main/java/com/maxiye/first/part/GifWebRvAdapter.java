@@ -20,6 +20,7 @@ import java.util.Map;
  * gif历史列表适配器
  * Created by due on 2018/5/14.
  */
+@SuppressWarnings({"WeakerAccess"})
 public class GifWebRvAdapter extends RecyclerView.Adapter {
     private ArrayList<HashMap<String, Object>> mData;
     private OnItemClickListener clickListener;

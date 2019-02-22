@@ -38,7 +38,7 @@ public class PageListPopupWindow {
     private ItemClickListener itemClickListener;
     private ItemLongClickListener itemLongClickListener;
     private int total;
-    private int pageSize;
+    private int pageSize = 10;
     private int pages;
     private int page;
     public String where;//筛选条件
@@ -74,6 +74,10 @@ public class PageListPopupWindow {
         list.remove(position);
         ma.notifyItemRemoved(position);
         ma.notifyItemRangeChanged(position, list.size());
+    }
+
+    public void dismiss() {
+        popupWindow.dismiss();
     }
 
     public int getTotal() {

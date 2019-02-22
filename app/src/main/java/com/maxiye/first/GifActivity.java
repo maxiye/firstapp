@@ -33,10 +33,7 @@ import android.support.v4.content.FileProvider;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.ListPopupWindow;
-import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.text.InputType;
 import android.util.DisplayMetrics;
@@ -63,7 +60,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.maxiye.first.part.CircleProgressDrawable;
-import com.maxiye.first.part.GifWebRvAdapter;
 import com.maxiye.first.part.PageListPopupWindow;
 import com.maxiye.first.spy.BaseSpy;
 import com.maxiye.first.spy.SpyGetter;
@@ -73,6 +69,7 @@ import com.maxiye.first.util.DiskLRUCache;
 import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.NetworkUtil;
 import com.maxiye.first.util.PermissionUtil;
+import com.maxiye.first.util.Util;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -96,13 +93,11 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -129,7 +124,7 @@ public class GifActivity extends AppCompatActivity {
     public static final String WEB_NAME = "GifActivity.webName";
     private static boolean getNewFlg = true;//是否获取新的文章
     private static boolean endFlg = false;
-    private static String webName = "yxdown";
+    private static String webName = "duowan";
     private static String type = "bitmap";
     private static String title = "动态图";
     private static String artId = "1023742";
@@ -501,7 +496,7 @@ public class GifActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.gif_activity_actions, menu);
+        getMenuInflater().inflate(R.menu.gif_activity_actions, Util.iconMenu(menu));
         return true;
     }
 
@@ -579,34 +574,44 @@ public class GifActivity extends AppCompatActivity {
     }
 
     @SuppressLint("InflateParams")
-    public void switchWeb(MenuItem item) {
-        PopupWindow popupWindow = new PopupWindow(450, ViewGroup.LayoutParams.WRAP_CONTENT);
-        popupWindow.setContentView(LayoutInflater.from(this).inflate(R.layout.gif_history_popupwindow_view, null));
-        popupWindow.setOutsideTouchable(true);
-        RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
-        DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
-        divider.setDrawable(Objects.requireNonNull(getDrawable(R.drawable.gif_rv_divider)));
-        rv.addItemDecoration(divider);//分隔线
-        rv.setLayoutManager(new LinearLayoutManager(this));
-        GifWebRvAdapter ma = new GifWebRvAdapter();
-        ArrayList<HashMap<String, Object>> listData = new ArrayList<>(webList.length);
-        for (String web : webList) {
-            HashMap<String, Object> webItem = new HashMap<>(2);
-            String actived = webName.equals(web) ? "<span style='color: #13b294'>&emsp;&emsp;&emsp;☯</span>" : "";//⊙◎☉●✪☯⊕¤❤☺☻۞
-            webItem.put("name", web + actived);
-            webItem.put("web", web);
-            webItem.put("icon", iconCacheList.get(web));
-            listData.add(webItem);
+    public void switchType(MenuItem item) {
+        PopupMenu pMenu = new PopupMenu(this, findViewById(R.id.gif_tpl_hidden_top), Gravity.END);
+        Menu menu = Util.iconMenu(pMenu.getMenu());
+        String[] typeList = getTypeList();
+        for (int i = 0; i < typeList.length; i++) {
+            String t = typeList[i];
+            if (t.equals(type)) {
+                t += "          √";
+            }
+            menu.add(Menu.NONE, i, Menu.NONE, t).setIcon(iconCacheList.get("default"));
         }
-        ma.setData(listData);
-        ma.setOnItemClickListener(position -> {
-            setWebName((String) listData.get(position).get("web"));
+        pMenu.setOnMenuItemClickListener(item1 -> {
+            setType(typeList[item1.getItemId()]);
             getNewFlg = true;
             initPage();
-            popupWindow.dismiss();
+            return true;
         });
-        rv.setAdapter(ma);
-        popupWindow.showAtLocation(findViewById(R.id.gif_activity_main_content), Gravity.TOP | Gravity.END, 0, 0);
+        pMenu.show();
+    }
+
+    @SuppressLint("InflateParams")
+    public void switchWeb(MenuItem item) {
+        PopupMenu pMenu = new PopupMenu(this, findViewById(R.id.gif_tpl_hidden_top), Gravity.END);
+        Menu menu = Util.iconMenu(pMenu.getMenu());
+        for (int i = 0; i < webList.length; i++) {
+            String web = webList[i];
+            MenuItem mItem = menu.add(Menu.NONE, i, Menu.NONE, web).setIcon(BitmapUtil.scaleDrawable(iconCacheList.get(web), 100, 0));
+            if (web.equals(webName)) {
+                mItem.setTitle(web + "          √");
+            }
+        }
+        pMenu.setOnMenuItemClickListener(item1 -> {
+            setWebName(webList[item1.getItemId()]);
+            getNewFlg = true;
+            initPage();
+            return true;
+        });
+        pMenu.show();
     }
 
     public void browserOpen(MenuItem item) {
@@ -694,37 +699,6 @@ public class GifActivity extends AppCompatActivity {
                 .show();
     }
 
-    @SuppressLint("InflateParams")
-    public void switchType(MenuItem item) {
-        PopupWindow popupWindow = new PopupWindow(450, ViewGroup.LayoutParams.WRAP_CONTENT);
-        popupWindow.setContentView(LayoutInflater.from(this).inflate(R.layout.gif_history_popupwindow_view, null));
-        popupWindow.setOutsideTouchable(true);
-        RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
-        DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
-        divider.setDrawable(Objects.requireNonNull(getDrawable(R.drawable.gif_rv_divider)));
-        rv.addItemDecoration(divider);//分隔线
-        rv.setLayoutManager(new LinearLayoutManager(this));
-        GifWebRvAdapter ma = new GifWebRvAdapter();
-        ArrayList<HashMap<String, Object>> typeList = new ArrayList<>();
-        for (String t : getTypeList()) {
-            HashMap<String, Object> typeItem = new HashMap<>(2);
-            String actived = type.equals(t) ? "<span style='color: #13b294'>&emsp;&emsp;&emsp;&emsp;☯</span>" : "";//⊙◎☉●✪☯⊕¤❤☺☻۞
-            typeItem.put("name", t + actived);
-            typeItem.put("type", t);
-            typeItem.put("icon", iconCacheList.get("default"));
-            typeList.add(typeItem);
-        }
-        ma.setData(typeList);
-        ma.setOnItemClickListener(position -> {
-            setType((String) typeList.get(position).get("type"));
-            getNewFlg = true;
-            initPage();
-            popupWindow.dismiss();
-        });
-        rv.setAdapter(ma);
-        popupWindow.showAtLocation(findViewById(R.id.gif_activity_main_content), Gravity.TOP | Gravity.END, 0, 0);
-    }
-
     public void bookmarkOperation(MenuItem item) {
         ListPopupWindow bookmarkMenu = new ListPopupWindow(this);
         bookmarkMenu.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new
@@ -751,44 +725,52 @@ public class GifActivity extends AppCompatActivity {
     }
 
     private void listBookmark() {
-        List<String> mData = getBookmark().stream()
-                .map(hm -> hm.get("title") + "，" + hm.get("web_name") + "，" + hm.get("type") + "，" + hm.get("art_id") + "，" + hm.get("page"))
-                .collect(Collectors.toList());
-        if (mData.size() == 0){
+        LinkedList<HashMap<String, String>> markList = getBookmark();
+        if (markList.size() == 0){
             alert("Bookmark List is Empty");
             return;
         }
-        ListPopupWindow listWin = new ListPopupWindow(this);
-        listWin.setAnchorView(findViewById(R.id.gif_tpl_hidden_top));
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, mData);
-        listWin.setAdapter(adapter);
-        listWin.setModal(true);
-        listWin.setOnItemClickListener((parent, view, position, id) -> {
-            ListPopupWindow tips = new ListPopupWindow(this);
-            tips.setAnchorView(view);
-            tips.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new String[]{getString(R.string.open), getString(R.string.delete)}));
-            tips.setModal(true);//获取焦点，点击外部不会让上层消失
-            tips.setWidth(500);
-            tips.setOnItemClickListener((parent1, view1, position1, id1) -> {
-                switch (position1) {
-                    case 0:
-                        seek(position, false);
-                        listWin.dismiss();
-                        break;
-                    case 1:
-                        removeMark(position);
-                        if (mData.size() > 1) {
-                            adapter.remove(adapter.getItem(position));
-                        } else {
-                            listWin.dismiss();
-                        }
-                        break;
-                }
-                tips.dismiss();
-            });
-            tips.show();
-        });
-        listWin.show();
+        PopupWindow listPage = new PageListPopupWindow.Builder(this)
+                .setListCountGetter(where -> 8)
+                .setListGetter((page, list, where) -> {
+                    markList.forEach(hm -> {
+                                HashMap<String, Object> item = new HashMap<>(2);
+                                item.put("icon", iconCacheList.get(hm.get("web_name")));
+                                item.put("name", hm.get("title") + "，" + hm.get("web_name") + "，" + hm.get("type") + "，" + hm.get("art_id") + "，" + hm.get("page"));
+                                list.add(item);
+                            });
+                    return list;
+                })
+                .setItemClickListener((pageListPopupWindow, position) -> {
+                    seek(position, false);
+                    pageListPopupWindow.dismiss();
+                })
+                .setItemLongClickListener((pageListPopupWindow, position) -> {
+                    PopupMenu pMenu = new PopupMenu(this, pageListPopupWindow.rv.getLayoutManager().findViewByPosition(position));//使用rv.getChildAt只能获取可见的item，0表示当前屏幕可见第一个item
+                    pMenu.getMenuInflater().inflate(R.menu.gif_bookmark_popupmenu, pMenu.getMenu());
+                    pMenu.setOnMenuItemClickListener(item1 -> {
+                                switch (item1.getItemId()) {
+                                    case R.id.seek_del_mark:
+                                        seek(position, true);
+                                        pageListPopupWindow.dismiss();
+                                        break;
+                                    case R.id.delete_mark:
+                                        removeMark(position);
+                                        if (markList.size() > 1) {
+                                            pageListPopupWindow.remove(position);
+                                        } else {
+                                            pageListPopupWindow.dismiss();
+                                        }
+                                        break;
+                                }
+                                return false;
+                            });
+                    pMenu.show();
+                    return false;
+                })
+                .setWindowHeight(ViewGroup.LayoutParams.WRAP_CONTENT)
+                .build();
+        listPage.showAsDropDown(findViewById(R.id.gif_tpl_hidden_top));
     }
 
     private LinkedList<HashMap<String,String>> getBookmark() {
@@ -816,10 +798,10 @@ public class GifActivity extends AppCompatActivity {
         alert(getString(R.string.add_successfully));
     }
 
-    private void seek(int index, boolean del) {
+    private void seek(int pos, boolean del) {
         LinkedList<HashMap<String,String>> bookmark = getBookmark();
-        if (index < bookmark.size()) {
-            HashMap<String, String> mark = bookmark.get(index);
+        if (pos < bookmark.size()) {
+            HashMap<String, String> mark = bookmark.get(pos);
             setType(mark.get("type"));
             setWebName(mark.get("web_name"));
             artId = mark.get("art_id");
@@ -835,7 +817,7 @@ public class GifActivity extends AppCompatActivity {
                 mViewPager.setCurrentItem(newPage - 1, true);
             }
             if (del) {
-                bookmark.remove(index);
+                bookmark.remove(pos);
                 Type _type = new TypeToken<LinkedList<HashMap<String,String>>>(){}.getType();
                 getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE).edit()
                         .putString(SettingActivity.BOOKMARK, new Gson().toJson(bookmark, _type))
@@ -904,7 +886,7 @@ public class GifActivity extends AppCompatActivity {
                     pMenu.show();
                     return true;
                 }).setPageSize(HISTORY_PAGE_SIZE)
-                .setWindowHeight(1200)
+                .setWindowHeight(ViewGroup.LayoutParams.WRAP_CONTENT)
                 .build();
         pageWindow.showAtLocation(findViewById(R.id.gif_activity_fab), Gravity.BOTTOM, 0, 0);
     }

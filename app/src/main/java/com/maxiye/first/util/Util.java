@@ -1,10 +1,12 @@
 package com.maxiye.first.util;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
+import android.view.Menu;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -12,6 +14,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.reflect.Method;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -124,5 +127,22 @@ public class Util {
             MyLog.w("saveFileEx", "Permission denied!");
         }
 
+    }
+
+    /**
+     * 开启Menu的icon显示
+     * @param menu Menu
+     * @return Menu
+     */
+    @SuppressLint("PrivateApi")
+    public static Menu iconMenu(Menu menu) {
+        try {
+            Method m = menu.getClass().getDeclaredMethod("setOptionalIconsVisible", Boolean.TYPE);
+            m.setAccessible(true);
+            m.invoke(menu, true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return menu;
     }
 }

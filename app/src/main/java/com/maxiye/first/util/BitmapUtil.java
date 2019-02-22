@@ -7,7 +7,9 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.media.ThumbnailUtils;
 import android.view.Window;
 import android.view.animation.Animation;
@@ -183,13 +185,9 @@ public class BitmapUtil {
      * @return String
      */
     public static String convertDotTxt(Bitmap bitmap) {
-        // 取得想要缩放的matrix參數
-        Matrix matrix = new Matrix();
         int w = bitmap.getWidth(), h = bitmap.getHeight();
         float scale = 150f / Math.max(w , h);
-        matrix.postScale(scale, scale);
-        // 得到新的圖片
-        bitmap = Bitmap.createBitmap(bitmap, 0, 0, w, h, matrix, true);
+        bitmap = scaleBitmap(bitmap, scale, scale);
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
         int[] pixels = new int[width * height];
@@ -495,5 +493,36 @@ public class BitmapUtil {
      */
     public static boolean isGif(byte[] data) {
         return data[0] == 71 && data[1] == 73 && data[2] == 70;//71=>G 73=>I 70=>F
+    }
+
+    /**
+     *  缩放bitmap
+     * @param bitmap bitmap
+     * @param scaleX X缩放倍率
+     * @param scaleY Y缩放倍率
+     * @return Bitmap
+     */
+    public static Bitmap scaleBitmap(Bitmap bitmap, float scaleX, float scaleY) {
+        Matrix matrix = new Matrix();
+        int w = bitmap.getWidth(), h = bitmap.getHeight();
+        matrix.postScale(scaleX, scaleY);
+        // 得到新的圖片
+        return Bitmap.createBitmap(bitmap, 0, 0, w, h, matrix, true);
+    }
+
+    /**
+     * 缩放drawable
+     * @param drawable drawable
+     * @return drawable
+     */
+    public static Drawable scaleDrawable(Drawable drawable, int w, int h) {
+        Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+        float scale = 1f;
+        if (w > 0) {
+            scale = ((float) w) / bitmap.getWidth();
+        } else if(h > 0) {
+            scale = ((float) h) / bitmap.getHeight();
+        }
+        return new BitmapDrawable(null, scaleBitmap(((BitmapDrawable) drawable).getBitmap(), scale, scale));
     }
 }
