@@ -4,4 +4,5 @@
     <item android:id="@+id/delete_history" android:title="@string/delete"/>
     <item android:id="@+id/copy_history_artid" android:title="@string/copy_art_id"/>
     <item android:id="@+id/reload_art" android:title="@string/reload_art"/>
+    <item android:id="@+id/filter_where" android:title="@string/filter_where"/>
 </menu>

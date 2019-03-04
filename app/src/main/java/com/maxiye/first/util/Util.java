@@ -80,8 +80,6 @@ public class Util {
         return null;
     }
 
-
-
     /**
      * 保存到内部存储
      *
@@ -144,5 +142,25 @@ public class Util {
             e.printStackTrace();
         }
         return menu;
+    }
+
+    /**
+     * 取前48bit 计算位或hash
+     * @param name String
+     * @return int
+     */
+    public static long strHash(String name) {
+        byte[] bytes = name.getBytes();
+        long hash = 0;
+        int lft = 40;
+        for (byte aByte : bytes) {
+            hash |= ((long)aByte << lft);
+            if (lft >= 8) {
+                lft -= 8;
+            } else {
+                break;
+            }
+        }
+        return hash;
     }
 }

@@ -11,6 +11,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.ThumbnailUtils;
+import android.util.Base64;
 import android.view.Window;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -23,6 +24,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.Objects;
+import java.util.Properties;
 
 import pl.droidsonroids.gif.GifImageView;
 
@@ -310,8 +312,8 @@ public class BitmapUtil {
      * 从文件获取指定大小压缩比的bitmap
      *
      * @param file file
-     * @param w    width
-     * @param h    height
+     * @param w    width 最小宽度
+     * @param h    height 最小高度
      * @return bitmap
      */
     public static Bitmap getBitmap(File file, int w, int h) {
@@ -397,10 +399,10 @@ public class BitmapUtil {
      */
     public static long calcImgMeta2(Bitmap bmp) {
         try {
-            Bitmap bitmap = ThumbnailUtils.extractThumbnail(bmp, 8, 8);
+            int width = 8;
+            int height = 8;
+            Bitmap bitmap = ThumbnailUtils.extractThumbnail(bmp, width, height);
             bitmap = convertGray(bitmap);
-            int width = bitmap.getWidth();
-            int height = bitmap.getHeight();
             int[] pixels = new int[width * height];
             bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
             int avg = 0;
@@ -408,7 +410,7 @@ public class BitmapUtil {
                 pixels[i] &= 0xFF;
                 avg += pixels[i];
             }
-            avg = avg >> 6;//improve
+            avg = avg >> 6;//improve / 64
             long meta = 0;
             for (int pix : pixels) {
                 meta = meta << 1 | (pix >= avg ? 1 : 0);
@@ -524,5 +526,26 @@ public class BitmapUtil {
             scale = ((float) h) / bitmap.getHeight();
         }
         return new BitmapDrawable(null, scaleBitmap(((BitmapDrawable) drawable).getBitmap(), scale, scale));
+    }
+
+    /**
+     * 获取图片指纹并缓存
+     * @param file File
+     * @return long
+     */
+    public static long cachedImgMeta(File file, Properties props) {
+        String fName = file.getName();
+        if (fName.length() > 6) {
+            fName = fName.substring(0, 6);
+        }
+        String hash = Base64.encodeToString(fName.getBytes(), Base64.NO_PADDING | Base64.NO_WRAP);
+        long meta;
+        if (props.containsKey(hash)) {
+            meta = Long.valueOf(props.getProperty(hash));
+        } else {
+            meta = BitmapUtil.calcImgMeta2(BitmapUtil.getBitmap(file, 8, 8));
+            props.setProperty(hash, String.valueOf(meta));
+        }
+        return meta;
     }
 }

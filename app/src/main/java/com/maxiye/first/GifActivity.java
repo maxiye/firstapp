@@ -75,6 +75,8 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -95,6 +97,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -880,6 +883,9 @@ public class GifActivity extends AppCompatActivity {
                                 initPage();
                                 pageWin.popupWindow.dismiss();
                                 break;
+                            case R.id.filter_where:
+                                showFilterInput(pageWin);
+                                break;
                         }
                         return false;
                     });
@@ -987,7 +993,7 @@ public class GifActivity extends AppCompatActivity {
                                 loading();
                                 threadPoolExecutor.execute(() -> {
                                     try {
-                                        String favIds = getRepeatedItems2();
+                                        String favIds = getRepeatedItems();
                                         runOnUiThread(() -> {
                                             pageWin.where = "id in (" + favIds + ")";
                                             pageWin.reset();
@@ -1044,56 +1050,21 @@ public class GifActivity extends AppCompatActivity {
         Objects.requireNonNull(dialog2.getWindow()).setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
     }
 
-    @SuppressWarnings("unused")
     private String getRepeatedItems() {
         File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);
-        File[] fileList = dir.listFiles(File::isFile);
-        StringBuilder ids = new StringBuilder();
-        if (fileList != null) {
-            float[][] metas = new float[fileList.length][2];
-            for (int i = 0; i < fileList.length; i++) {
-                metas[i] = BitmapUtil.calcImgMeta(fileList[i]);
-                //MyLog.w("getRepeatedItems", fileList[i].getName() + "---avg---" + metaAvg[i] + "---dx---" + metaDx[i]);
-            }
-            for (int i = 0; i < fileList.length; i++) {
-                if (metas[i][0] == 0) continue;
-                boolean flg = false;
-                for (int j = i + 1; j < fileList.length; j++) {
-                    if (metas[j][0] == 0) continue;
-                    if (BitmapUtil.cmpImgMata(metas[i], metas[j])) {
-                        flg = true;
-                        //MyLog.w("getRepeatedItems", fileList[j].getName() + "---avg---" + metaAvg[j] + "---dx---" + metaDx[j]);
-                        metas[j][0] = 0;
-                        String fname = fileList[j].getName();
-                        int idx = fname.indexOf("_");
-                        if (idx < 5 && idx > 0) ids.append(fname, 0, idx).append(",");
-                    }
-                }
-                if (flg) {
-                    //MyLog.w("getRepeatedItems", fileList[i].getName() + "---avg---" + metaAvg[i] + "---dx---" + metaDx[i]);
-                    metas[i][0] = 0;
-                    String fname = fileList[i].getName();
-                    int idx = fname.indexOf("_");
-                    //MyLog.w("getRepeatedItems", "___________________");
-                    if (idx < 5 && idx > 0) ids.append(fname, 0, idx).append(",");
-                }
-            }
-            if (ids.capacity() > 0) {
-                ids.deleteCharAt(ids.lastIndexOf(","));
-            }
-        }
-        MyLog.w("getRepeatedItems:ret", ids.toString());
-        return ids.toString();
-    }
-
-    private String getRepeatedItems2() {
-        File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);
         File[] fileList = dir.listFiles(file -> file.isFile() && file.length() > 1024);
+        Properties props = new Properties();
+        File propFile = new File(dir, "meta");
+        try (FileReader fr = new FileReader(propFile)) {
+            props.load(fr);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         StringBuilder ids = new StringBuilder();
         if (fileList != null) {
             long[] metas = new long[fileList.length];
             for (int i = 0; i < fileList.length; i++) {
-                metas[i] = BitmapUtil.calcImgMeta2(BitmapUtil.getBitmap(fileList[i], 8, 8));
+                metas[i] = BitmapUtil.cachedImgMeta(fileList[i], props);
                 //MyLog.w("getRepeatedItems", fileList[i].getName() + "------" + Long.toBinaryString(metas[i]));
             }
             for (int i = 0; i < fileList.length; i++) {
@@ -1124,6 +1095,11 @@ public class GifActivity extends AppCompatActivity {
             }
         }
         MyLog.w("getRepeatedItems:ret", ids.toString());
+        try (FileWriter fw = new FileWriter(propFile)) {
+            props.store(fw, "img meta");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return ids.toString();
     }
 
@@ -1462,7 +1438,7 @@ public class GifActivity extends AppCompatActivity {
             if (i < listSize) {
                 item = favoriteList.get(i);
             } else {
-                favoriteList.add(item = new HashMap<>(8));
+                favoriteList.add(item = new HashMap<>(9));
             }
             if (count > i) {
                 item.put("id", cus.getString(cus.getColumnIndex("id")));
@@ -1478,7 +1454,8 @@ public class GifActivity extends AppCompatActivity {
                 File file = new File(dir + name);
                 if (file.exists()) {
                     item.put("path", dir + name);
-                    item.put("name", title + "<span style='color: #13b294'>&emsp;&emsp;√</span>");
+                    long size = file.length() >> 10;//KB
+                    item.put("name", title + "（" + size + "K）" + "<span style='color: #13b294'>&emsp;√</span>");
                 } else {
                     item.put("path", "");
                     item.put("name", title);
@@ -1487,6 +1464,8 @@ public class GifActivity extends AppCompatActivity {
                         item.put("icon", iconCacheList.get("default"));
                         continue;
                     }
+                    long size = file.length() >> 10;//KB
+                    item.put("name", title + "（" + size + "K）");
                 }
                 try {
                     item.put("icon", new BitmapDrawable(getResources(), BitmapUtil.getBitmap(file, 50, 50)));
