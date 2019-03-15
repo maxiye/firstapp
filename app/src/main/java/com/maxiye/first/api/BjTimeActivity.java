@@ -7,8 +7,12 @@ import android.widget.TextView;
 
 import com.maxiye.first.R;
 import com.maxiye.first.util.ApiUtil;
+import com.maxiye.first.util.Util;
 
-public class BJTimeActivity extends AppCompatActivity {
+/**
+ * @author due
+ */
+public class BjTimeActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,9 +24,9 @@ public class BJTimeActivity extends AppCompatActivity {
 
     public void bjTime(View view) {
         ((TextView) findViewById(R.id.bj_time_ret)).setText("");
-        new Thread(() -> {
+        Util.getDefaultSingleThreadExecutor().execute(() -> {
             String ret = ApiUtil.getInstance().getBJTime();
             runOnUiThread(() -> ((TextView) findViewById(R.id.bj_time_ret)).setText(ret));
-        }).start();
+        });
     }
 }

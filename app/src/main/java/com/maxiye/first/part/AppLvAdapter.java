@@ -20,7 +20,9 @@ import java.util.Map;
 
 /**
  * app列表适配器
- * Created by due on 2018/5/15.
+ *
+ * @author due
+ * @date 2018/5/15
  */
 public class AppLvAdapter extends ArrayAdapter {
     private final List<Map<String, Object>> data;
@@ -48,10 +50,10 @@ public class AppLvAdapter extends ArrayAdapter {
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
-        HashMap<String, Object> app_info = (HashMap<String, Object>) data.get(position);
-        holder.icon.setImageDrawable((Drawable) app_info.get("icon"));
-        holder.name.setText((String) app_info.get("name"));
-        holder.pkg.setText((String) app_info.get("pkg"));
+        HashMap<String, Object> appInfo = (HashMap<String, Object>) data.get(position);
+        holder.icon.setImageDrawable((Drawable) appInfo.get("icon"));
+        holder.name.setText((String) appInfo.get("name"));
+        holder.pkg.setText((String) appInfo.get("pkg"));
         convertView.setTag(holder);
         return convertView;
     }

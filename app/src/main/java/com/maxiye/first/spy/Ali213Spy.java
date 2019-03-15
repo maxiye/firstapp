@@ -7,7 +7,8 @@ import com.maxiye.first.util.Util;
 import okhttp3.Request;
 
 /**
- * gamersky爬手
+ * ali213爬手
+ * @author due
  * Created by due on 2018/11/22.
  */
 class Ali213Spy extends BaseSpy {
@@ -18,6 +19,7 @@ class Ali213Spy extends BaseSpy {
         headers = webCfg.get("headers").getAsJsonObject();
     }
 
+    @Override
     public Request buildRequest(String artId, int webPage) {
         curUrl = webPage > 1 ? String.format(urlTpl2, artId, webPage) : String.format(urlTpl, artId);
         MyLog.println(curUrl);

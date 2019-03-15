@@ -7,14 +7,16 @@ import android.widget.Toast;
 
 /**
  * 权限请求助手
- * Created by due on 2018/5/7.
+ *
+ * @author due
+ * @date 2018/5/7
  */
 public class PermissionUtil {
     public static final int PER_REQ_CALL = 200;
     public static final int PER_REQ_STORAGE_READ = 201;
     public static final int PER_REQ_CAPTURE = 202;
     public static final int PER_REQ_STORAGE_WRT = 203;
-    private static CB cb;
+    private static Cb cb;
 
     @SuppressWarnings("UnusedParameters")
     public static void res(@NonNull Activity activity, int reqCode, @NonNull String[] pers, @NonNull int[] res) {
@@ -24,11 +26,14 @@ public class PermissionUtil {
             Toast.makeText(activity, "权限被拒绝", Toast.LENGTH_SHORT).show();
         }
     }
-    public static void req(@NonNull Activity activity, @NonNull String[] permissions, int requestCode, CB callback) {
+    public static void req(@NonNull Activity activity, @NonNull String[] permissions, int requestCode, Cb callback) {
         cb = callback;
         activity.requestPermissions(permissions, requestCode);
     }
-    public interface CB {
+    public interface Cb {
+        /**
+         * 权限同意后的回调方法接口
+         */
         void callback();
     }
 }

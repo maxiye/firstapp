@@ -22,10 +22,12 @@ class GamerskySpy extends BaseSpy {
         headers = webCfg.get("headers").getAsJsonObject();
     }
 
+    @Override
     public Request buildRequest(String artId, int webPage) {
         curUrl = webPage > 1 ? String.format(urlTpl2, artId, webPage) : String.format(urlTpl, artId);
         MyLog.println(curUrl);
-        RequestBody requestBody = RequestBody.create(MediaType.parse("text/plain"), String.format(questBody, artId));//app接口post调用
+        // app接口post调用
+        RequestBody requestBody = RequestBody.create(MediaType.parse("text/plain"), String.format(questBody, artId));
         Request.Builder builder =  new Request.Builder().url(curUrl).post(requestBody);
         for (String key : headers.keySet()) {
             builder.header(key, headers.get(key).getAsString());

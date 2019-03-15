@@ -16,7 +16,9 @@ import java.util.Objects;
 
 /**
  * 数据库助手
- * Created by due on 2018/10/22.
+ *
+ * @author due
+ * @date 2018/10/22
  *         ArrayList<HashMap<String, Object>> listData = new ArrayList<>(webList.length);
  *         for (String web : webList) {
  *             HashMap<String, Object> webItem = new HashMap<>(2);
@@ -101,22 +103,38 @@ public class MyPopupMenu {
         RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupmenu_rv);
         DividerItemDecoration divider = new DividerItemDecoration(context, DividerItemDecoration.VERTICAL);
         divider.setDrawable(Objects.requireNonNull(context.getDrawable(R.drawable.gif_rv_divider)));
-        rv.addItemDecoration(divider);//分隔线
+        // 分隔线
+        rv.addItemDecoration(divider);
         rv.setLayoutManager(new LinearLayoutManager(context));
         GifWebRvAdapter ma = new GifWebRvAdapter();
         ma.setData(menuList);
-        if (itemClickListener != null) ma.setOnItemClickListener(position -> itemClickListener.onClick(this, position));
-        if (itemLongClickListener != null) ma.setOnItemLongClickListener(position -> itemLongClickListener.onLongClick(this, position));
+        if (itemClickListener != null) {
+            ma.setOnItemClickListener(position -> itemClickListener.onClick(this, position));
+        }
+        if (itemLongClickListener != null) {
+            ma.setOnItemLongClickListener(position -> itemLongClickListener.onLongClick(this, position));
+        }
         rv.setAdapter(ma);
-        //popupWindow.showAtLocation(findViewById(R.id.gif_activity_main_content), Gravity.TOP | Gravity.END, 0, 0);
+        /*popupWindow.showAtLocation(findViewById(R.id.gif_activity_main_content), Gravity.TOP | Gravity.END, 0, 0);*/
         return popupWindow;
     }
 
     public interface ItemClickListener {
+        /**
+         * 项目点击事件
+         * @param pageListPopupWindow 菜单列表
+         * @param position int 位置
+         */
         void onClick(MyPopupMenu pageListPopupWindow, int position);
     }
 
     public interface ItemLongClickListener {
+        /**
+         * 菜单长按事件
+         * @param pageListPopupWindow 菜单列表
+         * @param position int 位置
+         * @return bool 是否已消费
+         */
         boolean onLongClick(MyPopupMenu pageListPopupWindow, int position);
     }
 

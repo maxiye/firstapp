@@ -14,6 +14,7 @@ import java.util.Arrays;
 /**
  * 清除缓存
  *
+ * @author due
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class CacheUtil {
@@ -66,11 +67,14 @@ public class CacheUtil {
         return dir == null || dir.delete();
     }
 
-    // 获取文件
-    // Context.getExternalFilesDir() --> SDCard/Android/data/你的应用的包名/files/
-    // 目录，一般放一些长时间保存的数据
-    // Context.getExternalCacheDir() -->
-    // SDCard/Android/data/你的应用包名/cache/目录，一般存放临时缓存数据
+    /**
+    * 获取文件
+    * Context.getExternalFilesDir() --> SDCard/Android/data/你的应用的包名/files/
+    * 目录，一般放一些长时间保存的数据
+    * Context.getExternalCacheDir() -->
+    * SDCard/Android/data/你的应用包名/cache/目录，一般存放临时缓存数据
+     * @param file File
+    */
     private static long getFolderSize(File file) {
         long size = 0;
         try {
@@ -136,13 +140,22 @@ public class CacheUtil {
                 Environment.MEDIA_MOUNTED)) {
             cacheSize += getFolderSize(context.getExternalCacheDir());
         }
-        if (unit == null) return cacheSize;
-        double kiloByte = cacheSize >> 10;// / 10
-        if (unit.equals(UNIT_KB)) return fix2(kiloByte);
+        if (unit == null) {
+            return cacheSize;
+        }
+        // / 10
+        double kiloByte = cacheSize >> 10;
+        if (unit.equals(UNIT_KB)) {
+            return fix2(kiloByte);
+        }
         double megaByte = kiloByte / 1024;
-        if (unit.equals(UNIT_MB)) return fix2(megaByte);
+        if (unit.equals(UNIT_MB)) {
+            return fix2(megaByte);
+        }
         double gigaByte = megaByte / 1024;
-        if (unit.equals(UNIT_GB)) return fix2(gigaByte);
+        if (unit.equals(UNIT_GB)) {
+            return fix2(gigaByte);
+        }
         return fix2(megaByte);
     }
 
@@ -158,15 +171,19 @@ public class CacheUtil {
      */
     private static void clearOld(File directory, double size) {
         File[] fileList = directory.listFiles(File::isFile);
-        if (fileList == null) return;
+        if (fileList == null) {
+            return;
+        }
         Arrays.sort(fileList, (f1, f2) -> {
             long diff = f1.lastModified() - f2.lastModified();
-            if (diff > 0)
+            if (diff > 0) {
                 return 1;
-            else if (diff == 0)
+            } else if (diff == 0) {
                 return 0;
-            else
-                return -1;//如果 if 中修改为 返回-1 同时此处修改为返回 1  排序就会是递减
+            } else {
+                // 如果 if 中修改为 返回-1 同时此处修改为返回 1  排序就会是递减
+                return -1;
+            }
         });
         for (File f : fileList) {
             long fLength = f.length();
@@ -178,9 +195,15 @@ public class CacheUtil {
         }
     }
 
+    /**
+     * 缓存超过400M，自动清空
+     * @param context Context
+     */
     public static void checkClear(Context context) {
         double cacheSize = CacheUtil.getSize(context, null);
-        if (cacheSize > 400 << 10 << 10)
+        int maxSize = 400 << 10 << 10;
+        if (cacheSize > maxSize) {
             CacheUtil.clearOld(context.getCacheDir(), cacheSize - (250 << 10 << 10));
+        }
     }
 }

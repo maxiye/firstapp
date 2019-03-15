@@ -125,11 +125,11 @@
             android:logo="@drawable/ic_cloud_queue_black_24dp"
             android:parentActivityName=".MainActivity">
         </activity>
-        <activity android:name=".api.IPAddressActivity" android:parentActivityName=".MainActivity" android:label="@string/ip_address"/>
+        <activity android:name=".api.IpAddressActivity" android:parentActivityName=".MainActivity" android:label="@string/ip_address"/>
         <activity android:name=".api.PhoneAddressActivity" android:parentActivityName=".MainActivity" android:label="@string/phone_address"/>
-        <activity android:name=".api.IDAddressActivity" android:parentActivityName=".MainActivity" android:label="@string/id_address"/>
+        <activity android:name=".api.IdAddressActivity" android:parentActivityName=".MainActivity" android:label="@string/id_address"/>
         <activity android:name=".api.PostcodeActivity" android:parentActivityName=".MainActivity" android:label="@string/postcode"/>
-        <activity android:name=".api.BJTimeActivity" android:parentActivityName=".MainActivity" android:label="@string/bj_time"/>
+        <activity android:name=".api.BjTimeActivity" android:parentActivityName=".MainActivity" android:label="@string/bj_time"/>
         <activity android:name=".api.WorkdayActivity" android:parentActivityName=".MainActivity" android:label="@string/workday"/>
     </application>
 

@@ -65,7 +65,9 @@
     <string name="workday">工作日</string>
     <string name="idcard">身份证号</string>
     <string name="scan_into_fav_db">扫描添加已收藏文件</string>
-    <string name="scan_fav_tips">扫描添加了 %1$d 个文件</string>
+    <plurals name="scan_fav_tips">
+        <item quantity="other">扫描添加了 %1$d 个文件</item>
+    </plurals>
     <string name="add_to_fav">收藏</string>
     <string name="add_successfully">已添加</string>
     <string name="already_in_fav">已在收藏夹中</string>
@@ -73,7 +75,9 @@
     <string name="no_more">没有更多内容了</string>
     <string name="go_to">出发</string>
     <string name="fix_fav_file">修复收藏的下载文件名</string>
-    <string name="fix_fav_tips">修复了 %1$d 个文件</string>
+    <plurals name="fix_fav_tips">
+        <item quantity="other">修复了 %1$d 个文件</item>
+    </plurals>
     <string name="delete_file">删除文件</string>
     <string name="delete_success">删除成功</string>
     <string name="file_is_lost">文件不存在或已删除！</string>

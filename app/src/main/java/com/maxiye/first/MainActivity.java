@@ -48,9 +48,10 @@ import android.widget.Toast;
 
 import com.maxiye.first.util.ApiUtil;
 import com.maxiye.first.util.BitmapUtil;
-import com.maxiye.first.util.DBHelper;
+import com.maxiye.first.util.DbHelper;
 import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.PermissionUtil;
+import com.maxiye.first.util.StringUtils;
 import com.maxiye.first.util.Util;
 
 import org.w3c.dom.Document;
@@ -63,10 +64,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
+import java.util.Random;
 import java.util.UUID;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -74,34 +76,40 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
-//@SuppressWarnings({"unused", "WeakerAccess"})  SameParameterValue unchecked FieldCanBeLocal deprecation(过时)   UnusedParameters  InflateParams
+/**
+ * @author due
+ * // @SuppressWarnings({"unused", "WeakerAccess"})  SameParameterValue unchecked FieldCanBeLocal deprecation(过时)   UnusedParameters  InflateParams
+ */
+@SuppressWarnings("AlibabaRemoveCommentedCode")
 public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
     private final int INTENT_CONTACT_PICK_REQCODE = 100;
     private final int INTENT_IMG_VIEW_REQCODE = 101;
     private final int INTENT_IMG_PICK_REQCODE = 102;
     private final int INTENT_IMG_CAPTURE_REQCODE = 103;
     public static final int INTENT_PICK_DB_BAK_REQCODE = 104;
-    public static final int INTENT_IMG_GRAY_REQCODE = 105;
-    public static final int INTENT_IMG_DOT_REQCODE = 106;
-    public static final int INTENT_IMG_REVERSE_REQCODE = 107;
-    public static final int INTENT_IMG_DOT_TXT_REQCODE = 108;
-    private long last_press_time = 0;
+    private static final int INTENT_IMG_GRAY_REQCODE = 105;
+    private static final int INTENT_IMG_DOT_REQCODE = 106;
+    private static final int INTENT_IMG_REVERSE_REQCODE = 107;
+    private static final int INTENT_IMG_DOT_TXT_REQCODE = 108;
+    private long lastPressTime = 0;
 
+    @SuppressWarnings("AlibabaRemoveCommentedCode")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        /*if (BuildConfig.DEBUG) {
+        /* if (BuildConfig.DEBUG) {
             StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectAll().penaltyLog().build());
             StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().detectAll().penaltyLog().build());
-        }*/
+        } */
         handleItt();//图片intent
 //        startActivity(new Intent(this, GifActivity.class));
     }
 
     @Override
     protected void onStop() {
-        setVolumeControlStream(AudioManager.USE_DEFAULT_STREAM_TYPE);//不再调节游戏或者音乐的音量
+        // 不再调节游戏或者音乐的音量
+        setVolumeControlStream(AudioManager.USE_DEFAULT_STREAM_TYPE);
         super.onStop();
     }
 
@@ -115,14 +123,14 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        int INTERVAL = 800;
+        int interval = 800;
         switch (keyCode) {
             case KeyEvent.KEYCODE_BACK:
-                long now = new Date().getTime();
-                if (now - last_press_time < INTERVAL) {
+                long now = Instant.now().getEpochSecond();
+                if (now - lastPressTime < interval) {
                     finish();
                 } else {
-                    last_press_time = now;
+                    lastPressTime = now;
                     alert(getString(R.string.alert_exit));
                 }
                 break;
@@ -185,8 +193,9 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                     try {
                         assert pic != null;
                         ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(pic, "r");
-                        if (pfd == null)
+                        if (pfd == null) {
                             throw new FileNotFoundException();
+                        }
                         Bitmap bm = BitmapFactory.decodeFileDescriptor(pfd.getFileDescriptor());
                         Cursor cur = getContentResolver().query(pic, null, null, null, null);
                         assert cur != null;
@@ -197,7 +206,6 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                         Toast toast = Toast.makeText(this, fname + "(" + flen + "bytes)===>" + data.getData().toString(), Toast.LENGTH_SHORT);
                         toast.setGravity(Gravity.CENTER, 0, 0);
                         ImageView iv = new ImageView(this);
-                        //iv.setImageURI(pic);
                         iv.setImageBitmap(bm);
                         LinearLayout ll = (LinearLayout) toast.getView();
                         ll.addView(iv, 0);
@@ -230,8 +238,10 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                     Uri bak = data.getData();
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         try {
-                            assert bak != null;//raw:/storage/emulated/0/Download/xxx.db.bak
-                            Files.copy(Paths.get(bak.getLastPathSegment().substring(4)), getDatabasePath(DBHelper.DB_NAME).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                            assert bak != null;
+                            assert bak.getLastPathSegment() != null;
+                            // raw:/storage/emulated/0/Download/xxx.db.bak
+                            Files.copy(Paths.get(bak.getLastPathSegment().substring(4)), getDatabasePath(DbHelper.DB_NAME).toPath(), StandardCopyOption.REPLACE_EXISTING);
                             alert("Success");
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -274,6 +284,8 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                     alert("bad res!");
                 }
                 break;
+            default:
+                break;
         }
     }
 
@@ -297,7 +309,9 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         pMenu.show();
     }
 
-    //处理图片intent
+    /**
+     * 处理图片intent
+     */
     private void handleItt() {
         Intent itt = getIntent();
         if (itt.getType() != null) {
@@ -313,7 +327,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 toast.show();
             }
             if (itt.getType().contains("text/plain")) {
-                //noinspection ConstantConditions
+                // noinspection ConstantConditions
                 alert(itt.getExtras().get(Intent.EXTRA_TEXT).toString());
             }
             alert(itt.getType());
@@ -324,25 +338,28 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         }
     }
 
-    //创建数据库
+    /**
+     * 创建数据库
+     */
     @SuppressWarnings("unused")
     private void createDB() {
-        SQLiteDatabase db = DBHelper.getDB(this);//此时创建数据库,生成.db文件
+        // 此时创建数据库,生成.db文件
+        SQLiteDatabase db = DbHelper.getDB(this);
         //增
         ContentValues ctv = new ContentValues();
         ctv.put("author", "zzz");
         ctv.put("price", 9.99f);
         ctv.put("pages", 180);
         ctv.put("name", "花儿与老年");
-        long newId = db.insert(DBHelper.TB_BOOK, null, ctv);
+        long newId = db.insert(DbHelper.TB_BOOK, null, ctv);
         //删
-        db.delete(DBHelper.TB_BOOK, "id = ?", new String[]{"2"});
+        db.delete(DbHelper.TB_BOOK, "id = ?", new String[]{"2"});
         //改
         ctv.put("price", 16.09d);
-        db.update(DBHelper.TB_BOOK, ctv, "id = ?", new String[]{"1"});
+        db.update(DbHelper.TB_BOOK, ctv, "id = ?", new String[]{"1"});
         //查
-        //Cursor cus = db.rawQuery("select * from "+DBHelper.TB_BOOK+" where name = ? ", new String[]{"花儿与老年"});
-        Cursor cus = db.query(DBHelper.TB_BOOK, new String[]{"*"}, "author = ?", new String[]{"zzz"}, null, null, "id desc");
+        //Cursor cus = db.rawQuery("select * from "+DbHelper.TB_BOOK+" where name = ? ", new String[]{"花儿与老年"});
+        Cursor cus = db.query(DbHelper.TB_BOOK, new String[]{"*"}, "author = ?", new String[]{"zzz"}, null, null, "id desc");
         cus.moveToFirst();//必须，不然报错
         cus.close();
     }
@@ -361,7 +378,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         //itt.putExtra(Intent.EXTRA_STREAM, Uri.parse("file:///storage/emulated/0/Download/1.jpg"));
         itt.putExtra(Intent.EXTRA_STREAM, baos.toByteArray());
         startActivity(itt);*/
-        //分享文件
+        // 分享文件
         if (Util.isExternalStorageReadable()) {
             File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "1.jpg");
             try {
@@ -370,7 +387,8 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                     /*Intent itt = new Intent(Intent.ACTION_VIEW,fileUri);//错误？不能直接使用fileUri
                     itt.setType(getContentResolver().getType(fileUri));*/
                     Intent itt = new Intent(Intent.ACTION_VIEW);
-                    itt.setDataAndType(fileUri, getContentResolver().getType(fileUri));//"image/jpeg"也可
+                    // "image/jpeg"也可
+                    itt.setDataAndType(fileUri, getContentResolver().getType(fileUri));
                     itt.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     startActivityForResult(Intent.createChooser(itt, "Open img"), INTENT_IMG_VIEW_REQCODE);
                 }
@@ -387,17 +405,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
 
     //添加快捷方式
     private void addShortcut() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            ShortcutManager scm = (ShortcutManager) getSystemService(SHORTCUT_SERVICE);
-            Intent launcherIntent = new Intent(Settings.ACTION_DATA_ROAMING_SETTINGS);//设置网络页面intent
-            ShortcutInfo si = new ShortcutInfo.Builder(this, "dataroam")
-                    .setIcon(Icon.createWithResource(this, R.drawable.ic_perm_data_setting_black_24dp))
-                    .setShortLabel("网络设置")
-                    .setIntent(launcherIntent)
-                    .build();
-            assert scm != null;
-            scm.requestPinShortcut(si, null);
-        } else {
+        /*if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             Intent addShortcutIntent = new Intent("com.android.launcher.action.INSTALL_SHORTCUT");//"com.android.launcher.action.INSTALL_SHORTCUT"
             // 不允许重复创建
             addShortcutIntent.putExtra("duplicate", false);// 经测试不是根据快捷方式的名字判断重复的
@@ -422,7 +430,17 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
 
             // 发送广播
             sendBroadcast(addShortcutIntent);
-        }
+        }*/
+        ShortcutManager scm = (ShortcutManager) getSystemService(SHORTCUT_SERVICE);
+        // 设置网络页面intent
+        Intent launcherIntent = new Intent(Settings.ACTION_DATA_ROAMING_SETTINGS);
+        ShortcutInfo si = new ShortcutInfo.Builder(this, "dataroam")
+                .setIcon(Icon.createWithResource(this, R.drawable.ic_perm_data_setting_black_24dp))
+                .setShortLabel("网络设置")
+                .setIntent(launcherIntent)
+                .build();
+        assert scm != null;
+        scm.requestPinShortcut(si, null);
 
     }
 
@@ -443,17 +461,17 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     @SuppressWarnings("deprecation")
     public void testAudio(View view) {
         SharedPreferences sp = getPreferences(MODE_PRIVATE);
-        SharedPreferences.Editor sp_e = sp.edit();
-        boolean is_reg_mb = sp.getBoolean("ReceiveMediaBtn", false);
+        SharedPreferences.Editor spEditor = sp.edit();
+        boolean isRegistered = sp.getBoolean("ReceiveMediaBtn", false);
         AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
         assert am != null;
-        if (is_reg_mb) {
+        if (isRegistered) {
             am.unregisterMediaButtonEventReceiver(new ComponentName(getPackageName(), MyReceiver.class.getName()));
-            sp_e.putBoolean("ReceiveMediaBtn", false).apply();
+            spEditor.putBoolean("ReceiveMediaBtn", false).apply();
             setVolumeControlStream(AudioManager.STREAM_RING);
         } else {
             am.registerMediaButtonEventReceiver(new ComponentName(getPackageName(), MyReceiver.class.getName()));
-            sp_e.putBoolean("ReceiveMediaBtn", true).commit();
+            spEditor.putBoolean("ReceiveMediaBtn", true).commit();
             setVolumeControlStream(AudioManager.STREAM_MUSIC);
         }
 
@@ -472,9 +490,9 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     @SuppressLint("MissingPermission")
     @Override
     public boolean onMenuItemClick(MenuItem item) {
-        int item_id = item.getItemId();
+        int itemId = item.getItemId();
         Intent intent;
-        switch (item_id) {
+        switch (itemId) {
             case R.id.test_call:
                 PermissionUtil.req(this, new String[]{Manifest.permission.CALL_PHONE}, PermissionUtil.PER_REQ_CALL, () -> {
                     Uri tel = Uri.parse("tel:10086");
@@ -537,25 +555,27 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         PopupMenu pMenu = new PopupMenu(this, view);
         pMenu.getMenuInflater().inflate(R.menu.test_activity_db_popupmenu, pMenu.getMenu());
         pMenu.setOnMenuItemClickListener(item -> {
-            int item_id = item.getItemId();
-            switch (item_id) {
+            int itemId = item.getItemId();
+            switch (itemId) {
                 case R.id.create_db:
                     createDB();
                     break;
                 case R.id.backup_db:
-                    DBHelper.backup(this);
+                    DbHelper.backup(this);
                     break;
                 case R.id.restore_db:
-                    DBHelper.restore(this);
+                    DbHelper.restore(this);
                     break;
-                /*case R.id.scan_into_fav_db:
-                    int count = new DBHelper(this).scanIntoFav();
-                    alert(getString(R.string.scan_fav_tips, count));
+                case R.id.scan_into_fav_db:
+                    int count = new DbHelper(this).scanIntoFav();
+                    alert(getResources().getQuantityString(R.plurals.scan_fav_tips, count));
                     break;
                 case R.id.fix_fav_file:
-                    int count2 = new DBHelper(this).fixFavFile();
-                    alert(getString(R.string.fix_fav_tips, count2));
-                    break;*/
+                    int count2 = new DbHelper(this).fixFavFile();
+                    alert(getResources().getQuantityString(R.plurals.fix_fav_tips, count2));
+                    break;
+                default:
+                    break;
             }
             return false;
         });
@@ -585,20 +605,20 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     }
 
     private File createTempFile() throws IOException {
-        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-        String img_name = "JPEG_" + timestamp + "_";
+        String timestamp = DateTimeFormatter.ofPattern("YYYYMMdd_HHmmss").format(LocalDateTime.now());
+        String imgName = "JPEG_" + timestamp + "_";
         File storedir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        return File.createTempFile(img_name, ".jpg", storedir);
+        return File.createTempFile(imgName, ".jpg", storedir);
     }
 
     public void capture(View view) {
         PermissionUtil.req(this, new String[]{Manifest.permission.CAMERA}, PermissionUtil.PER_REQ_CAPTURE, () -> {
             Intent cap = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             if (cap.resolveActivity(getPackageManager()) != null) {
-                File img_f;
+                File imgFile;
                 try {
-                    img_f = createTempFile();
-                    cap.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(this, "com.maxiye.first.fileprovider", img_f));
+                    imgFile = createTempFile();
+                    cap.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(this, "com.maxiye.first.fileprovider", imgFile));
                     startActivityForResult(cap, INTENT_IMG_CAPTURE_REQCODE);
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -631,22 +651,27 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         editText.setHint("13ba94 1080*1920");
         //创建对话框
         AlertDialog dialog2 = new AlertDialog.Builder(this)
-                .setIcon(R.drawable.ic_info_black_24dp)//设置图标
-                .setTitle(R.string.gradual_color)//设置标题
-                .setView(view2)//添加布局
+                // 设置图标
+                .setIcon(R.drawable.ic_info_black_24dp)
+                // 设置标题
+                .setTitle(R.string.gradual_color)
+                // 添加布局
+                .setView(view2)
                 .setPositiveButton(R.string.confirm, (dialog1, which) -> {
                     ImageView imgView = BitmapUtil.loadImg(this);
                     new Thread(() -> {
                         String txt = editText.getText().toString();
                         int color, w, h;
                         try {
-                            if (txt.equals("")) {
-                                color = 0x13ba94;w = 1080;h = 1920;
+                            if (StringUtils.isBlank(txt)) {
+                                color = 0x13ba94; w = 1080; h = 1920;
                             } else {
-                                if (txt.charAt(0) == '#') {
+                                char hashPrefix = '#';
+                                if (txt.charAt(0) == hashPrefix) {
                                     txt = txt.substring(1);
                                 }
-                                if (txt.contains(" ")) {
+                                String sizeSeparator = " ";
+                                if (txt.contains(sizeSeparator)) {
                                     String[] set = txt.split(" ");
                                     color = Integer.parseInt(set[0], 16);
                                     String[] wh = set[1].split("\\*");
@@ -665,8 +690,8 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                         }
                         Bitmap bitmap = BitmapUtil.gradualBitmap(color, w, h);
                         imgView.setOnLongClickListener(v -> {
-                            String fname = "#" + Integer.toHexString(color) + "_" + Integer.toString(w) + "×" + Integer.toString(h) + "_" + (int) (10000 * Math.random()) + ".png";
-                            File img = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/gradual/" + fname);
+                            String fName = "#" + Integer.toHexString(color) + "_" + Integer.toString(w) + "×" + Integer.toString(h) + "_" + new Random().nextInt() + ".png";
+                            File img = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/gradual/" + fName);
                             BitmapUtil.saveBitmap(this, img, bitmap);
                             return false;
                         });
@@ -709,12 +734,17 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     }
 
     private interface BitmapHandler {
+        /**
+         * Bitmap处理接口
+         * @param bitmap Bitmap
+         * @return Bitmap
+         */
         Bitmap handle(Bitmap bitmap);
     }
 
     private void showBitmap(Intent data, BitmapHandler handler, File saveFile) {
         ImageView imgView = BitmapUtil.loadImg(this);
-        new Thread(() -> {
+        Util.getDefaultSingleThreadExecutor().execute(() -> {
             try {
                 FileDescriptor fd = Util.getFileDescriptor(this, data);
                 Bitmap bitmap = handler != null ?
@@ -733,7 +763,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 runOnUiThread(() -> alert(e.getLocalizedMessage()));
                 e.printStackTrace();
             }
-        }).start();
+        });
     }
 
     private void saveDotTxt(Intent data) {

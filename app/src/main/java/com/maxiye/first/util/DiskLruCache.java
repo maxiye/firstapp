@@ -12,23 +12,25 @@ import java.util.LinkedHashMap;
 
 
 /**
- * 数据库助手
- * Created by due on 2018/7/12.
+ * 最近使用缓存工具
+ *
+ * @author due
+ * @date 2018/7/12
  */
-public class DiskLRUCache extends LinkedHashMap<String, String> {
+public class DiskLruCache extends LinkedHashMap<String, String> {
     private static final long serialVersionUID = 2244286267665222070L;
     private final int capacity;
     private long now = 0;
     private String keyword;
     private final Context context;
 
-    private DiskLRUCache(int capacity, Context context) {
+    private DiskLruCache(int capacity, Context context) {
         super(1000, 1, true);
         this.capacity = capacity;
         this.context = context;
     }
 
-    public static DiskLRUCache getInstance(Context context, String keyword) {
+    public static DiskLruCache getInstance(Context context, String keyword) {
         int capacity;
         switch (keyword) {
             case "bitmap":
@@ -42,12 +44,12 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
                 break;
         }
         File diskLru = new File(context.getCacheDir(), "diskLru_" + keyword);
-        DiskLRUCache diskLRUCache = new DiskLRUCache(capacity, context);
+        DiskLruCache diskLRUCache = new DiskLruCache(capacity, context);
         if (diskLru.exists()) {
             try (FileReader fr = new FileReader(diskLru)) {
                 JsonObject jsonObject = new Gson().fromJson(fr, JsonObject.class);
                 for (String key: jsonObject.keySet()) {
-                    diskLRUCache._put(key, jsonObject.get(key).getAsString());
+                    diskLRUCache.originPut(key, jsonObject.get(key).getAsString());
                 }
                 diskLRUCache.now = Integer.parseInt(jsonObject.get("size").getAsString());
                 MyLog.w("DiskLRU:getInstance", "now:" + diskLRUCache.now);
@@ -64,7 +66,7 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
         try (FileWriter fw = new FileWriter(diskLru)) {
             put("size", now + "");
             String json = new Gson().toJson(this);
-            _remove("size");
+            originRemove("size");
             fw.write(json);
             MyLog.w("DiskLRU:serialize", json);
         } catch (Exception e) {
@@ -122,12 +124,12 @@ public class DiskLRUCache extends LinkedHashMap<String, String> {
         return val;
     }
 
-    private void _put(String key, String value) {
+    private void originPut(String key, String value) {
         super.put(key, value);
     }
 
     @SuppressWarnings("SameParameterValue")
-    private void _remove(String key) {
+    private void originRemove(String key) {
         super.remove(key);
     }
 }

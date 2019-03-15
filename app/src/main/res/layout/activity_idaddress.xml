@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="20dp"
-    tools:context=".api.IDAddressActivity">
+    tools:context=".api.IdAddressActivity">
     <EditText
         android:id="@+id/id_input"
         android:hint="@string/idcard"

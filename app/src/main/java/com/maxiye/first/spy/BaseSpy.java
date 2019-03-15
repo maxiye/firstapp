@@ -3,6 +3,7 @@ package com.maxiye.first.spy;
 import com.google.gson.JsonObject;
 import com.maxiye.first.GifActivity;
 import com.maxiye.first.util.MyLog;
+import com.maxiye.first.util.StringUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,7 +18,9 @@ import okhttp3.ResponseBody;
 
 /**
  * 爬手
- * Created by due on 2018/11/21.
+ *
+ * @author due
+ * @date 2018/11/21
  */
 public class BaseSpy {
     String webName;
@@ -28,21 +31,21 @@ public class BaseSpy {
     private Pattern pt;
     boolean modeFlg;
 
-    BaseSpy(JsonObject web_cfg, boolean flg) {
+    BaseSpy(JsonObject webCfg, boolean flg) {
         modeFlg = !flg;
-        applyCfg(web_cfg);
+        applyCfg(webCfg);
     }
 
-    void applyCfg(JsonObject web_cfg) {
+    void applyCfg(JsonObject webCfg) {
         modeFlg = !modeFlg;
-        webCfg = web_cfg;
-        JsonObject regObj = webCfg.getAsJsonObject("img_reg");
+        this.webCfg = webCfg;
+        JsonObject regObj = this.webCfg.getAsJsonObject("img_reg");
         urlIdx = regObj.get("img_url_idx").getAsInt();
         extIdx = regObj.get("img_ext_idx").getAsInt();
         titleIdx = regObj.get("img_title_idx").getAsInt();
         realUrlIdx = regObj.get("img_real_url_idx") != null ? regObj.get("img_real_url_idx").getAsInt() : -1;
-        urlTpl = webCfg.get("img_web").getAsString();
-        urlTpl2 = webCfg.get("img_web_2nd").getAsString();
+        urlTpl = this.webCfg.get("img_web").getAsString();
+        urlTpl2 = this.webCfg.get("img_web_2nd").getAsString();
         pt = Pattern.compile(regObj.get("reg").getAsString(), Pattern.CASE_INSENSITIVE);
     }
 
@@ -63,7 +66,7 @@ public class BaseSpy {
             realUrl = realUrl == null ? "" : realUrl;
             String gifUrl = matcher.group(urlIdx);
             MyLog.println("title: " + name + "；url: " + gifUrl + "；ext: " + ext + "；realUrl: " + realUrl);
-            HashMap<String, String> imgInfo = new HashMap<>();
+            HashMap<String, String> imgInfo = new HashMap<>(4);
             imgInfo.put("url", gifUrl);
             imgInfo.put("title", name);
             imgInfo.put("ext", ext);
@@ -83,9 +86,12 @@ public class BaseSpy {
     void handleImgInfo(HashMap<String, String> imgInfo) {}
 
     private String handleTitle(String group) {
-        boolean notNull = group != null && !group.replaceAll("[\r\n\\s\t]", "").equals("");
-        String title = notNull ? group : UUID.randomUUID().toString();
-        return title.replaceAll("[\r\n\\s\t\\\\/]", "");
+        boolean isNull = group == null || StringUtils.isBlank(group.replaceAll("[\r\n\\s\t]", ""));
+        if (isNull) {
+            return UUID.randomUUID().toString();
+        } else {
+            return group.replaceAll("[\r\n\\s\t\\\\/]", "");
+        }
     }
 
     /**

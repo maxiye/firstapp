@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.os.Build;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.widget.Toast;
@@ -18,16 +17,17 @@ import com.maxiye.first.MainActivity;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.Date;
-import java.util.Locale;
 
 /**数据库助手
- * Created by Administrator on 2017-05-25.
+ *
+ * @author due
+ * @date 2017-05-25
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class DBHelper extends SQLiteOpenHelper {
+public class DbHelper extends SQLiteOpenHelper {
     public final static String DB_NAME = "first.db";
     private final static int DB_VERSION = 5;
     public final static String TB_BOOK = "book";
@@ -49,7 +49,9 @@ public class DBHelper extends SQLiteOpenHelper {
             + "title text default '', "
             + "pages integer default 0, "
             + "time text default '')";
-    //索引名不能相同
+    /**
+     * 索引名不能相同
+     */
     private final static String INDEX_IMG_WEB = "CREATE INDEX IF NOT EXISTS web_idx_art_id on " + TB_IMG_WEB + " (art_id, web_name)";
     private final static String CREATE_IMG_WEB_ITEM = "create table " + TB_IMG_WEB_ITEM + "("
             + "id integer primary key autoincrement,"
@@ -85,14 +87,14 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String DROP_IMG_WEB_ITEM = "DROP TABLE IF EXISTS " + TB_IMG_WEB_ITEM;
     private final Context mCont;
 
-    public DBHelper(Context context) {
+    public DbHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
         mCont = context;
         checkBakup();
     }
 
     public static SQLiteDatabase getDB(Context context) {
-        return new DBHelper(context).getWritableDatabase();
+        return new DbHelper(context).getWritableDatabase();
     }
 
     @Override
@@ -109,10 +111,18 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion == 1) update1to2(db);
-        if (oldVersion == 2) update2to3(db);
-        if (oldVersion == 3) update3to4(db);
-        if (oldVersion == 4) update4to5(db);
+        if (oldVersion == 1) {
+            update1to2(db);
+        }
+        if (oldVersion == 2) {
+            update2to3(db);
+        }
+        if (oldVersion == 3) {
+            update3to4(db);
+        }
+        if (oldVersion == 4) {
+            update4to5(db);
+        }
         Toast.makeText(mCont, "Update succeeded", Toast.LENGTH_SHORT).show();
     }
 
@@ -181,23 +191,22 @@ public class DBHelper extends SQLiteOpenHelper {
     public static void backup(Context context) {
         File db = context.getDatabasePath(DB_NAME);
         File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        File bak = new File(downloadDir, DB_NAME + ".bak." + new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(new Date()));
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            try {
-                Files.copy(db.toPath(), bak.toPath());
-                Toast.makeText(context, "Success：" + bak.getPath(), Toast.LENGTH_SHORT).show();
-                context.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE).edit().putLong(SettingActivity.BACKUP_TIME, System.currentTimeMillis()).apply();
-            } catch (IOException e) {
-                e.printStackTrace();
-                Toast.makeText(context, "Error：" + e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
-            }
-            File[] baks = downloadDir.listFiles((file, name) -> name.contains(DB_NAME + ".bak"));
-            if (baks != null && baks.length > 5) {
-                Arrays.sort(baks, (o1, o2) -> (int) (o1.lastModified() - o2.lastModified()));
-                MyLog.w("backdb", Arrays.toString(baks));
-                for (int i = 0,k = baks.length - 5; i < k; i++) {
-                    baks[i].delete();
-                }
+        File bak = new File(downloadDir, DB_NAME + ".bak." + DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now()));
+        try {
+            Files.copy(db.toPath(), bak.toPath());
+            Toast.makeText(context, "Success：" + bak.getPath(), Toast.LENGTH_SHORT).show();
+            context.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE).edit().putLong(SettingActivity.BACKUP_TIME, System.currentTimeMillis()).apply();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(context, "Error：" + e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+        }
+        File[] baks = downloadDir.listFiles((file, name) -> name.contains(DB_NAME + ".bak"));
+        int maxLength = 5;
+        if (baks != null && baks.length > maxLength) {
+            Arrays.sort(baks, (o1, o2) -> (int) (o1.lastModified() - o2.lastModified()));
+            MyLog.w("backdb", Arrays.toString(baks));
+            for (int i = 0,k = baks.length - maxLength; i < k; i++) {
+                baks[i].delete();
             }
         }
     }
@@ -210,7 +219,8 @@ public class DBHelper extends SQLiteOpenHelper {
 
     private void checkBakup() {
         long lastBackupTime = mCont.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE).getLong(SettingActivity.BACKUP_TIME, 0);
-        if (System.currentTimeMillis() - lastBackupTime > 86400 * 5 * 1000) {
+        int minIntavel = 86400 * 5 * 1000;
+        if (System.currentTimeMillis() - lastBackupTime > minIntavel) {
             backup(mCont);
         }
     }
@@ -219,13 +229,13 @@ public class DBHelper extends SQLiteOpenHelper {
         int count = 0;
         String[] types = new String[] {"gif", "bitmap"};
         SQLiteDatabase db = getWritableDatabase();
-        String datetime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+        String datetime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now());
         for(String type : types) {
             File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);
             String[] fileList = dir.list((file, s) -> file.isFile());
             if (fileList != null) {
                 for (String fName : fileList) {
-                    Cursor cus = db.query(DBHelper.TB_IMG_WEB_ITEM, new String[]{"*"}, "title = ?", new String[]{fName}, null, null, "id desc", "1");
+                    Cursor cus = db.query(DbHelper.TB_IMG_WEB_ITEM, new String[]{"*"}, "title = ?", new String[]{fName}, null, null, "id desc", "1");
                     if (cus.getCount() > 0) {
                         cus.moveToFirst();
                         int favFlg = cus.getInt(cus.getColumnIndex("fav_flg"));
@@ -245,7 +255,7 @@ public class DBHelper extends SQLiteOpenHelper {
                             MyLog.w("db_img_fav_insert: ", newId + "");
                             ContentValues ctv2 = new ContentValues(1);
                             ctv2.put("fav_flg", 1);
-                            int rows = db.update(DBHelper.TB_IMG_WEB_ITEM, ctv2, "id = ?", new String[]{cus.getString(cus.getColumnIndex("id"))});
+                            int rows = db.update(DbHelper.TB_IMG_WEB_ITEM, ctv2, "id = ?", new String[]{cus.getString(cus.getColumnIndex("id"))});
                             MyLog.w("db_web_item_update: ", rows + "");
                             count++;
                         }
@@ -268,7 +278,7 @@ public class DBHelper extends SQLiteOpenHelper {
             if (fileList != null) {
                 for (File file : fileList) {
                     String fName = file.getName();
-                    Cursor cus = db.query(DBHelper.TB_IMG_FAVORITE, new String[]{"id"}, "title = ?", new String[]{fName}, null, null, "id desc", "1");
+                    Cursor cus = db.query(DbHelper.TB_IMG_FAVORITE, new String[]{"id"}, "title = ?", new String[]{fName}, null, null, "id desc", "1");
                     if (cus.getCount() > 0) {
                         cus.moveToFirst();
                         String favId = cus.getString(cus.getColumnIndex("id"));

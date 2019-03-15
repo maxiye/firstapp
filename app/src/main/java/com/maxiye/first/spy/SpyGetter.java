@@ -4,15 +4,20 @@ import com.google.gson.JsonObject;
 
 /**
  * 爬虫助手
- * Created by due on 2018/11/22.
+ *
+ * @author due
+ * @date 2018/11/22
  */
 public class SpyGetter {
     private BaseSpy base, gamersky, yxdown, duowan, w17173, ali213;
     public static boolean modeFlg = true;
-    private static final SpyGetter instance = new SpyGetter();//饿汉
+    /**
+     * 饿汉模式
+     */
+    private static final SpyGetter INSTANCE = new SpyGetter();
 
     public static SpyGetter getInstance() {
-        return instance;
+        return INSTANCE;
     }
 
     public BaseSpy getSpy(String web, JsonObject webCfg) {
@@ -35,12 +40,15 @@ public class SpyGetter {
                 break;
             default:
                 spy = base == null ? base = new BaseSpy(webCfg, modeFlg) : base;
-                if (spy.webName != null && !spy.webName.equals(web)) spy.modeFlg = !modeFlg;
+                if (spy.webName != null && !spy.webName.equals(web)) {
+                    spy.modeFlg = !modeFlg;
+                }
                 break;
         }
         spy.webName = web;
-        if (spy.modeFlg != modeFlg)
+        if (spy.modeFlg != modeFlg) {
             spy.applyCfg(webCfg);
+        }
         return spy;
     }
 }

@@ -64,7 +64,10 @@
     <string name="workday">Workday</string>
     <string name="idcard">ID Card</string>
     <string name="scan_into_fav_db">Scan Files Into Favorite</string>
-    <string name="scan_fav_tips">Scanned %1$d Item(s)</string>
+    <plurals name="scan_fav_tips">
+        <item quantity="one">Scanned %1$d Item</item>
+        <item quantity="other">Scanned %1$d Items</item>
+    </plurals>
     <string name="add_to_fav">Add to Favorites</string>
     <string name="add_successfully">Add Successfully</string>
     <string name="already_in_fav">Already in Favorites</string>
@@ -72,7 +75,10 @@
     <string name="no_more">No More</string>
     <string name="go_to">Go To</string>
     <string name="fix_fav_file">Fix Favorite Files</string>
-    <string name="fix_fav_tips">Fixed %1$d File(s)</string>
+    <plurals name="fix_fav_tips">
+        <item quantity="one">Fixed %1$d File</item>
+        <item quantity="other">Fixed %1$d Files</item>
+    </plurals>
     <string name="delete_file">Delete File</string>
     <string name="delete_success">Delete Successfully</string>
     <string name="file_is_lost">File Does Not Exist or File Is Deleted!</string>

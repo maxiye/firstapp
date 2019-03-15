@@ -9,7 +9,12 @@ import android.widget.Toast;
 
 import com.maxiye.first.R;
 import com.maxiye.first.util.ApiUtil;
+import com.maxiye.first.util.StringUtils;
+import com.maxiye.first.util.Util;
 
+/**
+ * @author due
+ */
 public class ExchangeRateActivity extends AppCompatActivity {
 
     @Override
@@ -29,11 +34,11 @@ public class ExchangeRateActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.curRet)).setText("");
         String scur = ((EditText)findViewById(R.id.scur)).getText().toString();
         String tcur = ((EditText)findViewById(R.id.tcur)).getText().toString();
-        String finalScur = !scur.equals("") ? scur : "USD";
-        String finalTcur = !tcur.equals("") ? tcur : "CNY";
-        new Thread(() -> {
+        String finalScur = StringUtils.isBlank(scur) ? "USD" : scur;
+        String finalTcur = StringUtils.isBlank(tcur) ? "CNY" : tcur;
+        Util.getDefaultSingleThreadExecutor().execute(() -> {
             String ret = ApiUtil.getInstance().getExchangeRate(finalScur, finalTcur);
             runOnUiThread(() -> ((TextView) findViewById(R.id.curRet)).setText(ret));
-        }).start();
+        });
     }
 }

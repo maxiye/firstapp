@@ -17,10 +17,14 @@ import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+/**
+ * Webview util
+ * @author due
+ */
 public class WebViewActivity extends AppCompatActivity {
 
     private WebView webview;
-    private ProgressBar web_progress;
+    private ProgressBar webProgress;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -33,7 +37,7 @@ public class WebViewActivity extends AppCompatActivity {
         Intent intent = getIntent();
         String url = intent.getStringExtra(ApplistActivity.EXTRA_URL);
         webview = findViewById(R.id.webView);
-        web_progress = findViewById(R.id.webview_progress);
+        webProgress = findViewById(R.id.webview_progress);
         WebSettings webSettings = webview.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webview.setWebViewClient(new WebViewClient() {
@@ -45,11 +49,15 @@ public class WebViewActivity extends AppCompatActivity {
         webview.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
-                if (newProgress == 100) {
-                    web_progress.setVisibility(View.GONE);//加载完网页进度条消失
+                int maxProgress = 100;
+                if (newProgress == maxProgress) {
+                    // 加载完网页进度条消失
+                    webProgress.setVisibility(View.GONE);
                 } else {
-                    web_progress.setVisibility(View.VISIBLE);//开始加载网页时显示进度条
-                    web_progress.setProgress(newProgress);//设置进度值
+                    // 开始加载网页时显示进度条
+                    webProgress.setVisibility(View.VISIBLE);
+                    // 设置进度值
+                    webProgress.setProgress(newProgress);
                 }
                 super.onProgressChanged(view, newProgress);
             }

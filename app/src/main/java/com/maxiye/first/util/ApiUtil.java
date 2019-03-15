@@ -9,10 +9,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.maxiye.first.R;
-import com.maxiye.first.api.BJTimeActivity;
+import com.maxiye.first.api.BjTimeActivity;
 import com.maxiye.first.api.ExchangeRateActivity;
-import com.maxiye.first.api.IDAddressActivity;
-import com.maxiye.first.api.IPAddressActivity;
+import com.maxiye.first.api.IdAddressActivity;
+import com.maxiye.first.api.IpAddressActivity;
 import com.maxiye.first.api.PhoneAddressActivity;
 import com.maxiye.first.api.PostcodeActivity;
 import com.maxiye.first.api.WeatherActivity;
@@ -29,7 +29,9 @@ import okhttp3.ResponseBody;
 
 /**
  * 接口请求助手
- * Created by due on 2018/10/8.
+ *
+ * @author due
+ * @date 2018/10/8
  */
 @SuppressWarnings("FieldCanBeLocal")
 public class ApiUtil {
@@ -37,6 +39,8 @@ public class ApiUtil {
     private final OkHttpClient okHttpClient = new OkHttpClient();
     private final String appKey = "37185";
     private final String sign = "0c74aa000b3b57398e386b872ab67412";
+    private final String apiSuccessKey = "success";
+    private final String successStatus = "1";
     private final String exchangeRateApi = "http://api.k780.com/?app=finance.rate&scur=%s&tcur=%s&appkey=%s&sign=%s";
     private final String weatherApi = "http://api.k780.com/?app=weather.future&weaid=%s&&appkey=%s&sign=%s";
     private final String IPAddressApi = "http://api.k780.com/?app=ip.get&ip=%s&appkey=%s&sign=%s&format=json";
@@ -62,8 +66,8 @@ public class ApiUtil {
         PopupMenu pMenu = new PopupMenu(context, view);
         pMenu.getMenuInflater().inflate(R.menu.test_activity_api_popupmenu, pMenu.getMenu());
         pMenu.setOnMenuItemClickListener(item -> {
-            int item_id = item.getItemId();
-            switch (item_id) {
+            int itemId = item.getItemId();
+            switch (itemId) {
                 case R.id.weather_api:
                     context.startActivity(new Intent(context, WeatherActivity.class));
                     break;
@@ -71,22 +75,24 @@ public class ApiUtil {
                     context.startActivity(new Intent(context, ExchangeRateActivity.class));
                     break;
                 case R.id.ip_address_api:
-                    context.startActivity(new Intent(context, IPAddressActivity.class));
+                    context.startActivity(new Intent(context, IpAddressActivity.class));
                     break;
                 case R.id.phone_address_api:
                     context.startActivity(new Intent(context, PhoneAddressActivity.class));
                     break;
                 case R.id.id_address_api:
-                    context.startActivity(new Intent(context, IDAddressActivity.class));
+                    context.startActivity(new Intent(context, IdAddressActivity.class));
                     break;
                 case R.id.postcode_api:
                     context.startActivity(new Intent(context, PostcodeActivity.class));
                     break;
                 case R.id.bj_time_api:
-                    context.startActivity(new Intent(context, BJTimeActivity.class));
+                    context.startActivity(new Intent(context, BjTimeActivity.class));
                     break;
                 case R.id.workday_api:
                     context.startActivity(new Intent(context, WorkdayActivity.class));
+                    break;
+                default:
                     break;
             }
             return false;
@@ -104,6 +110,7 @@ public class ApiUtil {
                     .body();
             assert resBody != null;
             ret = resBody.string();
+            MyLog.w("ApiUtil_ret", ret);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -114,7 +121,7 @@ public class ApiUtil {
         String url = String.format(exchangeRateApi, scur, tcur, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!ret.equals("") && jsonObject.get("success").getAsString().equals("1")) {
+        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(apiSuccessKey).getAsString())) {
             JsonObject retObj = jsonObject.get("result").getAsJsonObject();
             ret = "状态：" + retObj.get("status").getAsString() +
                     "\r\n原币种：" + retObj.get("scur").getAsString() +
@@ -131,7 +138,7 @@ public class ApiUtil {
         String retTmp = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(retTmp, JsonObject.class);
         List<String[]> list = new ArrayList<>();
-        if (!retTmp.equals("") && jsonObject.get("success").getAsString().equals("1")) {
+        if (!StringUtils.isBlank(retTmp) && successStatus.equals(jsonObject.get(apiSuccessKey).getAsString())) {
             JsonArray retArr = jsonObject.get("result").getAsJsonArray();
             JsonObject retObj;
             StringBuilder ret = new StringBuilder();
@@ -173,7 +180,7 @@ public class ApiUtil {
         String url = String.format(IPAddressApi, ip, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!ret.equals("") && jsonObject.get("success").getAsString().equals("1")) {
+        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(apiSuccessKey).getAsString())) {
             try {
                 JsonObject retObj = jsonObject.get("result").getAsJsonObject();
                 ret = "状态：" + retObj.get("status").getAsString() +
@@ -201,7 +208,7 @@ public class ApiUtil {
         String url = String.format(PhoneAddressApi, phone, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!ret.equals("") && jsonObject.get("success").getAsString().equals("1")) {
+        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(apiSuccessKey).getAsString())) {
             try {
                 JsonObject retObj = jsonObject.get("result").getAsJsonObject();
                 ret = "状态：" + retObj.get("status").getAsString() +
@@ -226,7 +233,7 @@ public class ApiUtil {
         String url = String.format(IDAddressApi, id, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!ret.equals("") && jsonObject.get("success").getAsString().equals("1")) {
+        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(apiSuccessKey).getAsString())) {
             try {
                 JsonObject retObj = jsonObject.get("result").getAsJsonObject();
                 ret = "状态：" + retObj.get("status").getAsString() +
@@ -250,7 +257,7 @@ public class ApiUtil {
         String url = String.format(PostcodeApi, area, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!ret.equals("") && jsonObject.get("success").getAsString().equals("1")) {
+        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(apiSuccessKey).getAsString())) {
             try {
                 JsonObject retObj = jsonObject.get("result").getAsJsonObject().get("lists").getAsJsonArray().get(0).getAsJsonObject();
                 ret = "地区：" + retObj.get("areanm").getAsString() +
@@ -268,7 +275,7 @@ public class ApiUtil {
         String url = String.format(BJTimeApi, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!ret.equals("") && jsonObject.get("success").getAsString().equals("1")) {
+        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(apiSuccessKey).getAsString())) {
             try {
                 JsonObject retObj = jsonObject.get("result").getAsJsonObject();
                 ret = "时间戳：" + retObj.get("timestamp").getAsString() +
@@ -294,9 +301,10 @@ public class ApiUtil {
         String url = String.format(WorkdayApi, dates, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!ret.equals("") && jsonObject.get("success").getAsString().equals("1")) {
+        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(apiSuccessKey).getAsString())) {
             try {
-                if (dates.contains(",")) {
+                String multSeparator = ",";
+                if (dates.contains(multSeparator)) {
                     JsonArray retArr = jsonObject.get("result").getAsJsonArray();
                     StringBuilder retBuilder = new StringBuilder();
                     for(int i = 0; i<retArr.size(); i++) {

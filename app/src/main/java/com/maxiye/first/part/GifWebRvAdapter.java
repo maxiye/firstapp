@@ -18,7 +18,9 @@ import java.util.Map;
 
 /**
  * gif历史列表适配器
- * Created by due on 2018/5/14.
+ *
+ * @author due
+ * @date 2018/5/14
  */
 @SuppressWarnings({"WeakerAccess"})
 public class GifWebRvAdapter extends RecyclerView.Adapter {
@@ -59,10 +61,12 @@ public class GifWebRvAdapter extends RecyclerView.Adapter {
         if (!item.isEmpty()) {
             viewHolder.mTextView.setText(Html.fromHtml((String) item.get("name"), Html.FROM_HTML_MODE_COMPACT));
             viewHolder.mImageView.setImageDrawable((Drawable) item.get("icon"));
-            if (clickListener != null)
+            if (clickListener != null) {
                 viewHolder.itemView.setOnClickListener(view -> clickListener.onClick(position));
-            if (longClickListener != null)
+            }
+            if (longClickListener != null) {
                 viewHolder.itemView.setOnLongClickListener(view -> longClickListener.onLongClick(position));
+            }
         } else {
             viewHolder.mTextView.setText("");
             viewHolder.mImageView.setImageDrawable(null);
@@ -86,9 +90,18 @@ public class GifWebRvAdapter extends RecyclerView.Adapter {
     }
 
     public interface OnItemClickListener {
+        /**
+         * 单击绑定接口
+         * @param position int
+         */
         void onClick(int position);
     }
     public interface OnItemLongClickListener {
+        /**
+         * 长按点击接口
+         * @param position int
+         * @return boolean
+         */
         boolean onLongClick(int position);
     }
 

@@ -8,7 +8,9 @@ import android.widget.Toast;
 
 /**
  * 线控
- * Created by Administrator on 2017-06-14.
+ *
+ * @author Administrator
+ * @date 2017-06-14
  */
 
 public class MyReceiver extends BroadcastReceiver {

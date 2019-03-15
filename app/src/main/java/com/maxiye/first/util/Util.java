@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
+import android.support.annotation.NonNull;
 import android.view.Menu;
 
 import java.io.File;
@@ -15,15 +16,25 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Method;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 函数助手
- * Created by due on 2018/5/16.
+ * 常用方法助手
+ *
+ * @author due
+ * @date 2018/5/16
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class Util {
+
+    private static ExecutorService singleThreadPool;
+    private static Pattern UNICODE_PATTERN = Pattern.compile("\\\\u([a-f0-9]{4})");
     /**
      * unicode字符串(\\uxxxx)转为中文
      *
@@ -31,35 +42,40 @@ public class Util {
      * @return String
      */
     public static String unicode2Chinese(String unicode) {
-        Pattern p = Pattern.compile("\\\\u([a-f0-9]{4})");
-        Matcher mt = p.matcher(unicode);
+        Matcher mt = UNICODE_PATTERN.matcher(unicode);
         String result = unicode;
         while (mt.find()) {
             int byte1, byte2;
             String item = mt.group(1);
-            byte1 = Integer.parseInt(item.substring(0, 2), 16) << 8;//第一个byte是高位，相当于‘十位’
-            byte2 = Integer.parseInt(item.substring(2), 16);//这是‘个位’
+            // 第一个byte是高位，相当于‘十位’
+            byte1 = Integer.parseInt(item.substring(0, 2), 16) << 8;
+            // 这是‘个位’
+            byte2 = Integer.parseInt(item.substring(2), 16);
             result = result.replace(mt.group(0), String.valueOf((char) (byte1 + byte2)));
         }
         return result;
     }
 
     public static String unescape(String content) {
-        /*content = content.replaceAll("\\\\/", "");
-        content = content.replaceAll("\\\\\"", "'");*/
         content = content.replaceAll("\\\\(?=[/|\"])", "");
         content = unicode2Chinese(content);
         MyLog.w("unescape", content);
         return content;
     }
 
-    /* Checks if external storage is available for read and write */
+    /**
+     * Checks if external storage is available for read and write
+      * @return boolean
+     */
     public static boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
         return Environment.MEDIA_MOUNTED.equals(state);
     }
 
-    /* Checks if external storage is available to at least read */
+    /**
+     * Checks if external storage is available to at least read
+     * @return boolean
+     */
     public static boolean isExternalStorageReadable() {
         String state = Environment.getExternalStorageState();
         return Environment.MEDIA_MOUNTED.equals(state) ||
@@ -71,8 +87,9 @@ public class Util {
             Uri pic = intent.getData();
             assert pic != null;
             ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(pic, "r");
-            if (pfd == null)
+            if (pfd == null) {
                 throw new FileNotFoundException();
+            }
             return pfd.getFileDescriptor();
         } catch (Exception e) {
             e.printStackTrace();
@@ -162,5 +179,23 @@ public class Util {
             }
         }
         return hash;
+    }
+
+    public static class MyThreadFactory implements ThreadFactory {
+
+        @Override
+        public Thread newThread(@NonNull Runnable r) {
+            MyLog.w("MyThreadFactory", "new");
+            return new Thread(r,"due-single-thread");
+        }
+    }
+
+    public static ExecutorService getDefaultSingleThreadExecutor() {
+        if (singleThreadPool == null) {
+            singleThreadPool = new ThreadPoolExecutor(1, 1,
+                    0L, TimeUnit.MILLISECONDS,
+                    new LinkedBlockingQueue<>(5), new MyThreadFactory(), new ThreadPoolExecutor.AbortPolicy());
+        }
+        return singleThreadPool;
     }
 }

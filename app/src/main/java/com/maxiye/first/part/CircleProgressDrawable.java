@@ -15,12 +15,14 @@ import com.maxiye.first.util.BitmapUtil;
 
 /**
  * 自定义环形进度条
- * Created by 91287 on 2018/5/27.
+ *
+ * @author due
+ * @date 2018/5/27
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class CircleProgressDrawable extends Drawable {
     private Paint mPaint;
-    private boolean gradual_flg = true;
+    private boolean gradualFlg = true;
     private String style = STYLE_SHADOW;
     public final static String STYLE_BORDER = "border";
     public final static String STYLE_SHADOW = "shadow";
@@ -39,7 +41,10 @@ public class CircleProgressDrawable extends Drawable {
         setBounds(0, 0, 90, 90);
         circleWidth = Math.min(getBounds().width(), getBounds().height()) >> 3;
     }
-    //建造者模式
+
+    /**
+     * 建造者模式
+     */
     public static class Builder {
         private final CircleProgressDrawable cpd;
         public Builder () {
@@ -62,7 +67,7 @@ public class CircleProgressDrawable extends Drawable {
         }
 
         public Builder gradual(boolean gradual) {
-            cpd.gradual_flg = gradual;
+            cpd.gradualFlg = gradual;
             return this;
         }
 
@@ -72,8 +77,9 @@ public class CircleProgressDrawable extends Drawable {
          * @return builder
          */
         public Builder thin(int divide) {
-            if (divide < 2) {
-                divide = 2;
+            int minDivide = 2;
+            if (divide < minDivide) {
+                divide = minDivide;
             }
             cpd.circleWidth = Math.min(cpd.getBounds().width(), cpd.getBounds().height()) / divide;
             return this;
@@ -99,9 +105,10 @@ public class CircleProgressDrawable extends Drawable {
         // 设置抗锯齿
         mPaint.setAntiAlias(true);
         // 设置圆环宽度
-        mPaint.setStrokeWidth(circleWidth);//往外侧增加一半，往内侧增加一半。
+        // 往外侧增加一半，往内侧增加一半。
+        mPaint.setStrokeWidth(circleWidth);
         // 设置圆角
-        //mPaint.setStrokeCap(Paint.Cap.ROUND);
+        /*mPaint.setStrokeCap(Paint.Cap.ROUND);*/
         percent = curProgress * 1.0f / maxProgress;
         final Rect bounds = getBounds();
         int width = bounds.width();int height = bounds.height();
@@ -146,11 +153,13 @@ public class CircleProgressDrawable extends Drawable {
                 mPaint.setAlpha(0x20);
                 canvas.drawCircle(pX, pY, radius, mPaint);
                 break;
+            default:
+                break;
         }
         // 计算角度.
         int angle = (int) (percent * 360);
         //颜色渐变
-        if (gradual_flg) {
+        if (gradualFlg) {
 //            int Offset = (int) ((1- percent) * 150);
             mPaint.setColor(BitmapUtil.gradualColor(circleColor, (360 - angle)));
         } else {

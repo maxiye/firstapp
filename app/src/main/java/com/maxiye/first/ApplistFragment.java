@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
  * Activities that contain this fragment must implement the
  * {@link ApplistFragment.OnFrgActionListener} interface
  * to handle interaction events.
+ * @author due
  */
 public class ApplistFragment extends Fragment {
     private static final String ARG_1 = "arg_1";
@@ -45,7 +46,7 @@ public class ApplistFragment extends Fragment {
     private OnFrgActionListener mListener;
     private SharedPreferences sp;
     private PackageManager pm;
-    private ArrayList<ApplicationInfo> ai_al;
+    private ArrayList<ApplicationInfo> appInfoArrayList;
 
     /**
      * 简写toast
@@ -76,11 +77,12 @@ public class ApplistFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
         assert getActivity() != null;
         ListView lv = getActivity().findViewById(R.id.applist_frg_lv);
-        //点按事件
+        // 点按事件
         lv.setOnItemClickListener((parent, view, position, id) -> mListener.onItemClick(view));
         lv.setOnItemLongClickListener((parent, view, position, id) -> {
             mListener.onItemLongClick(view);
-            return true;//取消点击事件
+            // 取消点击事件
+            return true;
         });
         lv.setOnScrollListener(new AbsListView.OnScrollListener() {
             private int oldVisibleItem = 0;
@@ -93,7 +95,8 @@ public class ApplistFragment extends Fragment {
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                if (firstVisibleItem > oldVisibleItem && touchFlg && lv.getCount() > 15) {
+                int numPerScreen = 15;
+                if (firstVisibleItem > oldVisibleItem && touchFlg && lv.getCount() > numPerScreen) {
                     // 向上滑动
                     mListener.onListScroll(true);
                     touchFlg = false;
@@ -125,38 +128,38 @@ public class ApplistFragment extends Fragment {
             ApplistFragment fragment = frag.get();
             if (fragment != null && fragment.getActivity() != null) {
                 Activity activity = fragment.getActivity();
-                if (fragment.ai_al == null) {
+                if (fragment.appInfoArrayList == null) {
                     fragment.sp = activity.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
                     fragment.pm = activity.getPackageManager();
-                    fragment.ai_al = new ArrayList<>(fragment.pm.getInstalledApplications(0));
+                    fragment.appInfoArrayList = new ArrayList<>(fragment.pm.getInstalledApplications(0));
                 }
-                boolean show_system_apps = fragment.sp.getBoolean(SettingActivity.SHOW_SYSTEM, false);
+                boolean showSystemApps = fragment.sp.getBoolean(SettingActivity.SHOW_SYSTEM, false);
                 //过滤
-                List<Map<String, Object>> ai_list = fragment.ai_al.stream()
-                        .filter(ai -> show_system_apps || ((ai.flags & ApplicationInfo.FLAG_SYSTEM) == 0))
+                List<Map<String, Object>> aiList = fragment.appInfoArrayList.stream()
+                        .filter(ai -> showSystemApps || ((ai.flags & ApplicationInfo.FLAG_SYSTEM) == 0))
                         .filter(ai -> {
                             if (strings[0] != null && !strings[0].isEmpty()) {
-                                String app_name = fragment.pm.getApplicationLabel(ai).toString();
-                                return (app_name + ai.packageName).toLowerCase().contains(strings[0].toLowerCase());
+                                String appName = fragment.pm.getApplicationLabel(ai).toString();
+                                return (appName + ai.packageName).toLowerCase().contains(strings[0].toLowerCase());
                             }
                             return true;
                         })
                         .map(ai -> {
-                            HashMap<String, Object> app_info = new HashMap<>(3);
+                            HashMap<String, Object> appInfo = new HashMap<>(3);
                             try {
                                 PackageInfo pi = fragment.pm.getPackageInfo(ai.packageName, 0);
-                                app_info.put("name", fragment.pm.getApplicationLabel(ai) + " v" + pi.versionName + "(" + pi.versionCode + ")");
-                                app_info.put("pkg", ai.packageName);
-                                app_info.put("icon", fragment.pm.getApplicationIcon(ai));
+                                appInfo.put("name", fragment.pm.getApplicationLabel(ai) + " v" + pi.versionName + "(" + pi.versionCode + ")");
+                                appInfo.put("pkg", ai.packageName);
+                                appInfo.put("icon", fragment.pm.getApplicationIcon(ai));
                             } catch (PackageManager.NameNotFoundException e1) {
                                 e1.printStackTrace();
                             }
-                            return app_info;
+                            return appInfo;
                         })
                         .collect(Collectors.toList());
                 //写入文件
                 //saveFileEx("app_list.txt", app_list);
-                return ai_list.size() > 0 ? ai_list : null;
+                return aiList.size() > 0 ? aiList : null;
             }
             return null;
         }
@@ -222,10 +225,22 @@ public class ApplistFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     interface OnFrgActionListener {
+        /**
+         * 项目点击事件接口
+         * @param view View
+         */
         void onItemClick(View view);
 
+        /**
+         * 项目长按事件接口
+         * @param view View
+         */
         void onItemLongClick(View view);
 
+        /**
+         * 滚动事件
+         * @param flg 上划true，下滑false
+         */
         void onListScroll(boolean flg);
     }
 }

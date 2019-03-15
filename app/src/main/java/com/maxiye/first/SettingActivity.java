@@ -7,6 +7,9 @@ import android.os.Bundle;
 import android.widget.Switch;
 
 
+/**
+ * @author due
+ */
 public class SettingActivity extends AppCompatActivity {
     private SharedPreferences sp;
     public final static String SETTING = "com.maxiye.first.SETTING";
@@ -24,11 +27,11 @@ public class SettingActivity extends AppCompatActivity {
     }
 
     private void initSetting() {
-        Switch show_system_apps = findViewById(R.id.setting_show_system);
-        show_system_apps.setOnCheckedChangeListener((buttonView, isChecked) -> {
+        Switch showSystemApps = findViewById(R.id.setting_show_system);
+        showSystemApps.setOnCheckedChangeListener((buttonView, isChecked) -> {
             SharedPreferences.Editor editor = sp.edit();
             editor.putBoolean(SHOW_SYSTEM, isChecked).apply();
         });
-        show_system_apps.setChecked(sp.getBoolean(SHOW_SYSTEM, false));
+        showSystemApps.setChecked(sp.getBoolean(SHOW_SYSTEM, false));
     }
 }

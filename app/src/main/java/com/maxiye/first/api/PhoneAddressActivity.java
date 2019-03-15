@@ -8,7 +8,12 @@ import android.widget.TextView;
 
 import com.maxiye.first.R;
 import com.maxiye.first.util.ApiUtil;
+import com.maxiye.first.util.StringUtils;
+import com.maxiye.first.util.Util;
 
+/**
+ * @author due
+ */
 public class PhoneAddressActivity extends AppCompatActivity {
 
     @Override
@@ -21,10 +26,10 @@ public class PhoneAddressActivity extends AppCompatActivity {
     public void phoneAddress(View view) {
         ((TextView) findViewById(R.id.phone_address_ret)).setText("");
         String phone = ((EditText)findViewById(R.id.phone_input)).getText().toString();
-        String finalPhone = !phone.equals("") ? phone : "13641635423";
-        new Thread(() -> {
+        String finalPhone = StringUtils.isBlank(phone) ? "13641635423" : phone;
+        Util.getDefaultSingleThreadExecutor().execute(() -> {
             String ret = ApiUtil.getInstance().getPhoneAddress(finalPhone);
             runOnUiThread(() -> ((TextView) findViewById(R.id.phone_address_ret)).setText(ret));
-        }).start();
+        });
     }
 }

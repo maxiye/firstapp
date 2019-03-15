@@ -17,6 +17,7 @@ class W17173Spy extends BaseSpy {
         super(webCfg, modeFlg);
     }
 
+    @Override
     public Request buildRequest(String artId, int webPage) {
         curUrl = webPage > 1 ? urlTpl2 : String.format(urlTpl, artId);
         MyLog.println(curUrl);
@@ -28,7 +29,7 @@ class W17173Spy extends BaseSpy {
 
     @Override
     void handleImgInfo(HashMap<String, String> imgInfo) {
-        //捕获的url以//（exp. //i.17173cdn.com/2fhnvk/YWxqaGBf/cms3/IMnCErbmxubneda.gif!a-3-480x.jpg）开头
+        // 捕获的url以//（exp. //i.17173cdn.com/2fhnvk/YWxqaGBf/cms3/IMnCErbmxubneda.gif!a-3-480x.jpg）开头
         String url = imgInfo.get("url");
         if (url.startsWith("//")) {
             imgInfo.put("url", "http:" + url);

@@ -27,6 +27,7 @@
         <item name="actionBarStyle">@style/MyActionStyle</item>
         <!--<item name="actionMenuTextColor">@color/darkBlue</item>-->
         <item name="windowActionBarOverlay">false</item>
+        <!--<item name="android:windowBackground">@null</item>-->黑色背景
     </style>
     <!-- ActionBar 样式 -->
     <style name="MyActionStyle" parent="Widget.AppCompat.Light.ActionBar.Solid.Inverse">

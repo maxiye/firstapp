@@ -12,8 +12,10 @@ import okhttp3.Request;
 import okhttp3.ResponseBody;
 
 /**
- * 数据库助手
- * Created by due on 2018/8/6.
+ * 网络工具
+ *
+ * @author due
+ * @date 2018/8/6
  */
 @SuppressWarnings("unused")
 public class NetworkUtil {

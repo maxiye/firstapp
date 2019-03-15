@@ -8,11 +8,15 @@ import android.widget.TextView;
 
 import com.maxiye.first.R;
 import com.maxiye.first.util.ApiUtil;
+import com.maxiye.first.util.StringUtils;
+import com.maxiye.first.util.Util;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
+/**
+ * @author due
+ */
 public class WorkdayActivity extends AppCompatActivity {
 
     @Override
@@ -26,10 +30,10 @@ public class WorkdayActivity extends AppCompatActivity {
     public void workdayQuery(View view) {
         ((TextView) findViewById(R.id.workday_ret)).setText("");
         String date = ((EditText)findViewById(R.id.work_day_input)).getText().toString();
-        String finalDate = !date.equals("") ? date : new SimpleDateFormat("yyyyMMdd", Locale.CHINA).format(new Date());
-        new Thread(() -> {
+        String finalDate = StringUtils.isBlank(date) ? DateTimeFormatter.ofPattern("yyyyMMdd").format(LocalDate.now()) : date;
+        Util.getDefaultSingleThreadExecutor().execute(() -> {
             String ret = ApiUtil.getInstance().getWorkday(finalDate);
             runOnUiThread(() -> ((TextView) findViewById(R.id.workday_ret)).setText(ret));
-        }).start();
+        });
     }
 }

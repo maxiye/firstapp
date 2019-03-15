@@ -17,6 +17,9 @@ import android.widget.Toast;
 import com.maxiye.first.util.CacheUtil;
 
 
+/**
+ * @author due
+ */
 public class ApplistActivity extends AppCompatActivity implements ApplistFragment.OnFrgActionListener, ActivityCompat.OnRequestPermissionsResultCallback, SearchView.OnQueryTextListener {
     public static final String EXTRA_URL = "com.maxiye.first.URL";
 
@@ -83,8 +86,11 @@ public class ApplistActivity extends AppCompatActivity implements ApplistFragmen
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
+    /**
+     * ListView项目点击事件，实现OnFrgActionListener接口
+     * @param view View
+     */
     @Override
-    //ListView项目点击事件，实现OnFrgActionListener接口
     public void onItemClick(View view) {
         TextView tv = view.findViewById(R.id.applist_package_name);
         ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -111,15 +117,19 @@ public class ApplistActivity extends AppCompatActivity implements ApplistFragmen
     @Override
     public void onListScroll(boolean flg) {
         //上滑
-        if (flg && ab.isShowing())
+        if (flg && ab.isShowing()) {
             ab.hide();
+        }
         //下滑
         if (!flg && !ab.isShowing()) {
             ab.show();
         }
     }
 
-    //查询应用
+    /**
+     * 查询应用
+     * @param search String
+     */
     private void search(String search) {
         if (frg != null) {
             frg.keyword = search;

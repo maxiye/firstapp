@@ -8,7 +8,12 @@ import android.widget.TextView;
 
 import com.maxiye.first.R;
 import com.maxiye.first.util.ApiUtil;
+import com.maxiye.first.util.StringUtils;
+import com.maxiye.first.util.Util;
 
+/**
+ * @author due
+ */
 public class PostcodeActivity extends AppCompatActivity {
 
     @Override
@@ -21,10 +26,10 @@ public class PostcodeActivity extends AppCompatActivity {
     public void postcode(View view) {
         ((TextView) findViewById(R.id.postcode_ret)).setText("");
         String area = ((EditText)findViewById(R.id.area_nm_input)).getText().toString();
-        String finalArea = !area.equals("") ? area : "广东省广东市";
-        new Thread(() -> {
+        String finalArea = StringUtils.isBlank(area) ? "广东省广东市" : area;
+        Util.getDefaultSingleThreadExecutor().execute(() -> {
             String ret = ApiUtil.getInstance().getPostcode(finalArea);
             runOnUiThread(() -> ((TextView) findViewById(R.id.postcode_ret)).setText(ret));
-        }).start();
+        });
     }
 }

@@ -17,7 +17,9 @@ import pl.droidsonroids.gif.GifImageView;
 
 /**
  * 适配器
- * Created by due on 2018/10/08.
+ *
+ * @author due
+ * @date 2018/10/08
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class WeatherRetRvAdapter extends RecyclerView.Adapter {
@@ -67,10 +69,12 @@ public class WeatherRetRvAdapter extends RecyclerView.Adapter {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (clickListener != null)
+        if (clickListener != null) {
             viewHolder.itemView.setOnClickListener(view -> clickListener.onClick(position));
-        if (longClickListener != null)
+        }
+        if (longClickListener != null) {
             viewHolder.itemView.setOnLongClickListener(view -> longClickListener.onLongClick(position));
+        }
     }
 
     @Override
@@ -92,9 +96,18 @@ public class WeatherRetRvAdapter extends RecyclerView.Adapter {
     }
 
     public interface OnItemClickListener {
+        /**
+         * 每日天气点击事件
+         * @param position int
+         */
         void onClick(int position);
     }
     public interface OnItemLongClickListener {
+        /**
+         * 长按事件
+         * @param position int
+         * @return boolean 是否消费
+         */
         boolean onLongClick(int position);
     }
 

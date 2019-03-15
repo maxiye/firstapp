@@ -30,7 +30,9 @@ import pl.droidsonroids.gif.GifImageView;
 
 /**
  * bitmap工具
- * Created by due on 2018/5/16.
+ *
+ * @author due
+ * @date 2018/5/16
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class BitmapUtil {
@@ -65,14 +67,24 @@ public class BitmapUtil {
         return inSampleSize;
     }
 
+    /**
+     * 根据文件大小推测压缩比
+     * @param fileSize long
+     * @param type String
+     * @return int
+     */
     public static int predictInSampleSize(long fileSize, String type) {
-        if (type.equals("gif"))
+        if ("gif".equals(type)) {
             return 4;
-        if (fileSize < 30720) {//30
+        }
+        // 30
+        if (fileSize < 30720) {
             return 4;
-        } else if (fileSize < 122880) {//120
+        // 120
+        } else if (fileSize < 122880) {
             return 8;
-        } else if (fileSize < 491520) {//480
+        // 480
+        } else if (fileSize < 491520) {
             return 16;
         } else {
             return 32;
@@ -94,7 +106,8 @@ public class BitmapUtil {
         int w = bitmap.getWidth(), h = bitmap.getHeight();
         MyLog.w("convertGray", "wh:" + w + "," + h);
         int alpha = 0xFF << 24;
-        int[] pixels = new int[w * h];//3840*2312 8k
+        // 3840*2312 4k
+        int[] pixels = new int[w * h];
         bitmap.getPixels(pixels, 0, w, 0, 0, w, h);
         int avg = 0;
         for (int i = 0; i < pixels.length; i++) {
@@ -103,7 +116,8 @@ public class BitmapUtil {
             int g = (color & 0xFF00) >> 8;
             int b = color & 0xFF;
             int gray = (r * 306 + g * 601 + b * 117) >> 10;
-            pixels[i] = alpha | (gray << 16) | (gray << 8) | gray;//位或替换+，优化性能
+            // 位或替换+，优化性能
+            pixels[i] = alpha | (gray << 16) | (gray << 8) | gray;
         }
         return Bitmap.createBitmap(pixels, w, h, Bitmap.Config.ARGB_8888);
     }
@@ -122,9 +136,10 @@ public class BitmapUtil {
                 /*int max = Math.max(r, Math.max(g, b));
                 int min = Math.min(r, Math.min(g, b));
                 int avg = (r + g + b) / 3;*/
-                //min 比较深黑 max比较浅 avg正好
+                // min 比较深黑 max比较浅 avg正好
                 int gray = (r * 306 + g * 601 + b * 117) >> 10;
-                int rgb = alpha | (gray << 16) | (gray << 8) | gray;//位或替换+，优化性能
+                // 位或替换+，优化性能
+                int rgb = alpha | (gray << 16) | (gray << 8) | gray;
 //                MyLog.w("convertGray", "rgb:" + r + "," + g + "," + b + ";" + "max,min,avg:" + max + "," + min + "," + avg + ";" + "rgb:" + rgb);
                 ret.setPixel(i, j, rgb);
             }
@@ -170,7 +185,8 @@ public class BitmapUtil {
             int r = (color & 0xFF0000) >> 16;
             int g = (color & 0xFF00) >> 8;
             int b = color & 0xFF;
-            pixels[i] = (r * 306 + g * 601 + b * 117) >> 10;//转灰度
+            // 转灰度
+            pixels[i] = (r * 306 + g * 601 + b * 117) >> 10;
             avg += pixels[i];
         }
         avg = avg / (width * height);
@@ -200,7 +216,8 @@ public class BitmapUtil {
             int r = (color & 0xFF0000) >> 16;
             int g = (color & 0xFF00) >> 8;
             int b = color & 0xFF;
-            pixels[i] = (r * 306 + g * 601 + b * 117) >> 10;//转灰度
+            // 转灰度
+            pixels[i] = (r * 306 + g * 601 + b * 117) >> 10;
             avg += pixels[i];
         }
         avg = avg / (width * height);
@@ -241,11 +258,10 @@ public class BitmapUtil {
      * @param offset int
      * @return int
      */
-    public static int gradualColor1(int color, int offset) {
+    public static int gradualColor1(int color, int offset, boolean mode) {
         int a = 0xff000000, r = (color & 0xff0000) >> 16, g = (color & 0xff00) >> 8, b = color & 0xff;
         int[] rgb = new int[]{r, g, b};
         int i = 0;
-        boolean mode = true;//+
         if (mode) {
             rgb[i] += offset;
         } else {
@@ -410,7 +426,8 @@ public class BitmapUtil {
                 pixels[i] &= 0xFF;
                 avg += pixels[i];
             }
-            avg = avg >> 6;//improve / 64
+            // improve / 64
+            avg = avg >> 6;
             long meta = 0;
             for (int pix : pixels) {
                 meta = meta << 1 | (pix >= avg ? 1 : 0);
@@ -494,7 +511,8 @@ public class BitmapUtil {
      * @return boolean
      */
     public static boolean isGif(byte[] data) {
-        return data[0] == 71 && data[1] == 73 && data[2] == 70;//71=>G 73=>I 70=>F
+        // 71=>G 73=>I 70=>F
+        return data[0] == 71 && data[1] == 73 && data[2] == 70;
     }
 
     /**

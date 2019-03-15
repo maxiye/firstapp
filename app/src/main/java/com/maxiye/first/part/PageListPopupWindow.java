@@ -17,6 +17,7 @@ import android.widget.TextView;
 
 import com.maxiye.first.R;
 import com.maxiye.first.util.MyLog;
+import com.maxiye.first.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,7 +25,9 @@ import java.util.Objects;
 
 /**
  * 数据库助手
- * Created by due on 2018/10/22.
+ *
+ * @author due
+ * @date 2018/10/22
  */
 public class PageListPopupWindow {
     public ArrayList<HashMap<String, Object>> list;
@@ -41,7 +44,10 @@ public class PageListPopupWindow {
     private int pageSize = 10;
     private int pages;
     private int page;
-    public String where;//筛选条件
+    /**
+     * 筛选条件，eg. art_id=5
+     */
+    public String where;
     private int windowHeight;
 
     private PageListPopupWindow(Context ctx) {
@@ -137,7 +143,8 @@ public class PageListPopupWindow {
         rv.setLayoutManager(new LinearLayoutManager(context));
         DividerItemDecoration divider = new DividerItemDecoration(context, DividerItemDecoration.VERTICAL);
         divider.setDrawable(Objects.requireNonNull(context.getDrawable(R.drawable.gif_rv_divider)));
-        rv.addItemDecoration(divider);//分隔线
+        // 分隔线
+        rv.addItemDecoration(divider);
         ma = new GifWebRvAdapter();
         //设置页面相关
         EditText pageEdit = rootView.findViewById(R.id.popup_page);
@@ -170,7 +177,7 @@ public class PageListPopupWindow {
             });
             pageEdit.setOnEditorActionListener((textView, i, keyEvent) -> {
                 String nowPageStr = pageEdit.getText().toString();
-                int nowPage = nowPageStr.equals("") ? 1 : Integer.parseInt(nowPageStr);
+                int nowPage = StringUtils.isBlank(nowPageStr) ? 1 : Integer.parseInt(nowPageStr);
                 page = nowPage > pages ? pages : nowPage;
                 MyLog.w("FavoriteGoPage", "pagePopup:" + page);
                 pageEdit.setText(page + "");
@@ -179,8 +186,9 @@ public class PageListPopupWindow {
                 prev.setVisibility(page > 1 ? View.VISIBLE : View.GONE);
                 next.setVisibility(page < pages ? View.VISIBLE : View.GONE);
                 InputMethodManager imm = ((InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE));
-                if (imm != null)
+                if (imm != null) {
                     imm.toggleSoftInput(InputMethodManager.RESULT_UNCHANGED_SHOWN, InputMethodManager.HIDE_NOT_ALWAYS);
+                }
                 pageEdit.clearFocus();
                 return true;
             });
@@ -189,25 +197,52 @@ public class PageListPopupWindow {
         }
         list = new ArrayList<>(pageSize);
         ma.setData(listGetter.getList(1, list, where));
-        if (itemClickListener != null) ma.setOnItemClickListener(position -> itemClickListener.onClick(this, position));
-        if (itemLongClickListener != null) ma.setOnItemLongClickListener(position -> itemLongClickListener.onLongClick(this, position));
+        if (itemClickListener != null) {
+            ma.setOnItemClickListener(position -> itemClickListener.onClick(this, position));
+        }
+        if (itemLongClickListener != null) {
+            ma.setOnItemLongClickListener(position -> itemLongClickListener.onLongClick(this, position));
+        }
         rv.setAdapter(ma);
         return popupWindow;
     }
 
     public interface ListGetter {
+        /**
+         * 列表数据获取接口
+         * @param page int 页码
+         * @param list ArrayList 列表数据容器
+         * @param where string sql筛选条件
+         * @return ArrayList 列表数据
+         */
         ArrayList<HashMap<String, Object>> getList(int page, ArrayList<HashMap<String, Object>> list, String where);
     }
 
     public interface ListCountGetter {
+        /**
+         * 获取数据总数接口
+         * @param where 查询条件，eg. id=10
+         * @return int 数据总数
+         */
         int getListCount(String where);
     }
 
     public interface ItemClickListener {
+        /**
+         * 项目点击事件
+         * @param pageListPopupWindow 列表
+         * @param position int 位置
+         */
         void onClick(PageListPopupWindow pageListPopupWindow, int position);
     }
 
     public interface ItemLongClickListener {
+        /**
+         * 项目长按事件
+         * @param pageListPopupWindow 列表
+         * @param position int 位置
+         * @return boolean 是否消费
+         */
         boolean onLongClick(PageListPopupWindow pageListPopupWindow, int position);
     }
 
