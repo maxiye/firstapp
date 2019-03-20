@@ -62,16 +62,14 @@ public class PageListPopupWindow {
         total = listCountGetter.getListCount(where);
         pages = calcPages();
         page = 1;
-        if (pages > 1) {
-            EditText pageEdit = rootView.findViewById(R.id.popup_page);
-            TextView totalPage = rootView.findViewById(R.id.popup_total_page);
-            Button prev = rootView.findViewById(R.id.popup_prev_page);
-            Button next = rootView.findViewById(R.id.popup_next_page);
-            pageEdit.setText(String.valueOf(page));
-            prev.setVisibility(View.GONE);
-            next.setVisibility(pages > 1 ? View.VISIBLE : View.GONE);
-            totalPage.setText(String.valueOf(pages));
-        }
+        EditText pageEdit = rootView.findViewById(R.id.popup_page);
+        TextView totalPage = rootView.findViewById(R.id.popup_total_page);
+        Button prev = rootView.findViewById(R.id.popup_prev_page);
+        Button next = rootView.findViewById(R.id.popup_next_page);
+        pageEdit.setText(String.valueOf(page));
+        prev.setVisibility(View.GONE);
+        next.setVisibility(pages > 1 ? View.VISIBLE : View.GONE);
+        totalPage.setText(String.valueOf(pages));
         ma.setData(listGetter.getList(page, list, where));
         ma.notifyDataSetChanged();
     }

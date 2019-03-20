@@ -947,7 +947,7 @@ public class GifActivity extends AppCompatActivity {
 
     private int getHistoryCount(String andWhere) {
         String where = "art_id <> '' and type = '" + type + "'";
-        if (andWhere != null) {
+        if (!StringUtils.isBlank(andWhere)) {
             where += " and " + andWhere;
         }
         Cursor cus = db.rawQuery("select count(*) from " + DbHelper.TB_IMG_WEB + " where " + where, null);
@@ -1044,8 +1044,12 @@ public class GifActivity extends AppCompatActivity {
                                     try {
                                         String favIds = getRepeatedItems();
                                         runOnUiThread(() -> {
-                                            pageWin.where = "id in (" + favIds + ")";
-                                            pageWin.reset();
+                                            if (StringUtils.isBlank(favIds)) {
+                                                alert(getString(R.string.not_found));
+                                            } else {
+                                                pageWin.where = "id in (" + favIds + ")";
+                                                pageWin.reset();
+                                            }
                                             loading.dismiss();
                                         });
                                     } catch (Exception e) {
@@ -1153,7 +1157,7 @@ public class GifActivity extends AppCompatActivity {
                     }
                 }
             }
-            if (ids.capacity() > 0) {
+            if (ids.length() > 0) {
                 ids.deleteCharAt(ids.lastIndexOf(","));
             }
         }
@@ -1168,13 +1172,14 @@ public class GifActivity extends AppCompatActivity {
 
     private int getFavoriteCount(String andWhere) {
         String where = "type = '" + type + "'";
-        if (andWhere != null) {
+        if (!StringUtils.isBlank(andWhere)) {
             where += " and " + andWhere;
         }
         Cursor cus = db.rawQuery("select count(*) from " + DbHelper.TB_IMG_FAVORITE + " where " + where, null);
         cus.moveToFirst();
         int count = cus.getInt(0);
         cus.close();
+        MyLog.w("getFavoriteCount", count + "");
         return count;
     }
 
