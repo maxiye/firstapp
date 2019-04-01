@@ -344,7 +344,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     @SuppressWarnings("unused")
     private void createDB() {
         // 此时创建数据库,生成.db文件
-        SQLiteDatabase db = DbHelper.getDB(this);
+        SQLiteDatabase db = DbHelper.newDb(this);
         //增
         ContentValues ctv = new ContentValues();
         ctv.put("author", "zzz");
@@ -362,6 +362,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         Cursor cus = db.query(DbHelper.TB_BOOK, new String[]{"*"}, "author = ?", new String[]{"zzz"}, null, null, "id desc");
         cus.moveToFirst();//必须，不然报错
         cus.close();
+        db.close();
     }
 
     private void share() {
@@ -547,7 +548,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
      */
     public void getGif(View view) {
         Intent getGifInt = new Intent(this, GifActivity.class);
-        getGifInt.putExtra(GifActivity.WEB_NAME, "gamersky");
+        getGifInt.putExtra(GifActivity.WEB_NAME_ARG, "gamersky");
         startActivity(getGifInt);
     }
 

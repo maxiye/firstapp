@@ -2,8 +2,9 @@ package com.maxiye.first.spy;
 
 import com.google.gson.JsonObject;
 import com.maxiye.first.util.MyLog;
-import com.maxiye.first.util.Util;
+import com.maxiye.first.util.StringUtils;
 
+import okhttp3.Headers;
 import okhttp3.Request;
 
 /**
@@ -32,7 +33,7 @@ class Ali213Spy extends BaseSpy {
 
     @Override
     String handleContent(String content) {
-        return Util.unescape(content);
+        return StringUtils.unescape(content);
     }
 
     @Override

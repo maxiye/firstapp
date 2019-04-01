@@ -10,15 +10,14 @@ import com.google.gson.JsonObject;
  */
 public class SpyGetter {
     private BaseSpy base, gamersky, yxdown, duowan, w17173, ali213;
+    /**
+     * gif和bitmap模式切换标记
+     */
     public static boolean modeFlg = true;
     /**
      * 饿汉模式
      */
-    private static final SpyGetter INSTANCE = new SpyGetter();
-
-    public static SpyGetter getInstance() {
-        return INSTANCE;
-    }
+    public static final SpyGetter INSTANCE = new SpyGetter();
 
     public BaseSpy getSpy(String web, JsonObject webCfg) {
         BaseSpy spy;

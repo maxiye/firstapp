@@ -34,34 +34,6 @@ import java.util.regex.Pattern;
 public class Util {
 
     private static ExecutorService singleThreadPool;
-    private static Pattern UNICODE_PATTERN = Pattern.compile("\\\\u([a-f0-9]{4})");
-    /**
-     * unicode字符串(\\uxxxx)转为中文
-     *
-     * @param unicode String
-     * @return String
-     */
-    public static String unicode2Chinese(String unicode) {
-        Matcher mt = UNICODE_PATTERN.matcher(unicode);
-        String result = unicode;
-        while (mt.find()) {
-            int byte1, byte2;
-            String item = mt.group(1);
-            // 第一个byte是高位，相当于‘十位’
-            byte1 = Integer.parseInt(item.substring(0, 2), 16) << 8;
-            // 这是‘个位’
-            byte2 = Integer.parseInt(item.substring(2), 16);
-            result = result.replace(mt.group(0), String.valueOf((char) (byte1 + byte2)));
-        }
-        return result;
-    }
-
-    public static String unescape(String content) {
-        content = content.replaceAll("\\\\(?=[/|\"])", "");
-        content = unicode2Chinese(content);
-        MyLog.w("unescape", content);
-        return content;
-    }
 
     /**
      * Checks if external storage is available for read and write
@@ -192,7 +164,7 @@ public class Util {
 
     public static ExecutorService getDefaultSingleThreadExecutor() {
         if (singleThreadPool == null) {
-            singleThreadPool = new ThreadPoolExecutor(1, 1,
+            singleThreadPool = new ThreadPoolExecutor(1, 2,
                     0L, TimeUnit.MILLISECONDS,
                     new LinkedBlockingQueue<>(5), new MyThreadFactory(), new ThreadPoolExecutor.AbortPolicy());
         }

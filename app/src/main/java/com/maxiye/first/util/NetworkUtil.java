@@ -6,6 +6,7 @@ import android.net.NetworkInfo;
 
 import java.io.File;
 import java.io.RandomAccessFile;
+import java.util.HashMap;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -20,17 +21,45 @@ import okhttp3.ResponseBody;
 @SuppressWarnings("unused")
 public class NetworkUtil {
 
-    private ConnectivityManager.NetworkCallback netCB;
-    private ConnectivityManager connMgr;
+    private HashMap<Object, ConnectivityManager.NetworkCallback> callbackList = new HashMap<>(2);
+    private static NetworkUtil instance;
 
-    private NetworkUtil(Context context) {
-        connMgr = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        assert connMgr != null;
+    private NetworkUtil() {
+
     }
 
-    public NetworkUtil(Context context, ConnectivityManager.NetworkCallback networkCallback) {
-        this(context);
-        watch(networkCallback);
+    public static NetworkUtil getInstance() {
+        if (instance == null) {
+            synchronized (NetworkUtil.class) {
+                if (instance == null) {
+                    instance = new NetworkUtil();
+                }
+            }
+        }
+        return instance;
+    }
+
+    public static synchronized void register(Context context, ConnectivityManager.NetworkCallback networkCallback) {
+        ConnectivityManager connectivityManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager != null && networkCallback != null) {
+            getInstance().callbackList.put(context, networkCallback);
+            connectivityManager.registerDefaultNetworkCallback(networkCallback);
+        }
+    }
+
+    public static synchronized void unregister(Context context) {
+        ConnectivityManager.NetworkCallback networkCallback = getInstance().callbackList.remove(context);
+        ConnectivityManager connectivityManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager != null && networkCallback != null) {
+            connectivityManager.unregisterNetworkCallback(networkCallback);
+        }
+        checkDestroy();
+    }
+
+    private static void checkDestroy() {
+        if (instance != null && instance.callbackList.isEmpty()) {
+            instance = null;
+        }
     }
 
     /**
@@ -69,12 +98,6 @@ public class NetworkUtil {
         return netInfo != null && netInfo.getType() == ConnectivityManager.TYPE_MOBILE;
     }
 
-    private void watch(ConnectivityManager.NetworkCallback networkCallback) {
-        if (networkCallback != null) {
-            netCB = networkCallback;
-            connMgr.registerDefaultNetworkCallback(netCB);
-        }
-    }
     @SuppressWarnings("WeakerAccess")
     public static String download(String url, File path) {
         try {
@@ -96,16 +119,6 @@ public class NetworkUtil {
         } catch (Exception e) {
             e.printStackTrace();
             return "";
-        }
-    }
-
-    public void watch() {
-        watch(netCB);
-    }
-
-    public void unwatch() {
-        if (netCB != null) {
-            connMgr.unregisterNetworkCallback(netCB);
         }
     }
 }

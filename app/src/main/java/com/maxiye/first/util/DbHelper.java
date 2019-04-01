@@ -10,6 +10,7 @@ import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.widget.Toast;
 
+import com.maxiye.first.GifActivity;
 import com.maxiye.first.R;
 import com.maxiye.first.SettingActivity;
 import com.maxiye.first.MainActivity;
@@ -28,6 +29,7 @@ import java.util.Arrays;
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class DbHelper extends SQLiteOpenHelper {
+    public static DbHelper instance;
     public final static String DB_NAME = "first.db";
     private final static int DB_VERSION = 5;
     public final static String TB_BOOK = "book";
@@ -93,8 +95,19 @@ public class DbHelper extends SQLiteOpenHelper {
         checkBakup();
     }
 
-    public static SQLiteDatabase getDB(Context context) {
-        return new DbHelper(context).getWritableDatabase();
+    public static DbHelper getInstance(Context context) {
+        if (instance == null) {
+            synchronized (DbHelper.class) {
+                if (instance == null) {
+                    instance = new DbHelper(context);
+                }
+            }
+        }
+        return instance;
+    }
+
+    public static SQLiteDatabase newDb(Context context) {
+        return getInstance(context).getWritableDatabase();
     }
 
     @Override
@@ -219,15 +232,15 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private void checkBakup() {
         long lastBackupTime = mCont.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE).getLong(SettingActivity.BACKUP_TIME, 0);
-        int minIntavel = 86400 * 5 * 1000;
-        if (System.currentTimeMillis() - lastBackupTime > minIntavel) {
+        int minInterval = 86400 * 5 * 1000;
+        if (System.currentTimeMillis() - lastBackupTime > minInterval) {
             backup(mCont);
         }
     }
 
     public int scanIntoFav() {
         int count = 0;
-        String[] types = new String[] {"gif", "bitmap"};
+        String[] types = GifActivity.getTypeList();
         SQLiteDatabase db = getWritableDatabase();
         String datetime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now());
         for(String type : types) {
@@ -270,7 +283,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
     public int fixFavFile() {
         int count = 0;
-        String[] types = new String[] {"gif", "bitmap"};
+        String[] types = GifActivity.getTypeList();
         SQLiteDatabase db = getWritableDatabase();
         for(String type : types) {
             File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);

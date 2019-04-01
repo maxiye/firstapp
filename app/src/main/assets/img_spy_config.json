@@ -179,7 +179,7 @@
       },
       "request_body": "{\"os\":\"android\",\"app\":\"GSAPP\",\"osVersion\":\"8.1.0\",\"deviceType\":\"SM-N9600\",\"appVersion\":\"4.7.1\",\"deviceId\":\"\",\"request\":{\"pageIndex\":1,\"contentId\":\"%1$s\"}}",
       "img_reg": {
-        "reg": "(href=\"[^\"]*?\\?(http[^\"]+\\.jpg|jpeg|png|bmp)\"[\\s\\S]*?)? src=\"([^\"]+(\\.(jpg|jpeg|png|bmp)))\"[^>]*?>[^\\\\]*((\\\\r\\\\n)+(<span[^>]+>)?([^<\\\\]+)(?=[\\s\\S]*?<))?",
+        "reg": "(href=\"[^\"]*?\\?(http[^\"]+\\.jpg|jpeg|png|bmp|gif)\"[\\s\\S]*?)? src=\"([^\"]+(\\.(jpg|jpeg|png|bmp|gif)))\"[^>]*?>[^\\\\]*((\\\\r\\\\n)+(<span[^>]+>)?([^<\\\\]+)(?=[\\s\\S]*?<))?",
         "img_real_url_idx": 2,
         "img_url_idx": 3,
         "img_ext_idx": 4,
@@ -230,7 +230,7 @@
       "img_web": "http://tu.duowan.cn/gallery/%1$s.html",
       "img_web_2nd": "http://www.duowan.com/s/404/404.html",
       "img_reg": {
-        "reg": "\"title\":\"([^\"]+)\".*?\"source\":\"([^\"]+(\\.(jpg|jpeg|png|bmp)))\".*?\"add_intro\":\"([^\"]+)\"",
+        "reg": "\"title\":\"([^\"]+)\".*?\"source\":\"([^\"]+(\\.(jpg|jpeg|png|bmp|gif)))\".*?\"add_intro\":\"([^\"]+)\"",
         "img_url_idx": 2,
         "img_ext_idx": 3,
         "img_title_idx": 5
@@ -254,7 +254,7 @@
       "img_web": "http://news.17173.com/content/%1$s_1.shtml",
       "img_web_2nd": "http://news.17173.com/content/404",
       "img_reg": {
-        "reg": "<p class=\"p-image\"[\\s\\S]*?<img.*?data-src=\"([^\"]+?(\\.(jpg|jpeg|png|bmp)))(![^\"]+)?\"[^>]+></p>[\r\n\\s\t]+<p style=\"text-align:\\s?center[^>]+>([^<]+)</p>",
+        "reg": "<p class=\"p-image\"[\\s\\S]*?<img.*?data-src=\"([^\"]+?(\\.(jpg|jpeg|png|bmp|gif)))(![^\"]+)?\"[^>]+></p>[\r\n\\s\t]+<p style=\"text-align:\\s?center[^>]+>([^<]+)</p>",
         "img_url_idx": 1,
         "img_ext_idx": 2,
         "img_title_idx": 5
@@ -282,7 +282,7 @@
       "img_web": "http://3g.ali213.net/app/news/newsdetail/%1$s",
       "img_web_2nd": "http://3g.ali213.net/404.html",
       "img_reg": {
-        "reg": "<img.*?data-original=\"([^\"]+?(\\.(png|jpg|jpeg|bmp)))\"[^>]*>.*?</(p|div)>(\\\\r\\\\n)*<p style=\"text-align:\\s?center[^>]+>([^<]+)</p>",
+        "reg": "<img.*?data-original=\"([^\"]+?(\\.(png|jpg|jpeg|bmp|gif)))\"[^>]*>.*?</(p|div)>(\\\\r\\\\n)*<p style=\"text-align:\\s?center[^>]+>([^<]+)</p>",
         "img_url_idx": 1,
         "img_ext_idx": 2,
         "img_title_idx": 6
