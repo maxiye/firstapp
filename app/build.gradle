@@ -8,8 +8,8 @@ android {
         minSdkVersion 26
         //noinspection OldTargetApi
         targetSdkVersion 27
-        versionCode 117
-        versionName "1.5.6"
+        versionCode 118
+        versionName "1.5.7"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = false
         resConfigs "en", "zh"
@@ -43,4 +43,5 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     testImplementation 'junit:junit:4.12'
+    implementation 'org.jetbrains:annotations:15.0'
 }

@@ -12,10 +12,19 @@ import android.widget.Switch;
  */
 public class SettingActivity extends AppCompatActivity {
     private SharedPreferences sp;
-    public final static String SETTING = "com.maxiye.first.SETTING";
-    public final static String SHOW_SYSTEM = "show_system_apps";
-    public final static String BACKUP_TIME = "backup_time";
-    public final static String BOOKMARK = "bookmark";
+    public static final String SETTING = "com.maxiye.first.SETTING";
+    /**
+     * 是否显示所有应用
+     */
+    public static final String SHOW_SYSTEM = "show_system_apps";
+    /**
+     * 上次备份时间
+     */
+    public static final String BACKUP_TIME = "backup_time";
+    /**
+     * 书签json数据
+     */
+    public static final String BOOKMARK = "bookmark";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +35,9 @@ public class SettingActivity extends AppCompatActivity {
         initSetting();
     }
 
+    /**
+     * {@code 第42条：lambda表达式优于匿名类}
+     */
     private void initSetting() {
         Switch showSystemApps = findViewById(R.id.setting_show_system);
         showSystemApps.setOnCheckedChangeListener((buttonView, isChecked) -> {

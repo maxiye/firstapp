@@ -21,8 +21,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * 常用方法助手
@@ -30,7 +28,6 @@ import java.util.regex.Pattern;
  * @author due
  * @date 2018/5/16
  */
-@SuppressWarnings({"unused", "WeakerAccess"})
 public class Util {
 
     private static ExecutorService singleThreadPool;
@@ -39,6 +36,7 @@ public class Util {
      * Checks if external storage is available for read and write
       * @return boolean
      */
+    @SuppressWarnings({"WeakerAccess"})
     public static boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
         return Environment.MEDIA_MOUNTED.equals(state);
@@ -138,6 +136,7 @@ public class Util {
      * @param name String
      * @return int
      */
+    @SuppressWarnings({"unused"})
     public static long strHash(String name) {
         byte[] bytes = name.getBytes();
         long hash = 0;

@@ -49,13 +49,10 @@ import android.widget.Toast;
 import com.maxiye.first.util.ApiUtil;
 import com.maxiye.first.util.BitmapUtil;
 import com.maxiye.first.util.DbHelper;
-import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.PermissionUtil;
 import com.maxiye.first.util.StringUtils;
 import com.maxiye.first.util.Util;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -70,11 +67,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathFactory;
+import java.util.function.UnaryOperator;
 
 /**
  * @author due
@@ -93,7 +86,6 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     private static final int INTENT_IMG_DOT_TXT_REQCODE = 108;
     private long lastPressTime = 0;
 
-    @SuppressWarnings("AlibabaRemoveCommentedCode")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -123,11 +115,10 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        int interval = 800;
         switch (keyCode) {
             case KeyEvent.KEYCODE_BACK:
                 long now = Instant.now().getEpochSecond();
-                if (now - lastPressTime < interval) {
+                if (now - lastPressTime < 800) {
                     finish();
                 } else {
                     lastPressTime = now;
@@ -452,9 +443,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         } else {
             nfc = NfcAdapter.getDefaultAdapter(this);
             nfc.setBeamPushUrisCallback(new FileUrisCallBack(), this);
-            PermissionUtil.req(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PermissionUtil.PER_REQ_STORAGE_READ, () -> {
-
-            });
+            PermissionUtil.req(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PermissionUtil.RequestCode.STORAGE_READ, (result) -> {});
         }
 
     }
@@ -479,7 +468,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     }
 
     /**
-     * Called when pointer capture is enabled or disabled for the current window.
+     * Called when pointer capture is enabled or disabled for the progress window.
      *
      * @param hasCapture True if the window has pointer capture.
      */
@@ -491,11 +480,10 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     @SuppressLint("MissingPermission")
     @Override
     public boolean onMenuItemClick(MenuItem item) {
-        int itemId = item.getItemId();
         Intent intent;
-        switch (itemId) {
+        switch (item.getItemId()) {
             case R.id.test_call:
-                PermissionUtil.req(this, new String[]{Manifest.permission.CALL_PHONE}, PermissionUtil.PER_REQ_CALL, () -> {
+                PermissionUtil.req(this, new String[]{Manifest.permission.CALL_PHONE}, PermissionUtil.RequestCode.CALL, (result) -> {
                     Uri tel = Uri.parse("tel:10086");
                     startActivity(new Intent(Intent.ACTION_CALL, tel));
                 });
@@ -556,8 +544,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         PopupMenu pMenu = new PopupMenu(this, view);
         pMenu.getMenuInflater().inflate(R.menu.test_activity_db_popupmenu, pMenu.getMenu());
         pMenu.setOnMenuItemClickListener(item -> {
-            int itemId = item.getItemId();
-            switch (itemId) {
+            switch (item.getItemId()) {
                 case R.id.create_db:
                     createDB();
                     break;
@@ -605,6 +592,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         }
     }
 
+    @NonNull
     private File createTempFile() throws IOException {
         String timestamp = DateTimeFormatter.ofPattern("YYYYMMdd_HHmmss").format(LocalDateTime.now());
         String imgName = "JPEG_" + timestamp + "_";
@@ -613,12 +601,11 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     }
 
     public void capture(View view) {
-        PermissionUtil.req(this, new String[]{Manifest.permission.CAMERA}, PermissionUtil.PER_REQ_CAPTURE, () -> {
+        PermissionUtil.req(this, new String[]{Manifest.permission.CAMERA}, PermissionUtil.RequestCode.CAPTURE, (result) -> {
             Intent cap = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             if (cap.resolveActivity(getPackageManager()) != null) {
-                File imgFile;
                 try {
-                    imgFile = createTempFile();
+                    File imgFile = createTempFile();
                     cap.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(this, "com.maxiye.first.fileprovider", imgFile));
                     startActivityForResult(cap, INTENT_IMG_CAPTURE_REQCODE);
                 } catch (IOException e) {
@@ -627,27 +614,11 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
             }
         });
     }
-    @SuppressWarnings({"unused"})
-    public void test() {
-        try {
-            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(getAssets().open("test.txt"));
-            XPath xPath = XPathFactory.newInstance().newXPath();
-            Object res = xPath.evaluate("//div[@class='art-bd']/div/p[@class='p-image']/img", doc, XPathConstants.NODESET);
-            if (res instanceof NodeList) {
-                NodeList nodeList = (NodeList) res;
-                for (int i = 0; i < nodeList.getLength(); i++) {
-                    MyLog.println(nodeList.item(i).getAttributes().getNamedItem("data-src").getNodeValue());
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
-    @SuppressLint("InflateParams")
     public void genGradualColor(View view) {
         //实例化布局
-        View view2 = LayoutInflater.from(this).inflate(R.layout.dialog_edittext, null);
+        // attachToRoot true : The specified child already has a parent. You must call removeView() on the child's parent first.
+        View view2 = LayoutInflater.from(this).inflate(R.layout.dialog_edittext, findViewById(R.id.main_activity_view), false);
         EditText editText = view2.findViewById(R.id.dialog_input);
         editText.setHint("13ba94 1080*1920");
         //创建对话框
@@ -734,22 +705,23 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         startActivityForResult(intent, INTENT_IMG_DOT_TXT_REQCODE);
     }
 
-    private interface BitmapHandler {
-        /**
-         * Bitmap处理接口
-         * @param bitmap Bitmap
-         * @return Bitmap
-         */
-        Bitmap handle(Bitmap bitmap);
-    }
-
-    private void showBitmap(Intent data, BitmapHandler handler, File saveFile) {
+    /**
+     * {@code 第44条：优先使用标准的函数式接口}
+     * java.util.function包提供了大量标准函数式接口供你使用。
+     * 如果其中一个标准函数式接口完成这项工作，则通常应该优先使用它，而不是专门构建的函数式接口。
+     * 这将使你的API更容易学习，通过减少其不必要概念，并将提供重要的互操作性好处，因为许多标准函数式接口提供了有用的默认方法。
+     * 例如，Predicate接口提供了组合判断的方法。 在我们的LinkedHashMap示例中，标准的BiPredicate<Map<K,V>, Map.Entry<K,V>>接口应优先于自定义的EldestEntryRemovalFunction接口的使用。
+     * @param data Intent
+     * @param handler UnaryOperator
+     * @param saveFile File
+     */
+    private void showBitmap(Intent data, UnaryOperator<Bitmap> handler, File saveFile) {
         ImageView imgView = BitmapUtil.loadImg(this);
         Util.getDefaultSingleThreadExecutor().execute(() -> {
             try {
                 FileDescriptor fd = Util.getFileDescriptor(this, data);
                 Bitmap bitmap = handler != null ?
-                        handler.handle(BitmapFactory.decodeFileDescriptor(fd)) : BitmapFactory.decodeFileDescriptor(fd);
+                        handler.apply(BitmapFactory.decodeFileDescriptor(fd)) : BitmapFactory.decodeFileDescriptor(fd);
                 imgView.setOnLongClickListener(v -> {
                     BitmapUtil.saveBitmap(this, saveFile, bitmap);
                     return false;

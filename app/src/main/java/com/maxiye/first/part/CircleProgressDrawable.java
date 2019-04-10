@@ -10,32 +10,28 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-
-import com.maxiye.first.util.BitmapUtil;
+import android.support.v4.graphics.ColorUtils;
 
 /**
  * 自定义环形进度条
- *
+ * {@code 第2条：遇到多个构造器参数时，考虑用构建者}
+ * {@code 第3条：使用私有构造器或者枚举类型来强化Singleton属性}
+ * {@code 第6条：避免创建不必要的对象}
+ * {@code 第23条：优先使用类层次，而不是标签类}
+ * {@code 第40条：坚持使用{@link Override}注解}
  * @author due
  * @date 2018/5/27
  */
-@SuppressWarnings({"unused", "WeakerAccess"})
 public class CircleProgressDrawable extends Drawable {
     private Paint mPaint;
-    private boolean gradualFlg = true;
-    private String style = STYLE_SHADOW;
-    public final static String STYLE_BORDER = "border";
-    public final static String STYLE_SHADOW = "shadow";
-    public final static String STYLE_NONE = "none";
     private int maxProgress = 100;
     private int curProgress = 0;
     private int circleWidth;
-    private int circleColor = 0xFFF66725;
+    private int startColor = 0xFFF66725;
+    private int endColor = 0xFF009688;
     private float percent;
     private RectF rectF;
-    private int radius;
-    private int pX;
-    private int pY;
+    private int radius, pX, pY;
 
     private CircleProgressDrawable () {
         setBounds(0, 0, 90, 90);
@@ -51,23 +47,20 @@ public class CircleProgressDrawable extends Drawable {
             cpd = new CircleProgressDrawable();
         }
 
-        public Builder color(int cirColor) {
-            cpd.circleColor = cirColor;
+        public Builder color(int start, int end) {
+            cpd.startColor = start;
+            cpd.endColor = end;
             return this;
         }
 
-        public Builder capacity(int maxProg) {
-            cpd.maxProgress = maxProg;
+        public Builder threshold(int threshold) {
+            cpd.maxProgress = threshold;
             return this;
         }
 
-        public Builder current(int curProg) {
-            cpd.curProgress = curProg;
-            return this;
-        }
-
-        public Builder gradual(boolean gradual) {
-            cpd.gradualFlg = gradual;
+        @SuppressWarnings({"unused"})
+        public Builder progress(int progress) {
+            cpd.curProgress = progress;
             return this;
         }
 
@@ -76,17 +69,13 @@ public class CircleProgressDrawable extends Drawable {
          * @param divide 细度因子
          * @return builder
          */
+        @SuppressWarnings({"unused"})
         public Builder thin(int divide) {
             int minDivide = 2;
             if (divide < minDivide) {
                 divide = minDivide;
             }
             cpd.circleWidth = Math.min(cpd.getBounds().width(), cpd.getBounds().height()) / divide;
-            return this;
-        }
-
-        public Builder style(String cirStyle) {
-            cpd.style = cirStyle;
             return this;
         }
 
@@ -101,7 +90,7 @@ public class CircleProgressDrawable extends Drawable {
         // 描边
         mPaint.setStyle(Paint.Style.STROKE);
         // 设置颜色
-        mPaint.setColor(circleColor);
+        mPaint.setColor(endColor);
         // 设置抗锯齿
         mPaint.setAntiAlias(true);
         // 设置圆环宽度
@@ -119,10 +108,6 @@ public class CircleProgressDrawable extends Drawable {
         rectF = new RectF(pX - radius, pY - radius,pX + radius,pY + radius);
     }
 
-    public void setStyle(String cirStyle) {
-        this.style = cirStyle;
-    }
-
     public void setMaxProgress(int maxProg) {
         maxProgress = maxProg;
     }
@@ -136,35 +121,14 @@ public class CircleProgressDrawable extends Drawable {
     @Override
     public void draw(@NonNull Canvas canvas) {
         canvas.drawColor(Color.TRANSPARENT);
-        mPaint.setColor(circleColor);
-        //paint type
-        switch (style) {
-            case STYLE_NONE:
-                break;
-            case STYLE_BORDER:
-                // 绘制圆环
-                mPaint.setStrokeWidth(0.6f);
-                canvas.drawCircle(pX, pY, radius + (circleWidth >> 1), mPaint);
-                canvas.drawCircle(pX, pY, radius - (circleWidth >> 1), mPaint);
-                mPaint.setStrokeWidth(circleWidth);
-                break;
-            case STYLE_SHADOW:
-                // 绘制阴影
-                mPaint.setAlpha(0x20);
-                canvas.drawCircle(pX, pY, radius, mPaint);
-                break;
-            default:
-                break;
-        }
+        mPaint.setColor(endColor);
+        //paint type.
+        mPaint.setAlpha(0x20);
+        canvas.drawCircle(pX, pY, radius, mPaint);
+        // 颜色渐变.
+        mPaint.setColor(ColorUtils.blendARGB(startColor, endColor, percent));
         // 计算角度.
         int angle = (int) (percent * 360);
-        //颜色渐变
-        if (gradualFlg) {
-//            int Offset = (int) ((1- percent) * 150);
-            mPaint.setColor(BitmapUtil.gradualColor(circleColor, (360 - angle)));
-        } else {
-            mPaint.setColor(circleColor);
-        }
         // 2. 绘制进度条.
         canvas.drawArc(rectF, -90, angle, false, mPaint);
     }
@@ -193,4 +157,28 @@ public class CircleProgressDrawable extends Drawable {
     public int getIntrinsicWidth() {
         return getBounds().width();
     }
+
+
+    /**
+     * 绘制圆环
+     * @param canvas Canvas
+     */
+    @SuppressWarnings({"unused"})
+    private void drawBorder(@NonNull Canvas canvas) {
+        mPaint.setStrokeWidth(0.6f);
+        canvas.drawCircle(pX, pY, radius + (circleWidth >> 1), mPaint);
+        canvas.drawCircle(pX, pY, radius - (circleWidth >> 1), mPaint);
+        mPaint.setStrokeWidth(circleWidth);
+    }
+
+    /**
+     * 绘制阴影
+     * @param canvas Canvas
+     */
+    @SuppressWarnings({"unused"})
+    private void drawShadow(@NonNull Canvas canvas) {
+        mPaint.setAlpha(0x20);
+        canvas.drawCircle(pX, pY, radius, mPaint);
+    }
+
 }

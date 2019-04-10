@@ -33,22 +33,20 @@ import okhttp3.ResponseBody;
  * @author due
  * @date 2018/10/8
  */
-@SuppressWarnings("FieldCanBeLocal")
 public class ApiUtil {
     private static ApiUtil instance;
     private final OkHttpClient okHttpClient = new OkHttpClient();
     private final String appKey = "37185";
     private final String sign = "0c74aa000b3b57398e386b872ab67412";
-    private final String apiSuccessKey = "success";
+    private final String successMsg = "success";
     private final String successStatus = "1";
-    private final String exchangeRateApi = "http://api.k780.com/?app=finance.rate&scur=%s&tcur=%s&appkey=%s&sign=%s";
-    private final String weatherApi = "http://api.k780.com/?app=weather.future&weaid=%s&&appkey=%s&sign=%s";
-    private final String IPAddressApi = "http://api.k780.com/?app=ip.get&ip=%s&appkey=%s&sign=%s&format=json";
-    private final String PhoneAddressApi = "http://api.k780.com/?app=phone.get&phone=%s&appkey=%s&sign=%s&format=json";
-    private final String IDAddressApi = "http://api.k780.com/?app=idcard.get&idcard=%s&appkey=%s&sign=%s&format=json";
-    private final String PostcodeApi = "http://api.k780.com/?app=life.postcode&areaname=%s&appkey=%s&sign=%s&format=json";
-    private final String BJTimeApi = "http://api.k780.com/?app=life.time&appkey=%s&sign=%s&format=json";
-    private final String WorkdayApi = "http://api.k780.com/?app=life.workday&date=%s&appkey=%s&sign=%s&format=json";
+
+    /**
+     * 不可实例化
+     * {@code 第4条：通过私有化构造器强化不可实例化的能力}
+     */
+    private ApiUtil() {
+    }
 
     public static ApiUtil getInstance() {
         if (instance == null) {
@@ -118,10 +116,11 @@ public class ApiUtil {
     }
 
     public String getExchangeRate(String scur, String tcur) {
+        String exchangeRateApi = "http://api.k780.com/?app=finance.rate&scur=%s&tcur=%s&appkey=%s&sign=%s";
         String url = String.format(exchangeRateApi, scur, tcur, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(apiSuccessKey).getAsString())) {
+        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
             JsonObject retObj = jsonObject.get("result").getAsJsonObject();
             ret = "状态：" + retObj.get("status").getAsString() +
                     "\r\n原币种：" + retObj.get("scur").getAsString() +
@@ -134,11 +133,12 @@ public class ApiUtil {
     }
 
     public List<String[]> getWeather(String city, File cacheDir) {
+        String weatherApi = "http://api.k780.com/?app=weather.future&weaid=%s&&appkey=%s&sign=%s";
         String url = String.format(weatherApi, city, appKey, sign);
         String retTmp = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(retTmp, JsonObject.class);
         List<String[]> list = new ArrayList<>();
-        if (!StringUtils.isBlank(retTmp) && successStatus.equals(jsonObject.get(apiSuccessKey).getAsString())) {
+        if (!StringUtils.isBlank(retTmp) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
             JsonArray retArr = jsonObject.get("result").getAsJsonArray();
             JsonObject retObj;
             StringBuilder ret = new StringBuilder();
@@ -177,10 +177,11 @@ public class ApiUtil {
     }
 
     public String getIPAddress(String ip) {
-        String url = String.format(IPAddressApi, ip, appKey, sign);
+        String iPAddressApi = "http://api.k780.com/?app=ip.get&ip=%s&appkey=%s&sign=%s&format=json";
+        String url = String.format(iPAddressApi, ip, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(apiSuccessKey).getAsString())) {
+        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
             try {
                 JsonObject retObj = jsonObject.get("result").getAsJsonObject();
                 ret = "状态：" + retObj.get("status").getAsString() +
@@ -205,10 +206,11 @@ public class ApiUtil {
     }
 
     public String getPhoneAddress(String phone) {
-        String url = String.format(PhoneAddressApi, phone, appKey, sign);
+        String phoneAddressApi = "http://api.k780.com/?app=phone.get&phone=%s&appkey=%s&sign=%s&format=json";
+        String url = String.format(phoneAddressApi, phone, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(apiSuccessKey).getAsString())) {
+        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
             try {
                 JsonObject retObj = jsonObject.get("result").getAsJsonObject();
                 ret = "状态：" + retObj.get("status").getAsString() +
@@ -230,10 +232,11 @@ public class ApiUtil {
     }
 
     public String getIDAddress(String id) {
-        String url = String.format(IDAddressApi, id, appKey, sign);
+        String idAddressApi = "http://api.k780.com/?app=idcard.get&idcard=%s&appkey=%s&sign=%s&format=json";
+        String url = String.format(idAddressApi, id, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(apiSuccessKey).getAsString())) {
+        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
             try {
                 JsonObject retObj = jsonObject.get("result").getAsJsonObject();
                 ret = "状态：" + retObj.get("status").getAsString() +
@@ -254,10 +257,11 @@ public class ApiUtil {
     }
 
     public String getPostcode(String area) {//广东省广州市
-        String url = String.format(PostcodeApi, area, appKey, sign);
+        String postcodeApi = "http://api.k780.com/?app=life.postcode&areaname=%s&appkey=%s&sign=%s&format=json";
+        String url = String.format(postcodeApi, area, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(apiSuccessKey).getAsString())) {
+        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
             try {
                 JsonObject retObj = jsonObject.get("result").getAsJsonObject().get("lists").getAsJsonArray().get(0).getAsJsonObject();
                 ret = "地区：" + retObj.get("areanm").getAsString() +
@@ -272,10 +276,11 @@ public class ApiUtil {
     }
 
     public String getBJTime() {
-        String url = String.format(BJTimeApi, appKey, sign);
+        String bjTimeApi = "http://api.k780.com/?app=life.time&appkey=%s&sign=%s&format=json";
+        String url = String.format(bjTimeApi, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(apiSuccessKey).getAsString())) {
+        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
             try {
                 JsonObject retObj = jsonObject.get("result").getAsJsonObject();
                 ret = "时间戳：" + retObj.get("timestamp").getAsString() +
@@ -298,10 +303,11 @@ public class ApiUtil {
      * @return String
      */
     public String getWorkday(String dates) {
-        String url = String.format(WorkdayApi, dates, appKey, sign);
+        String workdayApi = "http://api.k780.com/?app=life.workday&date=%s&appkey=%s&sign=%s&format=json";
+        String url = String.format(workdayApi, dates, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(apiSuccessKey).getAsString())) {
+        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
             try {
                 String multSeparator = ",";
                 if (dates.contains(multSeparator)) {

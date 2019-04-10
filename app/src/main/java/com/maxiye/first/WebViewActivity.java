@@ -49,8 +49,7 @@ public class WebViewActivity extends AppCompatActivity {
         webview.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
-                int maxProgress = 100;
-                if (newProgress == maxProgress) {
+                if (newProgress == 100) {
                     // 加载完网页进度条消失
                     webProgress.setVisibility(View.GONE);
                 } else {

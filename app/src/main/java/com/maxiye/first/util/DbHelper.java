@@ -23,26 +23,27 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 
 /**数据库助手
- *
+ * {@code 第27条：消除未检查警告 }
+ * SuppressWarnings注解可以在任意声明上使用，从单独的局部变量到整个类都可以。
+ * 应该在尽可能小的作用域上使用SuppressWarnings注解。它通常是个变量声明或者是一个非常短的方法或者是构造器。
+ * 永远不要在整个类上使用SuppressWarnings注解，这么做会掩盖某些重要的警告
  * @author due
  * @date 2017-05-25
  */
-@SuppressWarnings({"unused", "WeakerAccess"})
 public class DbHelper extends SQLiteOpenHelper {
-    public static DbHelper instance;
-    public final static String DB_NAME = "first.db";
-    private final static int DB_VERSION = 5;
-    public final static String TB_BOOK = "book";
-    public final static String TB_IMG_WEB = "img_web";
-    public final static String TB_IMG_WEB_ITEM = "img_web_item";
-    public final static String TB_IMG_FAVORITE = "img_favorite";
-    private final static String CREATE_BOOK = "create table " + TB_BOOK + "("
+    public static final String DB_NAME = "first.db";
+    private static final int DB_VERSION = 5;
+    public static final String TB_BOOK = "book";
+    public static final String TB_IMG_WEB = "img_web";
+    public static final String TB_IMG_WEB_ITEM = "img_web_item";
+    public static final String TB_IMG_FAVORITE = "img_favorite";
+    private static final String CREATE_BOOK = "create table " + TB_BOOK + "("
             + "id integer primary key autoincrement,"
             + "author text default '', "
             + "price real default 0, "
             + "pages integer default 0, "
             + "name text default '')";
-    private final static String CREATE_IMG_WEB = "create table " + TB_IMG_WEB + "("
+    private static final String CREATE_IMG_WEB = "create table " + TB_IMG_WEB + "("
             + "id integer primary key autoincrement,"
             + "web_name text default '', "
             + "type text default '', "//gif|bitmap
@@ -54,8 +55,8 @@ public class DbHelper extends SQLiteOpenHelper {
     /**
      * 索引名不能相同
      */
-    private final static String INDEX_IMG_WEB = "CREATE INDEX IF NOT EXISTS web_idx_art_id on " + TB_IMG_WEB + " (art_id, web_name)";
-    private final static String CREATE_IMG_WEB_ITEM = "create table " + TB_IMG_WEB_ITEM + "("
+    private static final String INDEX_IMG_WEB = "CREATE INDEX IF NOT EXISTS web_idx_art_id on " + TB_IMG_WEB + " (art_id, web_name)";
+    private static final String CREATE_IMG_WEB_ITEM = "create table " + TB_IMG_WEB_ITEM + "("
             + "id integer primary key autoincrement,"
             + "web_name text default '', "
             + "type text default '', "
@@ -67,10 +68,10 @@ public class DbHelper extends SQLiteOpenHelper {
             + "fav_flg integer default 0, "//1已收藏，0未收藏
             + "ext text default '', "//gif|jpg|jpeg|bmp|png
             + "time text default '')";
-    private final static String INDEX_IMG_WEB_ITEM = "CREATE INDEX IF NOT EXISTS web_item_idx_art_id on " + TB_IMG_WEB_ITEM + " (art_id, web_name)";
+    private static final String INDEX_IMG_WEB_ITEM = "CREATE INDEX IF NOT EXISTS web_item_idx_art_id on " + TB_IMG_WEB_ITEM + " (art_id, web_name)";
 
 
-    private final static String CREATE_IMG_FAVORITE = "create table " + TB_IMG_FAVORITE + "("
+    private static final String CREATE_IMG_FAVORITE = "create table " + TB_IMG_FAVORITE + "("
             + "id integer primary key autoincrement, "
             + "item_id integer default 0, "
             + "web_name text default '', "
@@ -82,7 +83,7 @@ public class DbHelper extends SQLiteOpenHelper {
             + "real_url text default '', "
             + "ext text default '', "//gif|jpg|jpeg|bmp|png
             + "time text default '')";
-    private final static String INDEX_IMG_FAVORITE = "CREATE INDEX IF NOT EXISTS img_favorite_idx_art_id on " + TB_IMG_WEB_ITEM + " (art_id, web_name)";
+    private static final String INDEX_IMG_FAVORITE = "CREATE INDEX IF NOT EXISTS img_favorite_idx_art_id on " + TB_IMG_WEB_ITEM + " (art_id, web_name)";
 
     private static final String DROP_BOOK = "DROP TABLE IF EXISTS " + TB_BOOK;
     private static final String DROP_IMG_WEB = "DROP TABLE IF EXISTS " + TB_IMG_WEB;
@@ -95,19 +96,8 @@ public class DbHelper extends SQLiteOpenHelper {
         checkBakup();
     }
 
-    public static DbHelper getInstance(Context context) {
-        if (instance == null) {
-            synchronized (DbHelper.class) {
-                if (instance == null) {
-                    instance = new DbHelper(context);
-                }
-            }
-        }
-        return instance;
-    }
-
     public static SQLiteDatabase newDb(Context context) {
-        return getInstance(context).getWritableDatabase();
+        return new DbHelper(context).getWritableDatabase();
     }
 
     @Override
@@ -230,10 +220,12 @@ public class DbHelper extends SQLiteOpenHelper {
         activity.startActivityForResult(Intent.createChooser(intent, activity.getString(R.string.choose_a_backup)), MainActivity.INTENT_PICK_DB_BAK_REQCODE);
     }
 
+    /**
+     * 大于五天备份
+     */
     private void checkBakup() {
         long lastBackupTime = mCont.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE).getLong(SettingActivity.BACKUP_TIME, 0);
-        int minInterval = 86400 * 5 * 1000;
-        if (System.currentTimeMillis() - lastBackupTime > minInterval) {
+        if (System.currentTimeMillis() - lastBackupTime > 86400 * 5 * 1000) {
             backup(mCont);
         }
     }

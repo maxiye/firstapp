@@ -5,35 +5,67 @@ import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.widget.Toast;
 
+import org.jetbrains.annotations.Contract;
+
+import java.util.function.Consumer;
+import java.util.function.IntConsumer;
+
 /**
  * 权限请求助手
  *
+ * {@code 第37条：使用{@link java.util.EnumMap}代替序数索引数组}
+ * new EnumMap<>(PermissionUtil.RequestCode.class);
+ * Arrays.stream(reqs).collect(groupingBy(p -> p.reqCode, () -> new EnumMap<>(RequestCode.class), toSet()))
  * @author due
  * @date 2018/5/7
  */
 public class PermissionUtil {
-    public static final int PER_REQ_CALL = 200;
-    public static final int PER_REQ_STORAGE_READ = 201;
-    public static final int PER_REQ_CAPTURE = 202;
-    public static final int PER_REQ_STORAGE_WRT = 203;
-    private static Cb cb;
+    /**
+     * 性能影响
+     * {@code 第34条：用枚举替换常量}
+     * {@code 第35条：使用实例域来替换序数} code
+     * 可以在 <b>特定于常量的主体</b> 覆盖抽象方法
+     * public static final int CALL = 200;
+     * public static final int STORAGE_READ = 201;
+     * public static final int CAPTURE = 202;
+     * public static final int STORAGE_WRITE = 203;
+     */
+    public enum RequestCode {
+        /**
+         * 各种权限请求code
+         */
+        CALL(200),
+        STORAGE_READ(201),
+        CAPTURE(202),
+        STORAGE_WRITE(203);
+
+        private final int code;
+
+        RequestCode(int code) {
+            this.code = code;
+        }
+
+        @Contract(pure = true)
+        public int getCode() {
+            return code;
+        }
+    }
+
+    /**
+     * 权限同意后的回调方法接口
+     */
+    private static IntConsumer cb;
 
     @SuppressWarnings("UnusedParameters")
     public static void res(@NonNull Activity activity, int reqCode, @NonNull String[] pers, @NonNull int[] res) {
         if (res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED) {
-            cb.callback();
+            cb.accept(res[0]);
         } else {
             Toast.makeText(activity, "权限被拒绝", Toast.LENGTH_SHORT).show();
         }
     }
-    public static void req(@NonNull Activity activity, @NonNull String[] permissions, int requestCode, Cb callback) {
+    public static void req(@NonNull Activity activity, @NonNull String[] permissions, @NonNull RequestCode requestCode, IntConsumer callback) {
         cb = callback;
-        activity.requestPermissions(permissions, requestCode);
-    }
-    public interface Cb {
-        /**
-         * 权限同意后的回调方法接口
-         */
-        void callback();
+        activity.requestPermissions(permissions, requestCode.getCode());
     }
 }

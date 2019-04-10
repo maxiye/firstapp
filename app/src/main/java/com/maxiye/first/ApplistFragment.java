@@ -22,13 +22,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.maxiye.first.part.AppLvAdapter;
+import com.maxiye.first.util.StringUtils;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -44,8 +47,6 @@ public class ApplistFragment extends Fragment {
     String keyword;
 
     private OnFrgActionListener mListener;
-    private SharedPreferences sp;
-    private PackageManager pm;
     private ArrayList<ApplicationInfo> appInfoArrayList;
 
     /**
@@ -95,8 +96,7 @@ public class ApplistFragment extends Fragment {
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                int numPerScreen = 15;
-                if (firstVisibleItem > oldVisibleItem && touchFlg && lv.getCount() > numPerScreen) {
+                if (firstVisibleItem > oldVisibleItem && touchFlg && lv.getCount() > 15) {
                     // 向上滑动
                     mListener.onListScroll(true);
                     touchFlg = false;
@@ -123,39 +123,68 @@ public class ApplistFragment extends Fragment {
             frag = new WeakReference<>(applistFragment);
         }
 
+        /**
+         * {@code 第36条：使用EnumSet来替换Bit域} {@link java.util.EnumSet} ApplicationInfo.FLAG_SYSTEM
+         * EnumSet.of(...).contains(ApplicationInfo.FLAG_SYSTEM)
+         * {@code 第45条：明智审慎地使用Stream}
+         *
+         * {@code 第46条：在流中优先使用无副作用的函数}
+         *
+         * {@code 第47条：优先使用Collection而不是Stream来作为方法的返回类型}
+         * {@link java.util.Collection}接口是{@link Iterable}的子类型，并且具有{@link Collection#stream}方法，因此它提供迭代和流访问。
+         * 因此，Collection或适当的子类型通常是公共序列返回方法的最佳返回类型。 数组还使用{@link java.util.Arrays#asList(Object[])}和{@link java.util.stream.Stream#of}方法提供简单的迭代和流访问。
+         * 因为{@link java.util.stream.Stream}接口包含了{@link Iterable}接口中唯一的抽象方法{@link Stream#iterator}，Stream的方法规范与Iterable兼容。阻止程序员使用for-each循环在流上迭代的唯一原因是Stream无法继承Iterable。
+         * 不要在内存中存储大的序列，只是为了将它作为集合返回。
+         * 如果在将来的Java版本中，Stream接口声明被修改为继承Iterable，那么应该随意返回流，因为它们将允许流和迭代处理。
+         *
+         * {@code 第48条：谨慎使用流并行} {@link Stream#parallel}
+         * 并行性带来的性能收益在ArrayList、HashMap、HashSet和ConcurrentHashMap实例、数组、int类型范围和long类型的范围的流上最好。
+         * 这些数据结构的共同之处在于，它们都可以精确而廉价地分割成任意大小的子程序，这使得在并行线程之间划分工作变得很容易。
+         * 用于执行此任务的流泪库使用的抽象是spliterator，它由spliterator方法在Stream和Iterable上返回。
+         * collection.parallelStream().collect(Collectors.toSet())
+         * 对 parallelStream ， Collectors.toSet()先把输入分成多个部分，每部分生成一个 Set ，最后再把多个 Set 合成一个，性能更好还是更坏，取决于你的数据。
+         *
+         * Stream的collect方法执行的操作，称为可变缩减（mutable reductions），不适合并行性，因为组合集合的开销非常大。
+         * @param strings 参数列表
+         * @return List
+         */
         @Override
         protected List<Map<String, Object>> doInBackground(String... strings) {
             ApplistFragment fragment = frag.get();
+            String keyword = strings[0];
             if (fragment != null && fragment.getActivity() != null) {
                 Activity activity = fragment.getActivity();
+                PackageManager packageManager = activity.getPackageManager();
+                SharedPreferences sharedPreferences = activity.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
                 if (fragment.appInfoArrayList == null) {
-                    fragment.sp = activity.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
-                    fragment.pm = activity.getPackageManager();
-                    fragment.appInfoArrayList = new ArrayList<>(fragment.pm.getInstalledApplications(0));
+                    fragment.appInfoArrayList = new ArrayList<>(packageManager.getInstalledApplications(0));
                 }
-                boolean showSystemApps = fragment.sp.getBoolean(SettingActivity.SHOW_SYSTEM, false);
+                boolean showSystemApps = sharedPreferences.getBoolean(SettingActivity.SHOW_SYSTEM, false);
                 //过滤
                 List<Map<String, Object>> aiList = fragment.appInfoArrayList.stream()
+                        // 并行化处理
+//                        .parallel()
                         .filter(ai -> showSystemApps || ((ai.flags & ApplicationInfo.FLAG_SYSTEM) == 0))
                         .filter(ai -> {
-                            if (strings[0] != null && !strings[0].isEmpty()) {
-                                String appName = fragment.pm.getApplicationLabel(ai).toString();
-                                return (appName + ai.packageName).toLowerCase().contains(strings[0].toLowerCase());
+                            if (!StringUtils.isBlank(keyword)) {
+                                String appName = packageManager.getApplicationLabel(ai).toString();
+                                return (appName + ai.packageName).toLowerCase().contains(keyword.toLowerCase());
                             }
                             return true;
                         })
                         .map(ai -> {
                             HashMap<String, Object> appInfo = new HashMap<>(3);
                             try {
-                                PackageInfo pi = fragment.pm.getPackageInfo(ai.packageName, 0);
-                                appInfo.put("name", fragment.pm.getApplicationLabel(ai) + " v" + pi.versionName + "(" + pi.versionCode + ")");
+                                PackageInfo pi = packageManager.getPackageInfo(ai.packageName, 0);
+                                appInfo.put("name", packageManager.getApplicationLabel(ai) + " v" + pi.versionName + "(" + pi.versionCode + ")");
                                 appInfo.put("pkg", ai.packageName);
-                                appInfo.put("icon", fragment.pm.getApplicationIcon(ai));
+                                appInfo.put("icon", packageManager.getApplicationIcon(ai));
                             } catch (PackageManager.NameNotFoundException e1) {
                                 e1.printStackTrace();
                             }
                             return appInfo;
                         })
+                        // 证实paralleStream的forEach接口确实不能保证同步，同时也提出了解决方案：使用collect和reduce接口。
                         .collect(Collectors.toList());
                 //写入文件
                 //saveFileEx("app_list.txt", app_list);
@@ -223,6 +252,7 @@ public class ApplistFragment extends Fragment {
      * See the Android Training lesson <a href=
      * "http://developer.android.com/training/basics/fragments/communicating.html"
      * >Communicating with Other Fragments</a> for more information.
+     * {@code 第25条：将源文件限制为单个顶级类}
      */
     interface OnFrgActionListener {
         /**

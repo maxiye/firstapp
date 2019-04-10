@@ -11,6 +11,8 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.ThumbnailUtils;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Base64;
 import android.view.Window;
 import android.view.animation.Animation;
@@ -19,6 +21,8 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.maxiye.first.R;
+
+import org.jetbrains.annotations.Contract;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,7 +38,6 @@ import pl.droidsonroids.gif.GifImageView;
  * @author due
  * @date 2018/5/16
  */
-@SuppressWarnings({"unused", "WeakerAccess"})
 public class BitmapUtil {
 
     /**
@@ -45,7 +48,8 @@ public class BitmapUtil {
      * @param reqHeight int
      * @return int
      */
-    public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+    @SuppressWarnings({"WeakerAccess"})
+    public static int calculateInSampleSize(@NonNull BitmapFactory.Options options, int reqWidth, int reqHeight) {
         // Raw height and width of image
         final int height = options.outHeight;
         final int width = options.outWidth;
@@ -73,6 +77,8 @@ public class BitmapUtil {
      * @param type String
      * @return int
      */
+    @Contract(pure = true)
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public static int predictInSampleSize(long fileSize, String type) {
         if ("gif".equals(type)) {
             return 4;
@@ -102,14 +108,13 @@ public class BitmapUtil {
      * @param bitmap Bitmap
      * @return Bitmap
      */
-    public static Bitmap convertGray(Bitmap bitmap) {
+    public static Bitmap convertGray(@NonNull Bitmap bitmap) {
         int w = bitmap.getWidth(), h = bitmap.getHeight();
         MyLog.w("convertGray", "wh:" + w + "," + h);
         int alpha = 0xFF << 24;
         // 3840*2312 4k
         int[] pixels = new int[w * h];
         bitmap.getPixels(pixels, 0, w, 0, 0, w, h);
-        int avg = 0;
         for (int i = 0; i < pixels.length; i++) {
             int color = pixels[i];
             int r = (color & 0xFF0000) >> 16;
@@ -122,7 +127,8 @@ public class BitmapUtil {
         return Bitmap.createBitmap(pixels, w, h, Bitmap.Config.ARGB_8888);
     }
 
-    public static Bitmap convertGray2(Bitmap bitmap) {
+    @SuppressWarnings({"unused"})
+    public static Bitmap convertGray2(@NonNull Bitmap bitmap) {
         int w = bitmap.getWidth(), h = bitmap.getHeight();
         MyLog.w("convertGray", "wh:" + w + "," + h);
         int alpha = 0xFF << 24;
@@ -158,7 +164,7 @@ public class BitmapUtil {
      * @param bitmap Bitmap
      * @return Bitmap
      */
-    public static Bitmap convertReverse(Bitmap bitmap) {
+    public static Bitmap convertReverse(@NonNull Bitmap bitmap) {
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
         int[] pixels = new int[width * height];
@@ -174,7 +180,7 @@ public class BitmapUtil {
      * @param bitmap Bitmap
      * @return Bitmap
      */
-    public static Bitmap convertDot(Bitmap bitmap) {
+    public static Bitmap convertDot(@NonNull Bitmap bitmap) {
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
         int[] pixels = new int[width * height];
@@ -190,7 +196,6 @@ public class BitmapUtil {
             avg += pixels[i];
         }
         avg = avg / (width * height);
-        long meta = 0;
         for (int i = 0; i < pixels.length; i++) {
             pixels[i] = pixels[i] > avg ? 0xFFFFFFFF : 0xFF000000;
         }
@@ -202,7 +207,8 @@ public class BitmapUtil {
      * @param bitmap Bitmap
      * @return String
      */
-    public static String convertDotTxt(Bitmap bitmap) {
+    @NonNull
+    public static String convertDotTxt(@NonNull Bitmap bitmap) {
         int w = bitmap.getWidth(), h = bitmap.getHeight();
         float scale = 150f / Math.max(w , h);
         bitmap = scaleBitmap(bitmap, scale, scale);
@@ -221,7 +227,6 @@ public class BitmapUtil {
             avg += pixels[i];
         }
         avg = avg / (width * height);
-        long meta = 0;
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < pixels.length; i++) {
             sb.append(pixels[i] > avg ? "  " : "**");
@@ -258,6 +263,8 @@ public class BitmapUtil {
      * @param offset int
      * @return int
      */
+    @Contract(pure = true)
+    @SuppressWarnings({"unused"})
     public static int gradualColor1(int color, int offset, boolean mode) {
         int a = 0xff000000, r = (color & 0xff0000) >> 16, g = (color & 0xff00) >> 8, b = color & 0xff;
         int[] rgb = new int[]{r, g, b};
@@ -297,6 +304,8 @@ public class BitmapUtil {
      * @param offset int
      * @return int
      */
+    @Contract(pure = true)
+    @SuppressWarnings({"WeakerAccess"})
     public static int gradualColor(int color, int offset) {
         int a = 0xff000000, r = (color & 0xff0000) >> 16, g = (color & 0xff00) >> 8, b = color & 0xff;
         int[] rgb = new int[]{r, g, b};
@@ -332,6 +341,7 @@ public class BitmapUtil {
      * @param h    height 最小高度
      * @return bitmap
      */
+    @Nullable
     public static Bitmap getBitmap(File file, int w, int h) {
         BitmapFactory.Options opts = new BitmapFactory.Options();
         //读取图片信息，此时把options.inJustDecodeBounds 设回true，不返回bitmap
@@ -358,6 +368,9 @@ public class BitmapUtil {
      * @param file File
      * @return float[] avg 和 方差
      */
+    @NonNull
+    @Contract("_ -> new")
+    @SuppressWarnings({"unused"})
     public static float[] calcImgMeta(File file) {
         try {
             Bitmap bitmap = getBitmap(file, 64, 64);
@@ -395,7 +408,8 @@ public class BitmapUtil {
         }
     }
 
-    public static boolean cmpImgMata(float[] meta1, float[] meta2) {
+    @SuppressWarnings({"unused"})
+    public static boolean cmpImgMata(@NonNull float[] meta1, @NonNull float[] meta2) {
         float offAvg = Math.abs(meta1[0] - meta2[0]);
         float offDx = Math.abs(meta1[1] - meta2[1]);
         return offAvg < 1 && offDx < 160;
@@ -413,6 +427,7 @@ public class BitmapUtil {
      * @param bmp bitmap
      * @return long
      */
+    @SuppressWarnings({"WeakerAccess"})
     public static long calcImgMeta2(Bitmap bmp) {
         try {
             int width = 8;
@@ -483,7 +498,7 @@ public class BitmapUtil {
      * @param bitmap  bitmap
      */
     public static void saveBitmap(Activity context, File file, Bitmap bitmap) {
-        PermissionUtil.req(context, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PermissionUtil.PER_REQ_STORAGE_WRT, () -> {
+        PermissionUtil.req(context, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PermissionUtil.RequestCode.STORAGE_WRITE, (result) -> {
             try {
                 if (!file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
                     Toast.makeText(context, "create dir error: " + file.getParentFile().getAbsolutePath(), Toast.LENGTH_SHORT).show();
@@ -510,7 +525,8 @@ public class BitmapUtil {
      * @param data byte[]
      * @return boolean
      */
-    public static boolean isGif(byte[] data) {
+    @Contract(pure = true)
+    public static boolean isGif(@NonNull byte[] data) {
         // 71=>G 73=>I 70=>F
         return data[0] == 71 && data[1] == 73 && data[2] == 70;
     }
@@ -522,7 +538,8 @@ public class BitmapUtil {
      * @param scaleY Y缩放倍率
      * @return Bitmap
      */
-    public static Bitmap scaleBitmap(Bitmap bitmap, float scaleX, float scaleY) {
+    @SuppressWarnings({"WeakerAccess"})
+    public static Bitmap scaleBitmap(@NonNull Bitmap bitmap, float scaleX, float scaleY) {
         Matrix matrix = new Matrix();
         int w = bitmap.getWidth(), h = bitmap.getHeight();
         matrix.postScale(scaleX, scaleY);
@@ -535,6 +552,8 @@ public class BitmapUtil {
      * @param drawable drawable
      * @return drawable
      */
+    @NonNull
+    @Contract("_, _, _ -> new")
     public static Drawable scaleDrawable(Drawable drawable, int w, int h) {
         Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
         float scale = 1f;
@@ -551,7 +570,7 @@ public class BitmapUtil {
      * @param file File
      * @return long
      */
-    public static long cachedImgMeta(File file, Properties props) {
+    public static long cachedImgMeta(@NonNull File file, Properties props) {
         String fName = file.getName();
         if (fName.length() > 6) {
             fName = fName.substring(0, 6);

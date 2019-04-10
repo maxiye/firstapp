@@ -15,19 +15,26 @@ import com.maxiye.first.R;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.IntConsumer;
 
 /**
  * gif历史列表适配器
- *
+ * {@code 第27条：消除未检查警告} extends RecyclerView.Adapter<GifWebRvAdapter.ViewHolder>
+ * {@code 第44条：优先使用标准的函数式接口} IntConsumer
+ * 不要试图使用基本的函数式接口来装箱基本类型的包装类而不是基本类型的函数式接口
  * @author due
  * @date 2018/5/14
  */
-@SuppressWarnings({"WeakerAccess"})
-public class GifWebRvAdapter extends RecyclerView.Adapter {
+public class GifWebRvAdapter extends RecyclerView.Adapter<GifWebRvAdapter.ViewHolder> {
     private ArrayList<HashMap<String, Object>> mData;
-    private OnItemClickListener clickListener;
+    /**
+     * 单击绑定接口
+     * position int
+     */
+    private IntConsumer clickListener;
     private OnItemLongClickListener longClickListener;
 
+    @SuppressWarnings({"WeakerAccess"})
     public void setData(ArrayList<HashMap<String, Object>> data) {
         mData = data;
     }
@@ -36,11 +43,13 @@ public class GifWebRvAdapter extends RecyclerView.Adapter {
         return mData;
     }
 
+    @SuppressWarnings({"WeakerAccess"})
     public Map<String, Object> getItemData(int position) {
         return mData.get(position);
     }
 
-    public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
+    @SuppressWarnings({"WeakerAccess"})
+    public void setOnItemClickListener(IntConsumer onItemClickListener) {
         this.clickListener = onItemClickListener;
     }
 
@@ -50,26 +59,25 @@ public class GifWebRvAdapter extends RecyclerView.Adapter {
 
     @NonNull
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.gif_history_pwin_rv_list, parent, false));
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        ViewHolder viewHolder = (ViewHolder) holder;
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         HashMap<String, Object> item = mData.get(position);
         if (!item.isEmpty()) {
-            viewHolder.mTextView.setText(Html.fromHtml((String) item.get("name"), Html.FROM_HTML_MODE_COMPACT));
-            viewHolder.mImageView.setImageDrawable((Drawable) item.get("icon"));
+            holder.mTextView.setText(Html.fromHtml((String) item.get("name"), Html.FROM_HTML_MODE_COMPACT));
+            holder.mImageView.setImageDrawable((Drawable) item.get("icon"));
             if (clickListener != null) {
-                viewHolder.itemView.setOnClickListener(view -> clickListener.onClick(position));
+                holder.itemView.setOnClickListener(view -> clickListener.accept(position));
             }
             if (longClickListener != null) {
-                viewHolder.itemView.setOnLongClickListener(view -> longClickListener.onLongClick(position));
+                holder.itemView.setOnLongClickListener(view -> longClickListener.onLongClick(position));
             }
         } else {
-            viewHolder.mTextView.setText("");
-            viewHolder.mImageView.setImageDrawable(null);
+            holder.mTextView.setText("");
+            holder.mImageView.setImageDrawable(null);
         }
     }
 
@@ -78,6 +86,9 @@ public class GifWebRvAdapter extends RecyclerView.Adapter {
         return mData == null ? 0 : mData.size();
     }
 
+    /**
+     * {@code 第24条：优先考虑静态成员类}
+     */
     static class ViewHolder extends RecyclerView.ViewHolder {
         final TextView mTextView;
         final ImageView mImageView;
@@ -89,13 +100,6 @@ public class GifWebRvAdapter extends RecyclerView.Adapter {
         }
     }
 
-    public interface OnItemClickListener {
-        /**
-         * 单击绑定接口
-         * @param position int
-         */
-        void onClick(int position);
-    }
     public interface OnItemLongClickListener {
         /**
          * 长按点击接口

@@ -18,9 +18,12 @@ import okhttp3.ResponseBody;
  * @author due
  * @date 2018/8/6
  */
-@SuppressWarnings("unused")
 public class NetworkUtil {
-
+    /**
+     * {@code 第10条：覆盖equals方法时请遵守通用约定}
+     * 自反性,对称性,传递性,一致性,null比较
+     * {@code 第11条：覆盖equals方法时总要覆盖hashCode方法}
+     */
     private HashMap<Object, ConnectivityManager.NetworkCallback> callbackList = new HashMap<>(2);
     private static NetworkUtil instance;
 
@@ -67,6 +70,7 @@ public class NetworkUtil {
      * @param context contect
      * @return boolean
      */
+    @SuppressWarnings("unused")
     public static boolean isConnected(Context context) {
         ConnectivityManager connMgr = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         assert connMgr != null;
@@ -79,6 +83,7 @@ public class NetworkUtil {
      * @param context context
      * @return boolean
      */
+    @SuppressWarnings("unused")
     public static boolean isWifi(Context context) {
         ConnectivityManager connMgr = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         assert connMgr != null;

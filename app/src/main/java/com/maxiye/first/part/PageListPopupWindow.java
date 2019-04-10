@@ -19,22 +19,33 @@ import com.maxiye.first.R;
 import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.StringUtils;
 
+import org.jetbrains.annotations.Contract;
+
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
  * 数据库助手
- *
+ * {@code 第15条：最小化类和成员的可访问性}
+ * {@code 第16条：在公有类中使用访问方法，而不是公有域}
+ * {@code 第18条：组合优先于继承}
+ * {@code 第20条：接口优于抽象类} 接口是定义混合类型（mixins）的理想选择
+ * 通过包装者类模式（条目18），使用接口使得安全地增强类的功能成为可能。
+ * {@code 第22条：接口应该只被用来定义类型。它们不能仅仅是用来导出常量}
+ * {@code 第44条：优先使用标准的函数式接口}
+ * 一般来说，最好使用java.util.function.Function中提供的标准接口，但请注意，在相对罕见的情况下，最好编写自己的函数式接口。
  * @author due
  * @date 2018/10/22
  */
 public class PageListPopupWindow {
-    public ArrayList<HashMap<String, Object>> list;
-    public RecyclerView rv;
-    public GifWebRvAdapter ma;
-    public PopupWindow popupWindow;
-    public View rootView;
+
+    private ArrayList<HashMap<String, Object>> list;
+    private RecyclerView rv;
+    private GifWebRvAdapter ma;
+    private PopupWindow popupWindow;
+    private View rootView;
     private final Context context;
     private ListGetter listGetter;
     private ListCountGetter listCountGetter;
@@ -54,6 +65,7 @@ public class PageListPopupWindow {
         context = ctx;
     }
 
+    @Contract(pure = true)
     private int calcPages() {
         return total % pageSize == 0 ? total / pageSize : total / pageSize + 1;
     }
@@ -80,12 +92,73 @@ public class PageListPopupWindow {
         ma.notifyItemRangeChanged(position, list.size());
     }
 
+    /**
+     * 获取特定位置的item的view
+     * 使用rv.getChildAt只能获取可见的item，0表示当前屏幕可见第一个item
+     * @param position int
+     * @return view
+     */
+    public View getItemView(int position) {
+        return rv.getLayoutManager().findViewByPosition(position);
+    }
+
+    public Map<String, Object> getItemData(int position) {
+        return ma.getItemData(position);
+    }
+
     public void dismiss() {
         popupWindow.dismiss();
     }
 
+    /**
+     * 获取总数
+     * @return int
+     */
     public int getTotal() {
         return total;
+    }
+
+    /**
+     * 是否有上一页
+     * @return boolean
+     */
+    public boolean hasPrePage() {
+        return page > 1;
+    }
+
+    public void prePage() {
+        if (page > 1) {
+            --page;
+            ma.setData(listGetter.getList(page, list, where));
+            ma.notifyDataSetChanged();
+            EditText pageEdit = rootView.findViewById(R.id.popup_page);
+            Button prev = rootView.findViewById(R.id.popup_prev_page);
+            Button next = rootView.findViewById(R.id.popup_next_page);
+            pageEdit.setText(String.valueOf(page));
+            next.setVisibility(View.VISIBLE);
+            prev.setVisibility(page == 1 ? View.GONE : View.VISIBLE);
+        }
+    }
+
+    /**
+     * 是否有下一页
+     * @return boolean
+     */
+    public boolean hasNextPage() {
+        Button next = rootView.findViewById(R.id.popup_next_page);
+        return next.getVisibility() == Button.VISIBLE;
+    }
+
+    public void nextPage() {
+        ++page;
+        ma.setData(listGetter.getList(page, list, where));
+        ma.notifyDataSetChanged();
+        EditText pageEdit = rootView.findViewById(R.id.popup_page);
+        Button prev = rootView.findViewById(R.id.popup_prev_page);
+        Button next = rootView.findViewById(R.id.popup_next_page);
+        pageEdit.setText(String.valueOf(page));
+        prev.setVisibility(View.VISIBLE);
+        next.setVisibility(page < pages ? View.VISIBLE : View.GONE);
     }
 
     public static class Builder {
@@ -242,6 +315,10 @@ public class PageListPopupWindow {
          * @return boolean 是否消费
          */
         boolean onLongClick(PageListPopupWindow pageListPopupWindow, int position);
+    }
+
+    public ArrayList<HashMap<String, Object>> getList() {
+        return list;
     }
 
 }

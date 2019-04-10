@@ -1,19 +1,32 @@
 package com.maxiye.first;
 
+import android.support.annotation.NonNull;
+
+import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.StringUtils;
+import com.maxiye.first.util.Util;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.BlockJUnit4ClassRunner;
-import org.junit.runners.JUnit4;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import static org.junit.Assert.*;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Example local unit test, which will execute on the development machine (host).
- *
+ * {@code 第39条：注解优先于命名模式} 使用{@link Test}注解测试方法
  * @see <a href="http://d.android.com/tools/testing">Testing documentation</a>
  */
 // @RunWith(BlockJUnit4ClassRunner.class) //default
@@ -145,4 +158,115 @@ public class ExampleUnitTest {
         System.out.println(new Object().hashCode());
         System.out.println(new Object().hashCode());
     }
+
+    /**
+     * {@code 第26条：不要使用原始类型}
+     */
+    @Test(expected = ClassCastException.class)
+    @SuppressWarnings("all")
+    public void genericsTest() {
+        Set<Object> set2 = new HashSet<>();
+        set2.add(new Util());
+        set2.add(Integer.MAX_VALUE);
+        set2.add("aa");
+        System.out.println(set2.iterator().next());
+        // 你无法将任意元素（null除外）放入一个Collection<?>。试图这么做的化将产生编译时错误
+        // 错误: 对于add(Util), 找不到合适的方法
+        // 方法 Collection.add(CAP#1)不适用
+        Set<?> set3 = new HashSet<>();
+        /*set3.add(new Util());
+        set3.add(Integer.MAX_VALUE);
+        set3.add("aa");*/
+        System.out.println(set3);
+        Set<? extends Util> set4 = new HashSet<>();
+        // 找不到合适的方法
+        // set4.add(new Util());
+        System.out.println(set4);
+        // 原始类型 你将会失去泛型所带来的安全性和可读性
+        Set set = new HashSet();
+        set.add(new Util());
+        set.add(Integer.MAX_VALUE);
+        set.add("aa");
+        // ClassCastException
+        System.out.println((Util) set.iterator().next());
+    }
+
+    /**
+     * {@code 第30条：优先使用泛型方法}
+     * 总而言之，泛型方法就像泛型类型，比起那些要求客户端将参数及返回值进行显示强转的方法，它们更安全更简单。
+     * 就像类型一样，你应该保证你的方法不用强转就能用，这意味着要将这些方法泛型化，你也应该将现有方法泛型化，让新用户用起来更简单，而且不用破坏现有客户端（条目26）。
+     * @param map HashMap
+     * @param key String
+     * @return T
+     */
+    @SuppressWarnings("SameParameterValue")
+    private static <T> T genericFun(@NonNull HashMap<String, T> map, String key) {
+        return map.get(key);
+    }
+
+    /**
+     * {@code 第31条：使用有限制通配符来增加API的灵活性}
+     * @param map HashMap
+     * @param key String
+     * @return T
+     */
+    @SuppressWarnings("SameParameterValue")
+    private static Number genericExtendFun(@NonNull  HashMap<String, ? extends Number> map, String key) {
+        return map.get(key);
+    }
+
+    /**
+     * {@code 第32条：合理结合泛型和变长参数}
+     * 给方法一个泛型的可变参数数组是不安全的
+     * SafeVarargs注解消除堆污染提示
+     * @param stringLists List
+     */
+    @SafeVarargs
+    @SuppressWarnings("unused")
+    static void dangerous(@NonNull List<String>... stringLists) {
+        List<Integer> intList = new ArrayList<>(2);
+        ((Object[]) stringLists)[0] = intList;// Heap pollution 堆污染
+        String s = stringLists[0].get(0); // ClassCastException 类型转换异常
+    }
+
+    @Test
+    @SuppressWarnings("all")
+    public void genericTest() {
+        HashMap<String, Number> hashMap = new HashMap<>(3);
+        hashMap.put("1", 2);
+        hashMap.put("2", 3f);
+        System.out.println(genericFun(hashMap, "1"));
+        System.out.println(genericExtendFun(hashMap, "2"));
+        HashMap<String, String> map = new HashMap<>(2);
+        map.put("1", "2");
+        //System.out.println(genericExtendFun(map, "1"));
+        hashMap.put("3", Integer.valueOf(2));
+    }
+
+
+    @Test
+    public void xPathTest() {
+        try {
+            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new File("test.txt"));
+            XPath xPath = XPathFactory.newInstance().newXPath();
+            Object res = xPath.evaluate("//div[@class='art-bd']/div/p[@class='p-image']/img", doc, XPathConstants.NODESET);
+            if (res instanceof NodeList) {
+                NodeList nodeList = (NodeList) res;
+                for (int i = 0; i < nodeList.getLength(); i++) {
+                    MyLog.println(nodeList.item(i).getAttributes().getNamedItem("data-src").getNodeValue());
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void streamTest() {
+        ArrayList<String> strings = new ArrayList<>(20);
+        // 空
+        strings.stream()
+                .forEach(System.out::println);
+    }
+
 }

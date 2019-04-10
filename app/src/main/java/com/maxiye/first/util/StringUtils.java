@@ -9,11 +9,12 @@ import java.util.regex.Pattern;
  * @author due
  * @date 2019/3/15
  */
-@SuppressWarnings({"unused", "WeakerAccess"})
 public class StringUtils {
 
     /**
      * 优化pattern性能
+     * {@code 第6条：避免创建不必要的对象}
+     * 创建一个Pattern实例是昂贵的，因为它需要将正则表达式编译成一个有限状态机。
      */
     private static final Pattern UNICODE_PATTERN = Pattern.compile("\\\\u([a-f0-9A-F]{4})");
     private static final Pattern UNICODE_DIGIT_PATTERN = Pattern.compile("[a-f0-9A-F]{4}");
@@ -53,6 +54,7 @@ public class StringUtils {
      * @param unicode String
      * @return String
      */
+    @SuppressWarnings({"unused"})
     public static String unicode2ChineseOri2(String unicode) {
         Matcher mt = UNICODE_PATTERN.matcher(unicode);
         String result = unicode;
@@ -73,6 +75,7 @@ public class StringUtils {
      * @param unicode String
      * @return String
      */
+    @SuppressWarnings({"unused"})
     public static String unicode2ChineseOri(String unicode) {
         Matcher mt = UNICODE_PATTERN.matcher(unicode);
         String result = unicode;

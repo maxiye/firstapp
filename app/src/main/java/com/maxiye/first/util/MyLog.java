@@ -10,7 +10,6 @@ import com.maxiye.first.BuildConfig;
  * @author due
  * @date 2019/1/21
  */
-@SuppressWarnings({"WeakerAccess", "unused"})
 public class MyLog {
     private static final boolean IS_DEBUG = BuildConfig.DEBUG;
 
@@ -46,6 +45,7 @@ public class MyLog {
 
     // 更多log输出方法 ....
 
+    @SuppressWarnings({"unused"})
     public static boolean isDebug() {
         return IS_DEBUG;
     }

@@ -6,6 +6,9 @@ package com.maxiye.first.util;
  */
 import android.content.Context;
 import android.os.Environment;
+import android.support.annotation.NonNull;
+
+import org.jetbrains.annotations.Contract;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -16,19 +19,36 @@ import java.util.Arrays;
  *
  * @author due
  */
-@SuppressWarnings({"unused", "WeakerAccess"})
 public class CacheUtil {
-
-    public static final String UNIT_KB = "KB";
-    public static final String UNIT_MB = "MB";
-    public static final String UNIT_GB = "GB";
+    /**
+     * {@code 第34条：用枚举替换常量}
+     * public static final String KB = "KB";
+     * public static final String MB = "MB";
+     * public static final String GB = "GB";
+     */
+    public enum Unit {
+        /**
+         * 单位KB
+         */
+        KB,
+        /**
+         * 单位MB
+         */
+        MB,
+        /**
+         * 单位GB
+         */
+        GB
+    }
 
     /**
      * @param context Activity
      * @return string String
      *             获取当前缓存
      */
-    public static String getTotalCacheSize(Context context) {
+    @NonNull
+    @SuppressWarnings({"unused"})
+    public static String getTotalCacheSize(@NonNull Context context) {
         long cacheSize = getFolderSize(context.getCacheDir());
         if (Environment.getExternalStorageState().equals(
                 Environment.MEDIA_MOUNTED)) {
@@ -41,7 +61,7 @@ public class CacheUtil {
      * @param context
      *            删除缓存
      */
-    public static void clearAllCache(Context context) {
+    public static void clearAllCache(@NonNull Context context) {
         deleteDir(context.getCacheDir());
         if (Environment.getExternalStorageState().equals(
                 Environment.MEDIA_MOUNTED)) {
@@ -49,6 +69,7 @@ public class CacheUtil {
         }
     }
 
+    @Contract("null -> true")
     private static boolean deleteDir(File dir) {
         if (dir != null && dir.isDirectory()) {
             String[] children = dir.list();
@@ -102,6 +123,7 @@ public class CacheUtil {
      * @param size int
      * @return string
      */
+    @NonNull
     private static String getFormatSize(double size) {
         double kiloByte = size / 1024;
         if (kiloByte < 1) {
@@ -134,7 +156,7 @@ public class CacheUtil {
                 + "TB";
     }
 
-    public static double getSize(Context context, String unit) {
+    public static double getSize(@NonNull Context context, Unit unit) {
         long cacheSize = getFolderSize(context.getCacheDir());
         if (Environment.getExternalStorageState().equals(
                 Environment.MEDIA_MOUNTED)) {
@@ -145,15 +167,15 @@ public class CacheUtil {
         }
         // / 10
         double kiloByte = cacheSize >> 10;
-        if (unit.equals(UNIT_KB)) {
+        if (unit.equals(Unit.KB)) {
             return fix2(kiloByte);
         }
         double megaByte = kiloByte / 1024;
-        if (unit.equals(UNIT_MB)) {
+        if (unit.equals(Unit.MB)) {
             return fix2(megaByte);
         }
         double gigaByte = megaByte / 1024;
-        if (unit.equals(UNIT_GB)) {
+        if (unit.equals(Unit.GB)) {
             return fix2(gigaByte);
         }
         return fix2(megaByte);
@@ -169,7 +191,7 @@ public class CacheUtil {
      * @param directory File
      * @param size total size
      */
-    private static void clearOld(File directory, double size) {
+    private static void clearOld(@NonNull File directory, double size) {
         File[] fileList = directory.listFiles(File::isFile);
         if (fileList == null) {
             return;
@@ -199,10 +221,10 @@ public class CacheUtil {
      * 缓存超过400M，自动清空
      * @param context Context
      */
+    @SuppressWarnings({"unused"})
     public static void checkClear(Context context) {
         double cacheSize = CacheUtil.getSize(context, null);
-        int maxSize = 400 << 10 << 10;
-        if (cacheSize > maxSize) {
+        if (cacheSize > 400 << 10 << 10) {
             CacheUtil.clearOld(context.getCacheDir(), cacheSize - (250 << 10 << 10));
         }
     }

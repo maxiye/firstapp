@@ -1,11 +1,11 @@
 package com.maxiye.first.part;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.ViewGroup;
 import android.widget.PopupWindow;
 
 import com.maxiye.first.R;
@@ -17,6 +17,8 @@ import java.util.Objects;
 /**
  * 数据库助手
  *
+ * {@code 第15条：最小化类和成员的可访问性}
+ * {@code 第18条：组合优先于继承}
  * @author due
  * @date 2018/10/22
  *         ArrayList<HashMap<String, Object>> listData = new ArrayList<>(webList.length);
@@ -34,7 +36,7 @@ import java.util.Objects;
  *         }
  *         PopupWindow popupWindow = new MyPopupMenu.Builder(this)
  *                 .setMenuList(listData)
- *                 .setWH(450, ViewGroup.LayoutParams.WRAP_CONTENT)
+ *                 .setSize(450, ViewGroup.LayoutParams.WRAP_CONTENT)
  *                 .setItemClickListener((popMenu, position) -> {
  *                     setWebName((String) listData.get(position).get("web"));
  *                     getNewFlg = true;
@@ -44,10 +46,11 @@ import java.util.Objects;
  *                 .build();
  *         popupWindow.showAtLocation(findViewById(R.id.gif_activity_main_content), Gravity.TOP | Gravity.END, 0, 0);
  */
-@SuppressWarnings({"unused", "WeakerAccess"})
+@SuppressWarnings({"unused"})
 public class MyPopupMenu {
-    public ArrayList<HashMap<String, Object>> menuList;
-    public PopupWindow popupWindow;
+    private ArrayList<HashMap<String, Object>> menuList;
+    private PopupWindow popupWindow;
+    private ViewGroup parentView;
     private final Context context;
     private ItemClickListener itemClickListener;
     private ItemLongClickListener itemLongClickListener;
@@ -84,9 +87,14 @@ public class MyPopupMenu {
             return this;
         }
 
-        public Builder setWH(int width, int height) {
+        public Builder setSize(int width, int height) {
             pagePopup.width = width;
             pagePopup.height = height;
+            return this;
+        }
+
+        public Builder setParentView(ViewGroup parentView) {
+            pagePopup.parentView = parentView;
             return this;
         }
 
@@ -95,10 +103,9 @@ public class MyPopupMenu {
         }
     }
 
-    @SuppressLint("SetTextI18n,InflateParams")
     private PopupWindow build() {
         popupWindow = new PopupWindow(width, height);
-        popupWindow.setContentView(LayoutInflater.from(context).inflate(R.layout.my_popus_menu, null));
+        popupWindow.setContentView(LayoutInflater.from(context).inflate(R.layout.my_popus_menu, parentView));
         popupWindow.setOutsideTouchable(true);
         RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupmenu_rv);
         DividerItemDecoration divider = new DividerItemDecoration(context, DividerItemDecoration.VERTICAL);

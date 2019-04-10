@@ -45,7 +45,7 @@ public class ApplistActivity extends AppCompatActivity implements ApplistFragmen
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (CacheUtil.getSize(this, CacheUtil.UNIT_MB) > 500) {
+        if (CacheUtil.getSize(this, CacheUtil.Unit.MB) > 500) {
             CacheUtil.clearAllCache(this);
         }
     }

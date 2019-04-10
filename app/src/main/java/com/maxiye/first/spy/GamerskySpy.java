@@ -12,16 +12,22 @@ import okhttp3.RequestBody;
  * gamersky爬手
  * Created by due on 2018/11/22.
  */
-class GamerskySpy extends BaseSpy {
+final class GamerskySpy extends BaseSpy {
     private final String questBody;
     private final JsonObject headers;
 
-    GamerskySpy(JsonObject webCfg, boolean modeFlg) {
-        super(webCfg, modeFlg);
+    GamerskySpy(JsonObject webCfg, String web) {
+        super(webCfg, web);
         questBody = webCfg.get("request_body").getAsString();
         headers = webCfg.get("headers").getAsJsonObject();
     }
 
+    /**
+     * @implNote 组装post请求，并添加请求头限定请求格式为json
+     * @param artId String
+     * @param webPage int
+     * @return Request
+     */
     @Override
     public Request buildRequest(String artId, int webPage) {
         curUrl = webPage > 1 ? String.format(urlTpl2, artId, webPage) : String.format(urlTpl, artId);
@@ -35,11 +41,22 @@ class GamerskySpy extends BaseSpy {
         return builder.build();
     }
 
+    /**
+     * @implNote 删除转义生成的反斜杠 '\'
+     * @param content String
+     * @return String
+     */
     @Override
     String handleContent(String content) {
         return StringUtils.unescape(content);
     }
 
+    /**
+     * @implNote 一页显示全部内容，默认第一页
+     * @param artId String
+     * @param page Integer
+     * @return String
+     */
     @Override
     public String getUrl(String artId, Integer page) {
         return String.format(webCfg.get("url").getAsString(), artId);
