@@ -22,7 +22,7 @@ import com.maxiye.first.util.StringUtils;
 import org.jetbrains.annotations.Contract;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -41,7 +41,7 @@ import java.util.Objects;
  */
 public class PageListPopupWindow {
 
-    private ArrayList<HashMap<String, Object>> list;
+    private List<Map<String, Object>> list;
     private RecyclerView rv;
     private GifWebRvAdapter ma;
     private PopupWindow popupWindow;
@@ -248,7 +248,7 @@ public class PageListPopupWindow {
             });
             pageEdit.setOnEditorActionListener((textView, i, keyEvent) -> {
                 String nowPageStr = pageEdit.getText().toString();
-                int nowPage = StringUtils.isBlank(nowPageStr) ? 1 : Integer.parseInt(nowPageStr);
+                int nowPage = StringUtils.notBlank(nowPageStr) ? Integer.parseInt(nowPageStr) : 1;
                 page = nowPage > pages ? pages : nowPage;
                 MyLog.w("FavoriteGoPage", "pagePopup:" + page);
                 pageEdit.setText(page + "");
@@ -286,7 +286,7 @@ public class PageListPopupWindow {
          * @param where string sql筛选条件
          * @return ArrayList 列表数据
          */
-        ArrayList<HashMap<String, Object>> getList(int page, ArrayList<HashMap<String, Object>> list, String where);
+        List<Map<String, Object>> getList(int page, List<Map<String, Object>> list, String where);
     }
 
     public interface ListCountGetter {
@@ -317,7 +317,7 @@ public class PageListPopupWindow {
         boolean onLongClick(PageListPopupWindow pageListPopupWindow, int position);
     }
 
-    public ArrayList<HashMap<String, Object>> getList() {
+    public List<Map<String, Object>> getList() {
         return list;
     }
 

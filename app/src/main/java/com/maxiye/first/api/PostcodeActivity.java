@@ -26,7 +26,7 @@ public class PostcodeActivity extends AppCompatActivity {
     public void postcode(View view) {
         ((TextView) findViewById(R.id.postcode_ret)).setText("");
         String area = ((EditText)findViewById(R.id.area_nm_input)).getText().toString();
-        String finalArea = StringUtils.isBlank(area) ? "广东省广东市" : area;
+        String finalArea = StringUtils.notBlank(area) ? area : "广东省广东市";
         Util.getDefaultSingleThreadExecutor().execute(() -> {
             String ret = ApiUtil.getInstance().getPostcode(finalArea);
             runOnUiThread(() -> ((TextView) findViewById(R.id.postcode_ret)).setText(ret));

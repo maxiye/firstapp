@@ -8,8 +8,8 @@ android {
         minSdkVersion 26
         //noinspection OldTargetApi
         targetSdkVersion 27
-        versionCode 118
-        versionName "1.5.7"
+        versionCode 119
+        versionName "1.5.8"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = false
         resConfigs "en", "zh"

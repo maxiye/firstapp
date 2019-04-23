@@ -16,6 +16,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
@@ -261,12 +263,40 @@ public class ExampleUnitTest {
         }
     }
 
+    /**
+     * stream test
+     */
     @Test
     public void streamTest() {
         ArrayList<String> strings = new ArrayList<>(20);
         // 空
         strings.stream()
                 .forEach(System.out::println);
+    }
+
+    /**
+     * {@code 第31条：使用限定通配符来增加API的灵活性}
+     * 限定通配符的泛型是只读的，不能写入
+     */
+    @Test
+    public void extendsGenericTest() {
+        List<? extends Number> list = new ArrayList<>(5);
+        //list.add(Integer.valueOf(20));//失败
+        ((List<Integer>) list).add(2);//成功
+        HashMap<String, Object> item = new HashMap<>(2);
+        item.put("o", new Object());
+    }
+
+    /**
+     * {@code 第52条：明智而审慎地使用重载}
+     */
+    @Test
+    public void overloadTest() {
+        new Thread(System.out::println).start();
+
+        ExecutorService exec = Executors.newCachedThreadPool();
+
+//        exec.submit(System.out::println);
     }
 
 }

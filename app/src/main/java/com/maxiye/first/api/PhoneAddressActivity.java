@@ -26,7 +26,7 @@ public class PhoneAddressActivity extends AppCompatActivity {
     public void phoneAddress(View view) {
         ((TextView) findViewById(R.id.phone_address_ret)).setText("");
         String phone = ((EditText)findViewById(R.id.phone_input)).getText().toString();
-        String finalPhone = StringUtils.isBlank(phone) ? "13641635423" : phone;
+        String finalPhone = StringUtils.notBlank(phone) ? phone : "13641635423";
         Util.getDefaultSingleThreadExecutor().execute(() -> {
             String ret = ApiUtil.getInstance().getPhoneAddress(finalPhone);
             runOnUiThread(() -> ((TextView) findViewById(R.id.phone_address_ret)).setText(ret));

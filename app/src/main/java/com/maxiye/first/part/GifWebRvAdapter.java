@@ -12,8 +12,7 @@ import android.widget.TextView;
 
 import com.maxiye.first.R;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.IntConsumer;
 
@@ -22,11 +21,13 @@ import java.util.function.IntConsumer;
  * {@code 第27条：消除未检查警告} extends RecyclerView.Adapter<GifWebRvAdapter.ViewHolder>
  * {@code 第44条：优先使用标准的函数式接口} IntConsumer
  * 不要试图使用基本的函数式接口来装箱基本类型的包装类而不是基本类型的函数式接口
+ *
+ * {@code 第51条：仔细设计方法签名} 对于参数类型，优先选择接口而不是类
  * @author due
  * @date 2018/5/14
  */
 public class GifWebRvAdapter extends RecyclerView.Adapter<GifWebRvAdapter.ViewHolder> {
-    private ArrayList<HashMap<String, Object>> mData;
+    private List<Map<String, Object>> mData;
     /**
      * 单击绑定接口
      * position int
@@ -35,11 +36,11 @@ public class GifWebRvAdapter extends RecyclerView.Adapter<GifWebRvAdapter.ViewHo
     private OnItemLongClickListener longClickListener;
 
     @SuppressWarnings({"WeakerAccess"})
-    public void setData(ArrayList<HashMap<String, Object>> data) {
+    public void setData(List<Map<String, Object>> data) {
         mData = data;
     }
     @SuppressWarnings("unused")
-    public ArrayList<HashMap<String, Object>> getData() {
+    public List<Map<String, Object>> getData() {
         return mData;
     }
 
@@ -65,7 +66,7 @@ public class GifWebRvAdapter extends RecyclerView.Adapter<GifWebRvAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        HashMap<String, Object> item = mData.get(position);
+        Map<String, Object> item = mData.get(position);
         if (!item.isEmpty()) {
             holder.mTextView.setText(Html.fromHtml((String) item.get("name"), Html.FROM_HTML_MODE_COMPACT));
             holder.mImageView.setImageDrawable((Drawable) item.get("icon"));

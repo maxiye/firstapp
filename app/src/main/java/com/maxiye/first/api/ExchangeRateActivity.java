@@ -34,8 +34,8 @@ public class ExchangeRateActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.curRet)).setText("");
         String scur = ((EditText)findViewById(R.id.scur)).getText().toString();
         String tcur = ((EditText)findViewById(R.id.tcur)).getText().toString();
-        String finalScur = StringUtils.isBlank(scur) ? "USD" : scur;
-        String finalTcur = StringUtils.isBlank(tcur) ? "CNY" : tcur;
+        String finalScur = StringUtils.notBlank(scur) ? scur : "USD";
+        String finalTcur = StringUtils.notBlank(tcur) ? tcur : "CNY";
         Util.getDefaultSingleThreadExecutor().execute(() -> {
             String ret = ApiUtil.getInstance().getExchangeRate(finalScur, finalTcur);
             runOnUiThread(() -> ((TextView) findViewById(R.id.curRet)).setText(ret));

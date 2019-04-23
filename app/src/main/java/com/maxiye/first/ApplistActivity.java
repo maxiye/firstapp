@@ -115,13 +115,13 @@ public class ApplistActivity extends AppCompatActivity implements ApplistFragmen
     }
 
     @Override
-    public void onListScroll(boolean flg) {
+    public void onListScroll(Slide slide) {
         //上滑
-        if (flg && ab.isShowing()) {
+        if (slide.equals(Slide.UP) && ab.isShowing()) {
             ab.hide();
         }
         //下滑
-        if (!flg && !ab.isShowing()) {
+        if (slide.equals(Slide.DOWN) && !ab.isShowing()) {
             ab.show();
         }
     }

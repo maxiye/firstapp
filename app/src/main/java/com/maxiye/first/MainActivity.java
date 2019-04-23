@@ -578,16 +578,15 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
 
         @Override
         public Uri[] createBeamUris(NfcEvent event) {
-            Uri[] mFileUris = new Uri[10];
             File sendfile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "1.jpg");
-            boolean ret = sendfile.setReadable(true, true);
-            if (ret) {
+            if (sendfile.setReadable(true, true)) {
+                Uri[] mFileUris = new Uri[2];
                 Uri senduri = Uri.fromFile(sendfile);
                 mFileUris[0] = senduri;
                 alert(senduri.toString());
                 return mFileUris;
             } else {
-                return null;
+                return new Uri[0];
             }
         }
     }
@@ -635,9 +634,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                         String txt = editText.getText().toString();
                         int color, w, h;
                         try {
-                            if (StringUtils.isBlank(txt)) {
-                                color = 0x13ba94; w = 1080; h = 1920;
-                            } else {
+                            if (StringUtils.notBlank(txt)) {
                                 char hashPrefix = '#';
                                 if (txt.charAt(0) == hashPrefix) {
                                     txt = txt.substring(1);
@@ -654,6 +651,8 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                                     w = 1080;
                                     h = 1920;
                                 }
+                            } else {
+                                color = 0x13ba94; w = 1080; h = 1920;
                             }
                         } catch (Exception e) {
                             runOnUiThread(() -> alert(e.getLocalizedMessage()));

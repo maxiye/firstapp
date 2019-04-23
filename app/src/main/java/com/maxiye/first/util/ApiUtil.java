@@ -120,7 +120,7 @@ public class ApiUtil {
         String url = String.format(exchangeRateApi, scur, tcur, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
+        if (StringUtils.notBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
             JsonObject retObj = jsonObject.get("result").getAsJsonObject();
             ret = "状态：" + retObj.get("status").getAsString() +
                     "\r\n原币种：" + retObj.get("scur").getAsString() +
@@ -138,7 +138,7 @@ public class ApiUtil {
         String retTmp = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(retTmp, JsonObject.class);
         List<String[]> list = new ArrayList<>();
-        if (!StringUtils.isBlank(retTmp) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
+        if (StringUtils.notBlank(retTmp) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
             JsonArray retArr = jsonObject.get("result").getAsJsonArray();
             JsonObject retObj;
             StringBuilder ret = new StringBuilder();
@@ -181,7 +181,7 @@ public class ApiUtil {
         String url = String.format(iPAddressApi, ip, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
+        if (StringUtils.notBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
             try {
                 JsonObject retObj = jsonObject.get("result").getAsJsonObject();
                 ret = "状态：" + retObj.get("status").getAsString() +
@@ -210,7 +210,7 @@ public class ApiUtil {
         String url = String.format(phoneAddressApi, phone, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
+        if (StringUtils.notBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
             try {
                 JsonObject retObj = jsonObject.get("result").getAsJsonObject();
                 ret = "状态：" + retObj.get("status").getAsString() +
@@ -236,7 +236,7 @@ public class ApiUtil {
         String url = String.format(idAddressApi, id, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
+        if (StringUtils.notBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
             try {
                 JsonObject retObj = jsonObject.get("result").getAsJsonObject();
                 ret = "状态：" + retObj.get("status").getAsString() +
@@ -261,7 +261,7 @@ public class ApiUtil {
         String url = String.format(postcodeApi, area, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
+        if (StringUtils.notBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
             try {
                 JsonObject retObj = jsonObject.get("result").getAsJsonObject().get("lists").getAsJsonArray().get(0).getAsJsonObject();
                 ret = "地区：" + retObj.get("areanm").getAsString() +
@@ -280,7 +280,7 @@ public class ApiUtil {
         String url = String.format(bjTimeApi, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
+        if (StringUtils.notBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
             try {
                 JsonObject retObj = jsonObject.get("result").getAsJsonObject();
                 ret = "时间戳：" + retObj.get("timestamp").getAsString() +
@@ -307,7 +307,7 @@ public class ApiUtil {
         String url = String.format(workdayApi, dates, appKey, sign);
         String ret = callApi(url);
         JsonObject jsonObject = new Gson().fromJson(ret, JsonObject.class);
-        if (!StringUtils.isBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
+        if (StringUtils.notBlank(ret) && successStatus.equals(jsonObject.get(successMsg).getAsString())) {
             try {
                 String multSeparator = ",";
                 if (dates.contains(multSeparator)) {

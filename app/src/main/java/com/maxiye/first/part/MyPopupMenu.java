@@ -10,8 +10,8 @@ import android.widget.PopupWindow;
 
 import com.maxiye.first.R;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -19,6 +19,7 @@ import java.util.Objects;
  *
  * {@code 第15条：最小化类和成员的可访问性}
  * {@code 第18条：组合优先于继承}
+ * {@code 第51条：仔细设计方法签名} 对于参数类型，优先选择接口而不是类
  * @author due
  * @date 2018/10/22
  *         ArrayList<HashMap<String, Object>> listData = new ArrayList<>(webList.length);
@@ -48,7 +49,7 @@ import java.util.Objects;
  */
 @SuppressWarnings({"unused"})
 public class MyPopupMenu {
-    private ArrayList<HashMap<String, Object>> menuList;
+    private List<Map<String, Object>> menuList;
     private PopupWindow popupWindow;
     private ViewGroup parentView;
     private final Context context;
@@ -72,7 +73,7 @@ public class MyPopupMenu {
             pagePopup = new MyPopupMenu(context);
         }
 
-        public Builder setMenuList(ArrayList<HashMap<String, Object>> menus) {
+        public Builder setMenuList(List<Map<String, Object>> menus) {
             pagePopup.menuList = menus;
             return this;
         }

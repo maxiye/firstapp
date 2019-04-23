@@ -98,12 +98,12 @@ public class ApplistFragment extends Fragment {
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
                 if (firstVisibleItem > oldVisibleItem && touchFlg && lv.getCount() > 15) {
                     // 向上滑动
-                    mListener.onListScroll(true);
+                    mListener.onListScroll(OnFrgActionListener.Slide.UP);
                     touchFlg = false;
                 }
                 if (oldVisibleItem > firstVisibleItem && touchFlg) {
                     // 向下滑动
-                    mListener.onListScroll(false);
+                    mListener.onListScroll(OnFrgActionListener.Slide.DOWN);
                     touchFlg = false;
                 }
                 oldVisibleItem = firstVisibleItem;
@@ -166,7 +166,7 @@ public class ApplistFragment extends Fragment {
 //                        .parallel()
                         .filter(ai -> showSystemApps || ((ai.flags & ApplicationInfo.FLAG_SYSTEM) == 0))
                         .filter(ai -> {
-                            if (!StringUtils.isBlank(keyword)) {
+                            if (StringUtils.notBlank(keyword)) {
                                 String appName = packageManager.getApplicationLabel(ai).toString();
                                 return (appName + ai.packageName).toLowerCase().contains(keyword.toLowerCase());
                             }
@@ -253,8 +253,17 @@ public class ApplistFragment extends Fragment {
      * "http://developer.android.com/training/basics/fragments/communicating.html"
      * >Communicating with Other Fragments</a> for more information.
      * {@code 第25条：将源文件限制为单个顶级类}
+     * {@code 第51条：仔细设计方法签名}
+     * 与布尔型参数相比，优先使用两个元素枚举类型
      */
     interface OnFrgActionListener {
+        enum Slide {
+            /**
+             * 滑动方向枚举
+             */
+            UP,
+            DOWN
+        }
         /**
          * 项目点击事件接口
          * @param view View
@@ -269,8 +278,8 @@ public class ApplistFragment extends Fragment {
 
         /**
          * 滚动事件
-         * @param flg 上划true，下滑false
+         * @param slide 上划UP，下滑DOWN
          */
-        void onListScroll(boolean flg);
+        void onListScroll(Slide slide);
     }
 }

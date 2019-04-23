@@ -34,7 +34,7 @@ import pl.droidsonroids.gif.GifImageView;
 
 /**
  * bitmap工具
- *
+ * {@code 第56条：为所有已公开的API元素编写文档注释}
  * @author due
  * @date 2018/5/16
  */
@@ -424,32 +424,36 @@ public class BitmapUtil {
      * 第五步，计算哈希值：将上一步的比较结果，组合在一起，就构成了一个64位的整数
      * diff(s1, s2)：结果在1~5说明两张照片极其相似，6~10说明较为相似，10以上说明不相似
      *
+     * {@code 第55条：明智而审慎地返回Optional} 考虑选择
+     * 容器类型，包括集合、映射、Stream、数组和Optional，不应该封装在Optional中
+     * 永远不应该返回装箱的基本类型的Optional。
      * @param bmp bitmap
      * @return long
      */
     @SuppressWarnings({"WeakerAccess"})
     public static long calcImgMeta2(Bitmap bmp) {
-        try {
-            int width = 8;
-            int height = 8;
-            Bitmap bitmap = ThumbnailUtils.extractThumbnail(bmp, width, height);
-            bitmap = convertGray(bitmap);
-            int[] pixels = new int[width * height];
-            bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
-            int avg = 0;
-            for (int i = 0; i < pixels.length; i++) {
-                pixels[i] &= 0xFF;
-                avg += pixels[i];
+        if (bmp != null) {
+            try {
+                int width = 8, height = 8;
+                Bitmap bitmap = ThumbnailUtils.extractThumbnail(bmp, width, height);
+                bitmap = convertGray(bitmap);
+                int[] pixels = new int[64];
+                bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+                int avg = 0;
+                for (int i = 0; i < pixels.length; i++) {
+                    pixels[i] &= 0xFF;
+                    avg += pixels[i];
+                }
+                // improve / 64
+                avg = avg >> 6;
+                long meta = 0;
+                for (int pix : pixels) {
+                    meta = meta << 1 | (pix >= avg ? 1 : 0);
+                }
+                return meta;
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            // improve / 64
-            avg = avg >> 6;
-            long meta = 0;
-            for (int pix : pixels) {
-                meta = meta << 1 | (pix >= avg ? 1 : 0);
-            }
-            return meta;
-        } catch (Exception e) {
-            e.printStackTrace();
         }
         return 0;
     }

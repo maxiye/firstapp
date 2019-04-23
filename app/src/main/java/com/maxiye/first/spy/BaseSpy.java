@@ -1,11 +1,13 @@
 package com.maxiye.first.spy;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.StringUtils;
+
+import org.jetbrains.annotations.Contract;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -29,6 +31,8 @@ import okhttp3.ResponseBody;
  * 防御性拷贝是在检查参数(条目49)的有效性之前进行的，有效性检查是在拷贝上而不是在原始实例上进行的。
  * 虽然这看起来不自然，但却是必要的。它在检查参数和拷贝参数之间的漏洞窗口期间保护类不受其他线程对参数的更改的影响。
  * 在计算机安全社区中，这称为 time-of-check/time-of-use或TOCTOU攻击[Viega01]。
+ *
+ * {@code 第56条：为所有已公开的API元素编写文档注释}
  * @author due
  * @date 2018/11/21
  */
@@ -161,15 +165,8 @@ public class BaseSpy {
         return content;
     }
 
-    /**
-     * 处理标题
-     * @implSpec 各个web实现自己的标题处理方法
-     * @param imgInfo HashMap
-     */
-    void handleImgInfo(HashMap<String, String> imgInfo) {}
-
     private String handleTitle(String title) {
-        boolean isNull = title == null || StringUtils.isBlank(title = TITLE_PATTERN.matcher(title).replaceAll(""));
+        boolean isNull = title == null || !StringUtils.notBlank(title = TITLE_PATTERN.matcher(title).replaceAll(""));
         if (isNull) {
             title = UUID.randomUUID().toString();
         }
@@ -177,7 +174,21 @@ public class BaseSpy {
     }
 
     /**
+     * 处理标题
+     * @implSpec 各个web实现自己的标题处理方法
+     * @param imgInfo HashMap
+     */
+    void handleImgInfo(HashMap<String, String> imgInfo) {}
+
+    /**
      * 获取文章标题
+     *
+     * {@code 第52条：明智而审慎地使用重载}
+     * 重载（overloaded）方法之间的选择是静态的，而重写（overridden）方法之间的选择是动态的。
+     * 当调用重写方法时，对象的编译时类型对执行哪个方法没有影响; 总是会执行“最具体(most specific)”的重写方法。
+     * 将此与重载进行比较，其中对象的运行时类型对执行的重载没有影响; 选择是在编译时完成的，完全基于参数的编译时类型。
+     * 总是可以为方法赋予不同的名称，而不是重载它们。
+     * 最好避免重载具有相同数量参数的多个签名的方法
      * @param artId 文字id
      */
     @SuppressWarnings("unused")
@@ -206,7 +217,7 @@ public class BaseSpy {
         JsonObject regObj = webCfg.getAsJsonObject("title_reg");
         int titleIdx = regObj.get("title_idx").getAsInt();
         Pattern pattern1 = getPattern(regObj.get("reg").getAsString());
-        if (!StringUtils.isBlank(content)) {
+        if (StringUtils.notBlank(content)) {
             Matcher mt = pattern1.matcher(handleContent(content));
             if (mt.find()) {
                 return mt.group(titleIdx);
@@ -217,9 +228,11 @@ public class BaseSpy {
 
     /**
      * 获取最新的内容
+     * {@code 第54条：返回空的数组或集合不要返回null}
      * @return String[]
      */
-    @Nullable
+    @NonNull
+    @Contract(" -> new")
     public final String[] getNewArticle() {
         String url = webCfg.get("spy_root").getAsString();
         JsonObject regObj = webCfg.getAsJsonObject("img_web_reg");
@@ -242,7 +255,7 @@ public class BaseSpy {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        return new String[0];
     }
 
     /**

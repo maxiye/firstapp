@@ -48,7 +48,7 @@ public class WeatherActivity extends AppCompatActivity {
         ma.setData(null);
         ma.notifyDataSetChanged();
         String weaid = ((EditText)findViewById(R.id.weaid)).getText().toString();
-        String finalWeaid = StringUtils.isBlank(weaid) ? "上海" : weaid;
+        String finalWeaid = StringUtils.notBlank(weaid) ? weaid : "上海";
         Util.getDefaultSingleThreadExecutor().execute(() -> {
             List<String[]> ret = ApiUtil.getInstance().getWeather(finalWeaid, this.getCacheDir());
             runOnUiThread(() -> {

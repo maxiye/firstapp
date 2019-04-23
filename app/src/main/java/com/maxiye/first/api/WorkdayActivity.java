@@ -30,7 +30,7 @@ public class WorkdayActivity extends AppCompatActivity {
     public void workdayQuery(View view) {
         ((TextView) findViewById(R.id.workday_ret)).setText("");
         String date = ((EditText)findViewById(R.id.work_day_input)).getText().toString();
-        String finalDate = StringUtils.isBlank(date) ? DateTimeFormatter.ofPattern("yyyyMMdd").format(LocalDate.now()) : date;
+        String finalDate = StringUtils.notBlank(date) ? date : DateTimeFormatter.ofPattern("yyyyMMdd").format(LocalDate.now());
         Util.getDefaultSingleThreadExecutor().execute(() -> {
             String ret = ApiUtil.getInstance().getWorkday(finalDate);
             runOnUiThread(() -> ((TextView) findViewById(R.id.workday_ret)).setText(ret));

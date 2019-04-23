@@ -60,10 +60,9 @@ public class StringUtils {
         String result = unicode;
         while (mt.find()) {
             String item = mt.group(1);
-            if (isBlank(item)) {
-                continue;
+            if (notBlank(item)) {
+                result = result.replace(mt.group(0), String.valueOf((char) (Integer.parseInt(item, 16))));
             }
-            result = result.replace(mt.group(0), String.valueOf((char) (Integer.parseInt(item, 16))));
         }
         return result;
     }
@@ -105,11 +104,11 @@ public class StringUtils {
     }
 
     /**
-     * 判断字符串是否为空
+     * 判断字符串不为空
      * @param string String
      * @return boolean
      */
-    public static boolean isBlank(String string) {
-        return string == null || "".equals(string) || string.isEmpty();
+    public static boolean notBlank(String string) {
+        return !(string == null || "".equals(string) || string.isEmpty());
     }
 }
