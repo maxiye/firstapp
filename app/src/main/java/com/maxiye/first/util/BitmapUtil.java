@@ -35,6 +35,7 @@ import pl.droidsonroids.gif.GifImageView;
 /**
  * bitmap工具
  * {@code 第56条：为所有已公开的API元素编写文档注释}
+ * {@code 第67条：明智谨慎地进行优化}
  * @author due
  * @date 2018/5/16
  */

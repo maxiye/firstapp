@@ -12,7 +12,7 @@ import android.widget.Toast;
 import com.maxiye.first.R;
 import com.maxiye.first.part.WeatherRetRvAdapter;
 import com.maxiye.first.util.ApiUtil;
-import com.maxiye.first.util.StringUtils;
+import com.maxiye.first.util.StringUtil;
 import com.maxiye.first.util.Util;
 
 import java.util.List;
@@ -48,7 +48,7 @@ public class WeatherActivity extends AppCompatActivity {
         ma.setData(null);
         ma.notifyDataSetChanged();
         String weaid = ((EditText)findViewById(R.id.weaid)).getText().toString();
-        String finalWeaid = StringUtils.notBlank(weaid) ? weaid : "上海";
+        String finalWeaid = StringUtil.notBlank(weaid) ? weaid : "上海";
         Util.getDefaultSingleThreadExecutor().execute(() -> {
             List<String[]> ret = ApiUtil.getInstance().getWeather(finalWeaid, this.getCacheDir());
             runOnUiThread(() -> {

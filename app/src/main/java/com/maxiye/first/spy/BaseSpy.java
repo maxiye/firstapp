@@ -5,7 +5,7 @@ import android.support.annotation.Nullable;
 
 import com.google.gson.JsonObject;
 import com.maxiye.first.util.MyLog;
-import com.maxiye.first.util.StringUtils;
+import com.maxiye.first.util.StringUtil;
 
 import org.jetbrains.annotations.Contract;
 
@@ -166,7 +166,7 @@ public class BaseSpy {
     }
 
     private String handleTitle(String title) {
-        boolean isNull = title == null || !StringUtils.notBlank(title = TITLE_PATTERN.matcher(title).replaceAll(""));
+        boolean isNull = title == null || !StringUtil.notBlank(title = TITLE_PATTERN.matcher(title).replaceAll(""));
         if (isNull) {
             title = UUID.randomUUID().toString();
         }
@@ -217,7 +217,7 @@ public class BaseSpy {
         JsonObject regObj = webCfg.getAsJsonObject("title_reg");
         int titleIdx = regObj.get("title_idx").getAsInt();
         Pattern pattern1 = getPattern(regObj.get("reg").getAsString());
-        if (StringUtils.notBlank(content)) {
+        if (StringUtil.notBlank(content)) {
             Matcher mt = pattern1.matcher(handleContent(content));
             if (mt.find()) {
                 return mt.group(titleIdx);
@@ -260,13 +260,14 @@ public class BaseSpy {
 
     /**
      * 获取请求url
+     * {@code 第61条：基本类型优于装箱的基本类型}
      * @implSpec 各个web可以有自己的url组装方法
      * @param artId String
      * @param page Integer
      * @return String
      */
-    public String getUrl(String artId, Integer page) {
-        if (page == null) {
+    public String getUrl(String artId, int page) {
+        if (page == 0) {
             return String.format(urlTpl, artId);
         } else {
             return page > 2 ? String.format(urlTpl2, artId, page - 1) : String.format(urlTpl, artId);

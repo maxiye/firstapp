@@ -8,7 +8,7 @@ import android.widget.TextView;
 
 import com.maxiye.first.R;
 import com.maxiye.first.util.ApiUtil;
-import com.maxiye.first.util.StringUtils;
+import com.maxiye.first.util.StringUtil;
 import com.maxiye.first.util.Util;
 
 import java.time.LocalDate;
@@ -30,7 +30,7 @@ public class WorkdayActivity extends AppCompatActivity {
     public void workdayQuery(View view) {
         ((TextView) findViewById(R.id.workday_ret)).setText("");
         String date = ((EditText)findViewById(R.id.work_day_input)).getText().toString();
-        String finalDate = StringUtils.notBlank(date) ? date : DateTimeFormatter.ofPattern("yyyyMMdd").format(LocalDate.now());
+        String finalDate = StringUtil.notBlank(date) ? date : DateTimeFormatter.ofPattern("yyyyMMdd").format(LocalDate.now());
         Util.getDefaultSingleThreadExecutor().execute(() -> {
             String ret = ApiUtil.getInstance().getWorkday(finalDate);
             runOnUiThread(() -> ((TextView) findViewById(R.id.workday_ret)).setText(ret));

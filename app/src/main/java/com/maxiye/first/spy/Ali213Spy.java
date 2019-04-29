@@ -4,7 +4,7 @@ import android.support.annotation.NonNull;
 
 import com.google.gson.JsonObject;
 import com.maxiye.first.util.MyLog;
-import com.maxiye.first.util.StringUtils;
+import com.maxiye.first.util.StringUtil;
 
 import okhttp3.Request;
 
@@ -47,7 +47,7 @@ final class Ali213Spy extends BaseSpy {
      */
     @Override
     String handleContent(String content) {
-        return StringUtils.unescape(content);
+        return StringUtil.unescape(content);
     }
 
     /**
@@ -57,7 +57,7 @@ final class Ali213Spy extends BaseSpy {
      * @return String
      */
     @Override
-    public String getUrl(String artId, Integer page) {
+    public String getUrl(String artId, int page) {
         return String.format(webCfg.get("url").getAsString(), artId);
     }
 }

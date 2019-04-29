@@ -8,7 +8,7 @@ import android.widget.TextView;
 
 import com.maxiye.first.R;
 import com.maxiye.first.util.ApiUtil;
-import com.maxiye.first.util.StringUtils;
+import com.maxiye.first.util.StringUtil;
 import com.maxiye.first.util.Util;
 
 /**
@@ -26,7 +26,7 @@ public class IpAddressActivity extends AppCompatActivity {
     public void ipaddress(View view) {
         ((TextView) findViewById(R.id.ip_address_ret)).setText("");
         String ip = ((EditText)findViewById(R.id.ip_input)).getText().toString();
-        String finalIp = StringUtils.notBlank(ip) ? ip : "127.0.0.1";
+        String finalIp = StringUtil.notBlank(ip) ? ip : "127.0.0.1";
         Util.getDefaultSingleThreadExecutor().execute(() -> {
             String ret = ApiUtil.getInstance().getIPAddress(finalIp);
             runOnUiThread(() -> ((TextView) findViewById(R.id.ip_address_ret)).setText(ret));

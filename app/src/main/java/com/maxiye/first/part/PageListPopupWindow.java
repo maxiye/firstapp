@@ -17,7 +17,7 @@ import android.widget.TextView;
 
 import com.maxiye.first.R;
 import com.maxiye.first.util.MyLog;
-import com.maxiye.first.util.StringUtils;
+import com.maxiye.first.util.StringUtil;
 
 import org.jetbrains.annotations.Contract;
 
@@ -35,7 +35,8 @@ import java.util.Objects;
  * 通过包装者类模式（条目18），使用接口使得安全地增强类的功能成为可能。
  * {@code 第22条：接口应该只被用来定义类型。它们不能仅仅是用来导出常量}
  * {@code 第44条：优先使用标准的函数式接口}
- * 一般来说，最好使用java.util.function.Function中提供的标准接口，但请注意，在相对罕见的情况下，最好编写自己的函数式接口。
+ * 一般来说，最好使用{@link java.util.function.Function}中提供的标准接口，但请注意，在相对罕见的情况下，最好编写自己的函数式接口。
+ * {@code 第65条：接口优于反射}
  * @author due
  * @date 2018/10/22
  */
@@ -248,7 +249,7 @@ public class PageListPopupWindow {
             });
             pageEdit.setOnEditorActionListener((textView, i, keyEvent) -> {
                 String nowPageStr = pageEdit.getText().toString();
-                int nowPage = StringUtils.notBlank(nowPageStr) ? Integer.parseInt(nowPageStr) : 1;
+                int nowPage = StringUtil.notBlank(nowPageStr) ? Integer.parseInt(nowPageStr) : 1;
                 page = nowPage > pages ? pages : nowPage;
                 MyLog.w("FavoriteGoPage", "pagePopup:" + page);
                 pageEdit.setText(page + "");

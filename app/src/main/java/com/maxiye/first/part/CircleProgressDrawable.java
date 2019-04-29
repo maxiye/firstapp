@@ -19,6 +19,7 @@ import android.support.v4.graphics.ColorUtils;
  * {@code 第6条：避免创建不必要的对象}
  * {@code 第23条：优先使用类层次，而不是标签类}
  * {@code 第40条：坚持使用{@link Override}注解}
+ * {@code 第60条：需要精确的结果时避免使用float和double类型}
  * @author due
  * @date 2018/5/27
  */
@@ -118,6 +119,11 @@ public class CircleProgressDrawable extends Drawable {
         invalidateSelf();
     }
 
+    /**
+     * {@code 第59条：熟悉并使用Java类库}
+     * ColorUtils 的使用
+     * @param canvas Canvas
+     */
     @Override
     public void draw(@NonNull Canvas canvas) {
         canvas.drawColor(Color.TRANSPARENT);

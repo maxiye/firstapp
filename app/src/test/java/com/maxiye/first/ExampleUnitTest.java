@@ -3,7 +3,7 @@ package com.maxiye.first;
 import android.support.annotation.NonNull;
 
 import com.maxiye.first.util.MyLog;
-import com.maxiye.first.util.StringUtils;
+import com.maxiye.first.util.StringUtil;
 import com.maxiye.first.util.Util;
 
 import org.junit.Test;
@@ -11,6 +11,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
 import java.io.File;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,7 +41,7 @@ public class ExampleUnitTest {
 
     @Test
     public void unicodeConvert() {
-        String res = StringUtils.unicode2Chinese("\n" +
+        String res = StringUtil.unicode2Chinese("\n" +
                 "<!doctype html>\n" +
                 "<html>\n" +
                 "<head>\n" +
@@ -297,6 +298,21 @@ public class ExampleUnitTest {
         ExecutorService exec = Executors.newCachedThreadPool();
 
 //        exec.submit(System.out::println);
+    }
+
+    /**
+     * {@code 第60条：需要精确的结果时避免使用float和double类型}
+     * 使用BigDecimal，int或long进行货币计算。
+     */
+    @Test
+    public void floatTest() {
+        BigDecimal sub = new BigDecimal(".11");
+        BigDecimal sub2 = new BigDecimal(".89");
+        BigDecimal total = new BigDecimal("1.00");
+        total = total.subtract(sub);
+        System.out.println(total);
+        total = total.subtract(sub2);
+        System.out.println(total);
     }
 
 }

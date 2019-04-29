@@ -69,7 +69,7 @@ import com.maxiye.first.util.DiskLruCache;
 import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.NetworkUtil;
 import com.maxiye.first.util.PermissionUtil;
-import com.maxiye.first.util.StringUtils;
+import com.maxiye.first.util.StringUtil;
 import com.maxiye.first.util.Util;
 
 import org.jetbrains.annotations.Contract;
@@ -103,7 +103,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.Future;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -128,6 +128,8 @@ import pl.droidsonroids.gif.GifImageView;
  * 避免过长的参数列表。相同类型的长序列参数尤其有害
  * 对于参数类型，优先选择接口而不是类
  * 与布尔型参数相比，优先使用两个元素枚举类型
+ * {@code 第66条：明智谨慎地使用本地方法} native methods
+ * {@code 第69条：仅在发生异常的条件下使用异常}
  * @author due
  */
 public class GifActivity extends AppCompatActivity {
@@ -227,7 +229,7 @@ public class GifActivity extends AppCompatActivity {
                     .build();
         }
         // onkey 发生拥堵 --已修复
-        threadPoolExecutor = new ThreadPoolExecutor(4, 7, 30, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.DiscardOldestPolicy());
+        threadPoolExecutor = new ThreadPoolExecutor(4, 7, 30, TimeUnit.SECONDS, new LinkedBlockingDeque<>(), new ThreadPoolExecutor.DiscardOldestPolicy());
         diskLruCache = DiskLruCache.newInstance(this, type);
         MyHandler.init(this);
         // db获取,ui线程运行的 toast 可能报错
@@ -261,7 +263,6 @@ public class GifActivity extends AppCompatActivity {
         getSpy().close();
         NetworkUtil.unregister(this);
         db.close();
-        db = null;
         MyHandler.close();
         okHttpClient.dispatcher().cancelAll();
         okHttpClient = null;
@@ -272,11 +273,15 @@ public class GifActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-        super.onResume();
         if (isGprs = NetworkUtil.isGprs(this)) {
             alert(getText(R.string.gprs_network).toString());
             gprsContinue = false;
         }
+        // fix nullPointerException
+        if (currentFragment == null || currentFragment.activity == null) {
+            mViewPager.setCurrentItem(page - 1, true);
+        }
+        super.onResume();
     }
 
     @Override
@@ -508,7 +513,7 @@ public class GifActivity extends AppCompatActivity {
             assert responseBody != null;
             String content = responseBody.string();
             Matcher matcher = spy.match(content);
-            if (StringUtils.notBlank(content) && matcher.find()) {
+            if (StringUtil.notBlank(content) && matcher.find()) {
                 do {
                     HashMap<String, String> item = spy.findItem(matcher);
                     imgList.add(item);
@@ -566,7 +571,7 @@ public class GifActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.gif_activity_actions, Util.iconMenu(menu));
+        getMenuInflater().inflate(R.menu.gif_activity_actions, Util.enableMenuIcon(menu));
         return true;
     }
 
@@ -607,7 +612,7 @@ public class GifActivity extends AppCompatActivity {
                 .setView(view)
                 .setPositiveButton(R.string.go_to, (dialog1, which) -> {
                     String itemIdxStr = pageEdit.getText().toString();
-                    itemIdxStr = StringUtils.notBlank(itemIdxStr) ? itemIdxStr : "1";
+                    itemIdxStr = StringUtil.notBlank(itemIdxStr) ? itemIdxStr : "1";
                     mViewPager.setCurrentItem(Integer.parseInt(itemIdxStr) - 1, true);
                     if (endFlg) {
                         checkPageEnd();
@@ -634,7 +639,7 @@ public class GifActivity extends AppCompatActivity {
                 .setView(view2)
                 .setPositiveButton(R.string.go_to, (dialog1, which) -> {
                     String txt = articleId.getText().toString();
-                    if (StringUtils.notBlank(txt)) {
+                    if (StringUtil.notBlank(txt)) {
                         artId = txt;
                         initPage();
                     } else {
@@ -649,7 +654,7 @@ public class GifActivity extends AppCompatActivity {
 
     public void switchType(MenuItem item) {
         PopupMenu pMenu = new PopupMenu(this, findViewById(R.id.gif_tpl_hidden_top), Gravity.END);
-        Menu menu = Util.iconMenu(pMenu.getMenu());
+        Menu menu = Util.enableMenuIcon(pMenu.getMenu());
         String[] typeList = getTypeList();
         for (int i = 0; i < typeList.length; i++) {
             String t = typeList[i];
@@ -669,7 +674,7 @@ public class GifActivity extends AppCompatActivity {
 
     public void switchWeb(MenuItem item) {
         PopupMenu pMenu = new PopupMenu(this, findViewById(R.id.gif_tpl_hidden_top), Gravity.END);
-        Menu menu = Util.iconMenu(pMenu.getMenu());
+        Menu menu = Util.enableMenuIcon(pMenu.getMenu());
         for (int i = 0; i < webList.length; i++) {
             String web = webList[i];
             MenuItem mItem = menu.add(Menu.NONE, i, Menu.NONE, web).setIcon(BitmapUtil.scaleDrawable(iconCacheList.get(web), 100, 0));
@@ -691,7 +696,7 @@ public class GifActivity extends AppCompatActivity {
                 .setTitle(R.string.browser_open)
                 .setIcon(R.drawable.ic_public_orange_60dp)
                 .setPositiveButton(R.string.first_page, (dialog, which) -> {
-                    String url = getSpy().getUrl(artId, null);
+                    String url = getSpy().getUrl(artId, 0);
                     startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
                     dialog.dismiss();
                 })
@@ -724,7 +729,7 @@ public class GifActivity extends AppCompatActivity {
     }
 
     private void loaded(String tip) {
-        if (StringUtils.notBlank(tip)) {
+        if (StringUtil.notBlank(tip)) {
             alert(tip);
         }
         loading.dismiss();
@@ -796,6 +801,10 @@ public class GifActivity extends AppCompatActivity {
         bookmarkMenu.show();
     }
 
+    /**
+     * 显示书签列表
+     * {@code 第63条：注意字符串连接的性能}
+     */
     private void listBookmark() {
         LinkedList<HashMap<String, String>> markList = getBookmark();
         if (markList.size() == 0){
@@ -808,7 +817,7 @@ public class GifActivity extends AppCompatActivity {
                     markList.forEach(hm -> {
                                 HashMap<String, Object> item = new HashMap<>(2);
                                 item.put("icon", iconCacheList.get(hm.get("web_name")));
-                                item.put("name", hm.get("title") + "，" + hm.get("web_name") + "，" + hm.get("type") + "，" + hm.get("art_id") + "，" + hm.get("page"));
+                                item.put("name", String.format("%s，%s，%s，%s，%s", hm.get("title"), hm.get("web_name"), hm.get("type"), hm.get("art_id"), hm.get("page")));
                                 list.add(item);
                             });
                     return list;
@@ -988,7 +997,7 @@ public class GifActivity extends AppCompatActivity {
 
     private int getHistoryCount(String andWhere) {
         String where = "art_id <> '' and type = '" + type + "'";
-        if (StringUtils.notBlank(andWhere)) {
+        if (StringUtil.notBlank(andWhere)) {
             where += " and " + andWhere;
         }
         Cursor cus = db.rawQuery("select count(*) from " + DbHelper.TB_IMG_WEB + " where " + where, null);
@@ -1008,6 +1017,7 @@ public class GifActivity extends AppCompatActivity {
      * 填充历史列表
      * {@code 第57条：最小化局部变量的作用域}
      * 优先选择for循环而不是while循环，最小化了局部变量的作用域 ：listSize
+     * {@code 第64条：通过接口引用对象}
      * @param page int
      * @param historyList List
      * @param andWhere String
@@ -1096,7 +1106,7 @@ public class GifActivity extends AppCompatActivity {
                                         String favIds = getRepeatedItems();
                                         runOnUiThread(() -> {
                                             String tip;
-                                            if (StringUtils.notBlank(favIds)) {
+                                            if (StringUtil.notBlank(favIds)) {
                                                 pageWin.where = "id in (" + favIds + ")";
                                                 pageWin.reset();
                                                 tip = getString(R.string.success);
@@ -1227,7 +1237,7 @@ public class GifActivity extends AppCompatActivity {
 
     private int getFavoriteCount(String andWhere) {
         String where = "type = '" + type + "'";
-        if (StringUtils.notBlank(andWhere)) {
+        if (StringUtil.notBlank(andWhere)) {
             where += " and " + andWhere;
         }
         Cursor cus = db.rawQuery("select count(*) from " + DbHelper.TB_IMG_FAVORITE + " where " + where, null);
@@ -1408,7 +1418,7 @@ public class GifActivity extends AppCompatActivity {
     private void loadFavImg(@NonNull Dialog dialog, GifImageView imgView, @NonNull Map<String, Object> item) {
         String title = (String) item.get("title");
         String url = (String) item.get("real_url");
-        url = StringUtils.notBlank(url) ? url : (String) item.get("url");
+        url = StringUtil.notBlank(url) ? url : (String) item.get("url");
         dialog.setTitle(Html.fromHtml("<p style='color: #F66725; text-align: center'>" + title + "</p>", Html.FROM_HTML_MODE_COMPACT));
         ImgViewTask.newInstance(imgView, this)
                 .executeOnExecutor(threadPoolExecutor, title, url, (String) item.get("id"), (String) item.get("path"));
@@ -1464,7 +1474,7 @@ public class GifActivity extends AppCompatActivity {
             GifActivity activity = gifActivityWR.get();
             String imgKey = activity.genCacheKey(strings[2], "favorite");
             String path = strings[3];
-            File cache = StringUtils.notBlank(path) ? new File(path) : activity.diskLruCache.get(imgKey);
+            File cache = StringUtil.notBlank(path) ? new File(path) : activity.diskLruCache.get(imgKey);
             if (cache != null) {
                 try {
                     MyLog.w("loadImg(fromCache)", "title：" + strings[0] + ";url：" + strings[1]);
@@ -1775,13 +1785,11 @@ public class GifActivity extends AppCompatActivity {
             textView.setText(title + "：" + page);
             for (int i = 1; i <= 3; i++) {
                 int pos = i;
+                // java.lang.NullPointerException: Attempt to invoke virtual method 'java.lang.String com.maxiye.first.GifActivity.getPackageName()' on a null object reference
                 GifImageView giv = rootView.findViewById(getResources().getIdentifier("gif_" + i, "id", activity.getPackageName()));
                 giv.setMinimumHeight(90);
                 giv.setMinimumWidth(90);
-                giv.setOnLongClickListener(view -> {
-                    longClickCb(pos, rootView);
-                    return true;
-                });
+                giv.setOnLongClickListener(view -> longClickCb(pos, rootView));
             }
             return rootView;
         }
@@ -1791,14 +1799,8 @@ public class GifActivity extends AppCompatActivity {
             super.setUserVisibleHint(isVisibleToUser);
             activity.okHttpClient.dispatcher().cancelAll();
             MyHandler.instance.removeCallbacksAndMessages(null);
-            if (isVisibleToUser) {
-                if (activity.threadPoolExecutor.getActiveCount() == activity.threadPoolExecutor.getMaximumPoolSize()) {
-                    activity.threadPoolExecutor.shutdownNow();
-                    MyLog.w("threadPoolExecutor", "shutdownNow");
-                }
-                if (imgPosition == 1) {
-                    checkLoad();
-                }
+            if (isVisibleToUser && imgPosition == 1) {
+                checkLoad();
             }
         }
 
@@ -1813,7 +1815,7 @@ public class GifActivity extends AppCompatActivity {
             return (page - 1) * 3 + index - 1;
         }
 
-        private void longClickCb(int position, View view) {
+        private boolean longClickCb(int position, View view) {
             focusedPosition = position;
             ListPopupWindow listMenu = new ListPopupWindow(activity);
             listMenu.setAdapter(new ArrayAdapter<>(activity, android.R.layout.simple_list_item_1, new
@@ -1848,6 +1850,7 @@ public class GifActivity extends AppCompatActivity {
                 listMenu.dismiss();
             });
             listMenu.show();
+            return true;
         }
 
         private long addFav() {
@@ -1936,7 +1939,7 @@ public class GifActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             } else {
-                String url = StringUtils.notBlank(imgInfo.get("real_url")) ? imgInfo.get("real_url") : imgInfo.get("url");
+                String url = StringUtil.notBlank(imgInfo.get("real_url")) ? imgInfo.get("real_url") : imgInfo.get("url");
                 Request request = new Request.Builder().url(url).build();
                 activity.okHttpClient.newCall(request).enqueue(new Callback() {
                     @Override
@@ -2001,9 +2004,6 @@ public class GifActivity extends AppCompatActivity {
             /* CacheUtil.clearAllCache(activity); */
             activity.okHttpClient.dispatcher().cancelAll();
             this.imgPosition = 1;
-            if (activity.threadPoolExecutor.getActiveCount() == activity.threadPoolExecutor.getPoolSize()) {
-                activity.threadPoolExecutor.shutdownNow();
-            }
             checkLoad();
         }
     }

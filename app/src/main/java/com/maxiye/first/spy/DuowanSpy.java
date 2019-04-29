@@ -1,7 +1,7 @@
 package com.maxiye.first.spy;
 
 import com.google.gson.JsonObject;
-import com.maxiye.first.util.StringUtils;
+import com.maxiye.first.util.StringUtil;
 
 
 /**
@@ -21,6 +21,6 @@ final class DuowanSpy extends BaseSpy {
     @Override
     String handleContent(String content) {
         //title被unicode转义（exp. \u5168\u7403\u641e\u7b11GIF\u56fe）
-        return StringUtils.unescape(content);
+        return StringUtil.unescape(content);
     }
 }

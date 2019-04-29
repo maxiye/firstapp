@@ -22,6 +22,8 @@ import java.util.Arrays;
 public class CacheUtil {
     /**
      * {@code 第34条：用枚举替换常量}
+     * {@code 第62条：当有其他更合适的类型时就不用字符串}
+     * 字符串是枚举类型的不良替代品。
      * public static final String KB = "KB";
      * public static final String MB = "MB";
      * public static final String GB = "GB";

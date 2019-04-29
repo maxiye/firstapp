@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
  * @author due
  * @date 2019/3/15
  */
-public class StringUtils {
+public class StringUtil {
 
     /**
      * 优化pattern性能
@@ -21,6 +21,9 @@ public class StringUtils {
     private static final Pattern UNESCAPE_PATTERN = Pattern.compile("\\\\(?=[/\"])");
     /**
      * unicode字符串(\\uxxxx)转为中文，5倍速优化
+     * {@code 第63条：注意字符串连接的性能}
+     * 不要使用字符串连接操作符组合多个字符串。而是使用StringBuilder的append方法。
+     * 或者，使用字符数组，或者一次处理一个字符串，而不是把它们组合起来。
      * 14ms
      * @param unicode String
      * @return String

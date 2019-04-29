@@ -273,6 +273,10 @@ public class DbHelper extends SQLiteOpenHelper {
 
     }
 
+    /**
+     * {@code 第58条：for-each循环优于传统for循环}
+     * @return int
+     */
     public int fixFavFile() {
         int count = 0;
         String[] types = GifActivity.getTypeList();

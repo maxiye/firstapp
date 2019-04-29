@@ -50,7 +50,7 @@ import com.maxiye.first.util.ApiUtil;
 import com.maxiye.first.util.BitmapUtil;
 import com.maxiye.first.util.DbHelper;
 import com.maxiye.first.util.PermissionUtil;
-import com.maxiye.first.util.StringUtils;
+import com.maxiye.first.util.StringUtil;
 import com.maxiye.first.util.Util;
 
 
@@ -67,6 +67,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.UnaryOperator;
 
 /**
@@ -614,6 +615,13 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         });
     }
 
+    /**
+     * {@code 第59条：熟悉并使用Java类库}
+     * 从Java 7开始，就不应再使用{@link Random}了。
+     * 对于大多数用途，选择的随机数生成器现在是{@link ThreadLocalRandom}。 它产生更高质量的随机数，而且速度非常快。 在我的机器上，它比Random快3.6倍。
+     * 对于fork-join池和并行流的应用，请使用{@link java.util.SplittableRandom}。
+     * @param view View
+     */
     public void genGradualColor(View view) {
         //实例化布局
         // attachToRoot true : The specified child already has a parent. You must call removeView() on the child's parent first.
@@ -634,7 +642,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                         String txt = editText.getText().toString();
                         int color, w, h;
                         try {
-                            if (StringUtils.notBlank(txt)) {
+                            if (StringUtil.notBlank(txt)) {
                                 char hashPrefix = '#';
                                 if (txt.charAt(0) == hashPrefix) {
                                     txt = txt.substring(1);
@@ -661,7 +669,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                         }
                         Bitmap bitmap = BitmapUtil.gradualBitmap(color, w, h);
                         imgView.setOnLongClickListener(v -> {
-                            String fName = "#" + Integer.toHexString(color) + "_" + Integer.toString(w) + "×" + Integer.toString(h) + "_" + new Random().nextInt() + ".png";
+                            String fName = "#" + Integer.toHexString(color) + "_" + Integer.toString(w) + "×" + Integer.toString(h) + "_" + ThreadLocalRandom.current().nextInt() + ".png";
                             File img = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/gradual/" + fName);
                             BitmapUtil.saveBitmap(this, img, bitmap);
                             return false;

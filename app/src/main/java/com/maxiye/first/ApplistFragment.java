@@ -22,7 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.maxiye.first.part.AppLvAdapter;
-import com.maxiye.first.util.StringUtils;
+import com.maxiye.first.util.StringUtil;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -166,7 +166,7 @@ public class ApplistFragment extends Fragment {
 //                        .parallel()
                         .filter(ai -> showSystemApps || ((ai.flags & ApplicationInfo.FLAG_SYSTEM) == 0))
                         .filter(ai -> {
-                            if (StringUtils.notBlank(keyword)) {
+                            if (StringUtil.notBlank(keyword)) {
                                 String appName = packageManager.getApplicationLabel(ai).toString();
                                 return (appName + ai.packageName).toLowerCase().contains(keyword.toLowerCase());
                             }

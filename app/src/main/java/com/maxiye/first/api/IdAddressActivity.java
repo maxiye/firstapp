@@ -8,7 +8,7 @@ import android.widget.TextView;
 
 import com.maxiye.first.R;
 import com.maxiye.first.util.ApiUtil;
-import com.maxiye.first.util.StringUtils;
+import com.maxiye.first.util.StringUtil;
 import com.maxiye.first.util.Util;
 
 /**
@@ -26,7 +26,7 @@ public class IdAddressActivity extends AppCompatActivity {
     public void idAddress(View view) {
         ((TextView) findViewById(R.id.id_address_ret)).setText("");
         String id = ((EditText)findViewById(R.id.id_input)).getText().toString();
-        String finalId = StringUtils.notBlank(id) ? id : "420701197002278239";
+        String finalId = StringUtil.notBlank(id) ? id : "420701197002278239";
         Util.getDefaultSingleThreadExecutor().execute(() -> {
             String ret = ApiUtil.getInstance().getIDAddress(finalId);
             runOnUiThread(() -> ((TextView) findViewById(R.id.id_address_ret)).setText(ret));
