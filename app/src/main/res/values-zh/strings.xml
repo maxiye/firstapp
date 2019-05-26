@@ -29,8 +29,7 @@
     <string name="section_format">页面: %1$d</string>
     <string name="refresh">刷新</string>
     <string name="download">下载</string>
-    <string name="skip_to">前往</string>
-    <string name="change_art_id">修改文章id</string>
+    <string name="change_art_id">前往文章</string>
     <string name="switch_web">切换网站</string>
     <string name="browser_open">使用浏览器打开</string>
     <string name="history">历史记录</string>
@@ -118,4 +117,13 @@
     <string name="reverse_bitmap">反转</string>
     <string name="dot_bitmap_txt">点阵文字图</string>
     <string name="filter_where">筛选条件</string>
+    <string name="webdav_user">WebDav 用户名</string>
+    <string name="webdav_user_tip">设置WebDav的用户名</string>
+    <string name="webdav_password">WebDav 密码</string>
+    <string name="webdav_password_tip">设置WebDav的密码</string>
+    <string name="not_set">未设置</string>
+    <string name="last_page">最后一页</string>
+    <string name="go_page">跳页</string>
+    <string name="next_article">下一篇</string>
+    <string name="prev_article">上一篇</string>
 </resources>

@@ -167,6 +167,6 @@ public class DiskLruCache implements Serializable {
      * @return boolean
      */
     public boolean isNotExists(String key) {
-        return map.containsKey(key);
+        return !map.containsKey(key);
     }
 }

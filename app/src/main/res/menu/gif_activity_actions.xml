@@ -39,12 +39,12 @@
         android:title="@string/one_key_get"
         android:onClick="oneKey"
         app:showAsAction="always"/>
-    <item
+    <!--<item
         android:orderInCategory="100"
         android:icon="@drawable/ic_done_all_black_24dp"
         android:title="@string/get_all"
         android:onClick="fetchAll"
-        app:showAsAction="ifRoom"/>
+        app:showAsAction="ifRoom"/>-->
     <item
         android:orderInCategory="100"
         android:icon="@drawable/ic_bookmark_border_black_24dp"
@@ -54,8 +54,8 @@
     <item
         android:orderInCategory="100"
         android:icon="@drawable/ic_arrow_forward_black_24dp"
-        android:title="@string/skip_to"
-        android:onClick="skipTo"
+        android:title="@string/go_page"
+        android:onClick="goPage"
         app:showAsAction="ifRoom"/>
     <item
         android:orderInCategory="100"

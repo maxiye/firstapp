@@ -116,19 +116,14 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_BACK:
-                long now = Instant.now().getEpochSecond();
-                if (now - lastPressTime < 800) {
-                    finish();
-                } else {
-                    lastPressTime = now;
-                    alert(getString(R.string.alert_exit));
-                }
-                break;
-
-            default:
-                break;
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            long now = Instant.now().getEpochSecond();
+            if (now - lastPressTime < 800) {
+                finish();
+            } else {
+                lastPressTime = now;
+                alert(getString(R.string.alert_exit));
+            }
         }
         return false;
     }
@@ -550,7 +545,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                     createDB();
                     break;
                 case R.id.backup_db:
-                    DbHelper.backup(this);
+                    Util.getDefaultSingleThreadExecutor().execute(() -> DbHelper.backup(this));
                     break;
                 case R.id.restore_db:
                     DbHelper.restore(this);
@@ -669,7 +664,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                         }
                         Bitmap bitmap = BitmapUtil.gradualBitmap(color, w, h);
                         imgView.setOnLongClickListener(v -> {
-                            String fName = "#" + Integer.toHexString(color) + "_" + Integer.toString(w) + "×" + Integer.toString(h) + "_" + ThreadLocalRandom.current().nextInt() + ".png";
+                            String fName = "#" + Integer.toHexString(color) + "_" + w + "×" + h + "_" + ThreadLocalRandom.current().nextInt() + ".png";
                             File img = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/gradual/" + fName);
                             BitmapUtil.saveBitmap(this, img, bitmap);
                             return false;

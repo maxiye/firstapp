@@ -7,6 +7,8 @@
                 android:padding="15dp">
 
     <RelativeLayout
+        android:id="@+id/show_system_app_cfg"
+        android:padding="10dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         tools:ignore="UselessParent">
@@ -25,7 +27,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/show_system_apps"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 android:textColor="@color/colorDarkGray"/>
         </LinearLayout>
 
@@ -35,5 +37,77 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"/>
+    </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/webdav_user_cfg"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:layout_below="@id/show_system_app_cfg"
+        tools:ignore="UselessParent">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:ignore="RelativeOverlap">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="17sp"
+                android:text="@string/webdav_user"
+                android:textColor="@color/actionTitle"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/webdav_user_tip"
+                android:textSize="13sp"
+                android:textColor="@color/colorDarkGray"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/webdav_user_view"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:lines="1"
+            android:layout_centerVertical="true"
+            android:textAlignment="textEnd"
+            android:layout_alignParentEnd="true"/>
+    </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/webdav_pwd_cfg"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:layout_below="@id/webdav_user_cfg"
+        tools:ignore="UselessParent">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:ignore="RelativeOverlap">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="17sp"
+                android:text="@string/webdav_password"
+                android:textColor="@color/actionTitle"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/webdav_password_tip"
+                android:textSize="13sp"
+                android:textColor="@color/colorDarkGray"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/webdav_pwd_view"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:lines="1"
+            android:inputType="textPassword"
+            android:layout_centerVertical="true"
+            android:textAlignment="textEnd"
+            android:layout_alignParentEnd="true"
+            tools:ignore="TextViewEdits"/>
     </RelativeLayout>
 </RelativeLayout>

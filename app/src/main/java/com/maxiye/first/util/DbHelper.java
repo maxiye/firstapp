@@ -1,5 +1,7 @@
 package com.maxiye.first.util;
 
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +16,7 @@ import com.maxiye.first.GifActivity;
 import com.maxiye.first.R;
 import com.maxiye.first.SettingActivity;
 import com.maxiye.first.MainActivity;
+import com.maxiye.first.part.NotificationTool;
 
 import java.io.File;
 import java.io.IOException;
@@ -83,7 +86,7 @@ public class DbHelper extends SQLiteOpenHelper {
             + "real_url text default '', "
             + "ext text default '', "//gif|jpg|jpeg|bmp|png
             + "time text default '')";
-    private static final String INDEX_IMG_FAVORITE = "CREATE INDEX IF NOT EXISTS img_favorite_idx_art_id on " + TB_IMG_WEB_ITEM + " (art_id, web_name)";
+    private static final String INDEX_IMG_FAVORITE = "CREATE INDEX IF NOT EXISTS img_favorite_idx_art_id on " + TB_IMG_FAVORITE + " (art_id, web_name)";
 
     private static final String DROP_BOOK = "DROP TABLE IF EXISTS " + TB_BOOK;
     private static final String DROP_IMG_WEB = "DROP TABLE IF EXISTS " + TB_IMG_WEB;
@@ -192,16 +195,46 @@ public class DbHelper extends SQLiteOpenHelper {
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public static void backup(Context context) {
+        // 通知栏
+        NotificationManager notificationManager = NotificationTool.getNotificationManager(context);
+        Notification notification = new Notification.Builder(context, NotificationTool.CHANNEL_1)
+                .setSmallIcon(R.drawable.ic_cloud_done_black_24dp)
+                .setContentTitle(context.getText(R.string.backup_db))
+                .setAutoCancel(true)
+                .setOngoing(true)// 不能滑动关闭
+                .setProgress(100, 0, true)
+                .build();
+        notificationManager.notify(1, notification);
         File db = context.getDatabasePath(DB_NAME);
         File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         File bak = new File(downloadDir, DB_NAME + ".bak." + DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now()));
         try {
             Files.copy(db.toPath(), bak.toPath());
-            Toast.makeText(context, "Success：" + bak.getPath(), Toast.LENGTH_SHORT).show();
             context.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE).edit().putLong(SettingActivity.BACKUP_TIME, System.currentTimeMillis()).apply();
+            MyLog.w("Dbhelper:backup db", WebdavUtil.BASE_URL + bak.getName());
+            boolean isSuccess = new WebdavUtil(context).put(WebdavUtil.BASE_URL + bak.getName(), db);
+            if (isSuccess) {
+                Notification notification2 = new Notification.Builder(context, "1")
+                        .setSmallIcon(R.drawable.ic_cloud_done_black_24dp)
+                        .setContentTitle(context.getText(R.string.backup_db))
+                        .setContentText("Success：" + bak.getPath())
+                        .setAutoCancel(true)
+                        .setTimeoutAfter(8000)
+                        .build();
+                notificationManager.notify(1, notification2);
+            } else {
+                throw new IOException("backup failed");
+            }
         } catch (IOException e) {
             e.printStackTrace();
-            Toast.makeText(context, "Error：" + e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+            Notification notification2 = new Notification.Builder(context, "1")
+                    .setSmallIcon(R.drawable.ic_cloud_done_black_24dp)
+                    .setContentTitle(context.getText(R.string.backup_db))
+                    .setContentText("Error：" + e.getLocalizedMessage())
+                    .setAutoCancel(true)
+                    .setTimeoutAfter(3000)
+                    .build();
+            notificationManager.notify(1, notification2);
         }
         File[] baks = downloadDir.listFiles((file, name) -> name.contains(DB_NAME + ".bak"));
         int maxLength = 5;
@@ -226,7 +259,7 @@ public class DbHelper extends SQLiteOpenHelper {
     private void checkBakup() {
         long lastBackupTime = mCont.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE).getLong(SettingActivity.BACKUP_TIME, 0);
         if (System.currentTimeMillis() - lastBackupTime > 86400 * 5 * 1000) {
-            backup(mCont);
+            Util.getDefaultSingleThreadExecutor().execute(() -> backup(mCont));
         }
     }
 

@@ -28,7 +28,6 @@
     <string name="gif_desc">Gif Desc</string>
     <string name="section_format">Hello World from Section: %1$d</string>
     <string name="download">Download</string>
-    <string name="skip_to">Go to</string>
     <string name="change_art_id">Change Article Id</string>
     <string name="switch_web">Switch Web</string>
     <string name="browser_open">Open by Browser</string>
@@ -119,4 +118,13 @@
     <string name="reverse_bitmap">Reverse Bitmap</string>
     <string name="dot_bitmap_txt">Dot Bitmap Text</string>
     <string name="filter_where">Filter Conditions</string>
+    <string name="webdav_user">WebDav Username</string>
+    <string name="webdav_user_tip">Setup the Username for WebDav</string>
+    <string name="webdav_password">WebDav Password</string>
+    <string name="webdav_password_tip">Setup the Password for WebDav</string>
+    <string name="not_set">Not Set</string>
+    <string name="last_page">Last Page</string>
+    <string name="go_page">Go to Page</string>
+    <string name="next_article">Next Article</string>
+    <string name="prev_article">Prev Article</string>
 </resources>
