@@ -12,12 +12,17 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:visibility="invisible"/>
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/gif_swipe_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <android.support.v4.view.ViewPager
+            android:id="@+id/gif_activity_viewpager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+    </android.support.v4.widget.SwipeRefreshLayout>
 
-    <android.support.v4.view.ViewPager
-        android:id="@+id/gif_activity_viewpager"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/gif_activity_fab"

@@ -2,13 +2,13 @@
       xmlns:app="http://schemas.android.com/apk/res-auto"
       xmlns:tools="http://schemas.android.com/tools"
       tools:context="com.maxiye.first.GifActivity">
-    <item
+    <!--<item
         android:orderInCategory="100"
         android:icon="@drawable/ic_refresh_black_24dp"
         android:title="@string/refresh"
         android:onClick="refresh"
         app:showAsAction="always"
-        tools:ignore="AlwaysShowAction"/>
+        tools:ignore="AlwaysShowAction"/>-->
     <item
         android:orderInCategory="100"
         android:icon="@drawable/ic_star_border_black_24dp"

@@ -32,6 +32,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.FileProvider;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.ListPopupWindow;
@@ -209,10 +210,9 @@ public class GifActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_get_gif);
         // Create the adapter that will return a fragment
-        SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
         // Set up the ViewPager with the sections adapter.
         mViewPager = findViewById(R.id.gif_activity_viewpager);
-        mViewPager.setAdapter(mSectionsPagerAdapter);
+        mViewPager.setAdapter(new SectionsPagerAdapter(getSupportFragmentManager()));
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             getNewFlg = bundle.getBoolean(GET_NEW_FLG_ARG, true);
@@ -252,6 +252,11 @@ public class GifActivity extends AppCompatActivity {
             }
         });
         initPage();
+        SwipeRefreshLayout refreshLayout = findViewById(R.id.gif_swipe_layout);
+        refreshLayout.setOnRefreshListener(() -> {
+            refresh();
+            refreshLayout.setRefreshing(false);
+        });
         MyLog.w("end", "onCreateOver");
     }
 
@@ -574,7 +579,7 @@ public class GifActivity extends AppCompatActivity {
         return true;
     }
 
-    public void refresh(MenuItem item) {
+    public void refresh() {
         loading();
         currentFragment.refresh();
         threadPoolExecutor.execute(() -> {
@@ -599,14 +604,14 @@ public class GifActivity extends AppCompatActivity {
         //实例化布局
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_edittext, findViewById(R.id.get_img_ll), false);
         EditText pageEdit = view.findViewById(R.id.dialog_input);
-        pageEdit.setHint(R.string.go_page);
+        pageEdit.setHint(R.string.input_page);
         pageEdit.setInputType(InputType.TYPE_CLASS_NUMBER);
         //创建对话框
         AlertDialog dialog = new AlertDialog.Builder(this)
                 // 设置图标
                 .setIcon(R.drawable.ic_info_black_24dp)
                 // 设置标题
-                .setTitle(R.string.input_page)
+                .setTitle(R.string.go_page)
                 // 添加布局
                 .setView(view)
                 .setPositiveButton(R.string.go_to, (dialog1, which) -> {
@@ -632,13 +637,13 @@ public class GifActivity extends AppCompatActivity {
         //实例化布局
         View view2 = LayoutInflater.from(this).inflate(R.layout.dialog_edittext, findViewById(R.id.get_img_ll), false);
         EditText articleId = view2.findViewById(R.id.dialog_input);
-        articleId.setHint(R.string.go_to);
+        articleId.setHint(R.string.input_artid);
         //创建对话框
         AlertDialog dialog2 = new AlertDialog.Builder(this)
                 // 设置图标
                 .setIcon(R.drawable.ic_info_black_24dp)
                 // 设置标题
-                .setTitle(R.string.input_artid)
+                .setTitle(R.string.go_to)
                 // 添加布局
                 .setView(view2)
                 .setPositiveButton(R.string.go_to, (dialog1, which) -> {
@@ -668,7 +673,7 @@ public class GifActivity extends AppCompatActivity {
                 })
                 .create();
         dialog2.show();
-        Objects.requireNonNull(dialog2.getWindow()).setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        //Objects.requireNonNull(dialog2.getWindow()).setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
     }
 
     public void switchType(MenuItem item) {
@@ -1608,7 +1613,7 @@ public class GifActivity extends AppCompatActivity {
                 // 设置图标
                 .setIcon(R.drawable.ic_info_black_24dp)
                 // 设置标题
-                .setTitle(R.string.input_page)
+                .setTitle(R.string.delete)
                 .setPositiveButton(R.string.delete, (dialog1, which) -> {
                     deleteFavorite(id, itemId);
                     pageWin.remove(position);
@@ -1884,6 +1889,14 @@ public class GifActivity extends AppCompatActivity {
         public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_get_gif, container, false);
+            rootView.setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+                if (oldScrollY == 0 && scrollY > 0) {
+                    activity.findViewById(R.id.gif_swipe_layout).setEnabled(false);
+                }
+                if (scrollY == 0) {
+                    activity.findViewById(R.id.gif_swipe_layout).setEnabled(true);
+                }
+            });
             TextView textView = rootView.findViewById(R.id.section_label);
             textView.setText(title + "：" + page);
             for (int i = 1; i <= 3; i++) {
@@ -1968,12 +1981,15 @@ public class GifActivity extends AppCompatActivity {
             try {
                 Uri fileUri = FileProvider.getUriForFile(activity, "com.maxiye.first.fileprovider", img);
                 if (fileUri != null) {
-                    /*Intent itt = new Intent(Intent.ACTION_VIEW,fileUri);//错误？不能直接使用fileUri
+                    /*Intent itt = new Intent(Intent.ACTION_VIEW,fileUri);// 错误？不能直接使用fileUri
                     itt.setType(getContentResolver().getType(fileUri));*/
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    Intent intent = new Intent(Intent.ACTION_SEND);
                     // "image/jpeg"也可
-                    intent.setDataAndType(fileUri, activity.getContentResolver().getType(fileUri));
-                    intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    // 微信 qq 获取资源失败
+                    // intent.setDataAndType(fileUri, activity.getContentResolver().getType(fileUri));
+                    // intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    intent.putExtra(Intent.EXTRA_STREAM, fileUri);
+                    intent.setType(activity.getContentResolver().getType(fileUri));
                     startActivity(Intent.createChooser(intent, "Share Image"));
                 }
             } catch (IllegalArgumentException e) {
