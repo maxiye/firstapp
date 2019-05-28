@@ -65,7 +65,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
-import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.UnaryOperator;
@@ -612,7 +611,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
 
     /**
      * {@code 第59条：熟悉并使用Java类库}
-     * 从Java 7开始，就不应再使用{@link Random}了。
+     * 从Java 7开始，就不应再使用{@link java.util.Random}了。
      * 对于大多数用途，选择的随机数生成器现在是{@link ThreadLocalRandom}。 它产生更高质量的随机数，而且速度非常快。 在我的机器上，它比Random快3.6倍。
      * 对于fork-join池和并行流的应用，请使用{@link java.util.SplittableRandom}。
      * @param view View

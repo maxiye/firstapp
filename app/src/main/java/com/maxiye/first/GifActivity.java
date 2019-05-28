@@ -54,6 +54,7 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -1456,12 +1457,10 @@ public class GifActivity extends AppCompatActivity {
 
     @NonNull
     private String genCacheKey(String subfix, @NonNull String keyType) {
-        switch (keyType) {
-            case "favorite":
-                return "favorite_" + type + "-" + subfix;
-            default:
-                return webName + "_" + ART_ID_PATTERN.matcher(artId).replaceAll("#") + "-" + subfix;
+        if ("favorite".equals(keyType)) {
+            return "favorite_" + type + "-" + subfix;
         }
+        return webName + "_" + ART_ID_PATTERN.matcher(artId).replaceAll("#") + "-" + subfix;
     }
 
     /**
@@ -1889,16 +1888,18 @@ public class GifActivity extends AppCompatActivity {
         public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_get_gif, container, false);
+            // 下拉刷新滑动冲突解决
+            SwipeRefreshLayout refreshLayout = activity.findViewById(R.id.gif_swipe_layout);
+            refreshLayout.setEnabled(true);
             rootView.setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
                 if (oldScrollY == 0 && scrollY > 0) {
-                    activity.findViewById(R.id.gif_swipe_layout).setEnabled(false);
+                    refreshLayout.setEnabled(false);
                 }
-                if (scrollY == 0) {
-                    activity.findViewById(R.id.gif_swipe_layout).setEnabled(true);
+                if (oldScrollY > 0 && scrollY == 0) {
+                    refreshLayout.setEnabled(true);
                 }
             });
-            TextView textView = rootView.findViewById(R.id.section_label);
-            textView.setText(title + "：" + page);
+            ((TextView) rootView.findViewById(R.id.section_label)).setText(title + "：" + page);
             for (int i = 1; i <= 3; i++) {
                 int pos = i;
                 // java.lang.NullPointerException: Attempt to invoke virtual method 'java.lang.String com.maxiye.first.GifActivity.getPackageName()' on a null object reference
@@ -1915,9 +1916,16 @@ public class GifActivity extends AppCompatActivity {
             super.setUserVisibleHint(isVisibleToUser);
             activity.okHttpClient.dispatcher().cancelAll();
             MyHandler.instance.removeCallbacksAndMessages(null);
-            if (isVisibleToUser && imgPosition == 1) {
-                checkLoad();
+            if (isVisibleToUser) {
+                if (imgPosition == 1) {
+                    checkLoad();
+                } else {
+                    // 滑动冲突解决
+                    SwipeRefreshLayout refreshLayout = activity.findViewById(R.id.gif_swipe_layout);
+                    refreshLayout.setEnabled(refreshLayout.findViewById(R.id.gif_scroll_view).getScrollY() == 0);
+                }
             }
+
         }
 
         void send(int what, int arg1, int arg2, Object obj) {
@@ -1976,24 +1984,28 @@ public class GifActivity extends AppCompatActivity {
          * 分享
          */
         private void share() {
-            String cacheKey = activity.genCacheKey(getImgOffset(focusedPosition) + "", "");
+            String cacheKey = activity.genCacheKey(String.valueOf(getImgOffset(focusedPosition)), "");
             File img = activity.diskLruCache.get(cacheKey);
-            try {
-                Uri fileUri = FileProvider.getUriForFile(activity, "com.maxiye.first.fileprovider", img);
-                if (fileUri != null) {
+            if (img.exists()) {
+                try {
+                    Uri fileUri = FileProvider.getUriForFile(activity, "com.maxiye.first.fileprovider", img);
+                    if (fileUri != null) {
                     /*Intent itt = new Intent(Intent.ACTION_VIEW,fileUri);// 错误？不能直接使用fileUri
                     itt.setType(getContentResolver().getType(fileUri));*/
-                    Intent intent = new Intent(Intent.ACTION_SEND);
-                    // "image/jpeg"也可
-                    // 微信 qq 获取资源失败
-                    // intent.setDataAndType(fileUri, activity.getContentResolver().getType(fileUri));
-                    // intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    intent.putExtra(Intent.EXTRA_STREAM, fileUri);
-                    intent.setType(activity.getContentResolver().getType(fileUri));
-                    startActivity(Intent.createChooser(intent, "Share Image"));
+                        Intent intent = new Intent(Intent.ACTION_SEND);
+                        // "image/jpeg"也可
+                        // 微信 qq 获取资源失败
+                        // intent.setDataAndType(fileUri, activity.getContentResolver().getType(fileUri));
+                        // intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        intent.putExtra(Intent.EXTRA_STREAM, fileUri);
+                        intent.setType(activity.getContentResolver().getType(fileUri));
+                        startActivity(Intent.createChooser(intent, "Share Image"));
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    activity.alert("文件获取错误");
                 }
-            } catch (IllegalArgumentException e) {
-                e.printStackTrace();
+            } else {
                 activity.alert("文件获取错误");
             }
         }
