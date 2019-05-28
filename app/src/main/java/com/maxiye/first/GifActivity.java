@@ -1890,7 +1890,6 @@ public class GifActivity extends AppCompatActivity {
             View rootView = inflater.inflate(R.layout.fragment_get_gif, container, false);
             // 下拉刷新滑动冲突解决
             SwipeRefreshLayout refreshLayout = activity.findViewById(R.id.gif_swipe_layout);
-            refreshLayout.setEnabled(true);
             rootView.setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
                 if (oldScrollY == 0 && scrollY > 0) {
                     refreshLayout.setEnabled(false);
@@ -1917,13 +1916,13 @@ public class GifActivity extends AppCompatActivity {
             activity.okHttpClient.dispatcher().cancelAll();
             MyHandler.instance.removeCallbacksAndMessages(null);
             if (isVisibleToUser) {
-                if (imgPosition == 1) {
-                    checkLoad();
-                } else {
-                    // 滑动冲突解决
+                // 滑动冲突解决
+                View view = getView();
+                if (view != null) {
                     SwipeRefreshLayout refreshLayout = activity.findViewById(R.id.gif_swipe_layout);
-                    refreshLayout.setEnabled(refreshLayout.findViewById(R.id.gif_scroll_view).getScrollY() == 0);
+                    refreshLayout.setEnabled(view.getScrollY() == 0);
                 }
+                checkLoad();
             }
 
         }
@@ -1986,7 +1985,7 @@ public class GifActivity extends AppCompatActivity {
         private void share() {
             String cacheKey = activity.genCacheKey(String.valueOf(getImgOffset(focusedPosition)), "");
             File img = activity.diskLruCache.get(cacheKey);
-            if (img.exists()) {
+            if (img != null && img.exists()) {
                 try {
                     Uri fileUri = FileProvider.getUriForFile(activity, "com.maxiye.first.fileprovider", img);
                     if (fileUri != null) {
