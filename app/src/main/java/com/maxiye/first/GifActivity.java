@@ -456,8 +456,10 @@ public class GifActivity extends AppCompatActivity {
             int index = 0;
             for (String key : cfgs.keySet()) {
                 webList[index++] = key;
-                iconCacheList.putIfAbsent(key, BitmapDrawable.createFromStream(is = am.open(cfgs.getAsJsonObject(key).get("local_icon").getAsString()), null));
-                is.close();
+                if (!iconCacheList.containsKey(key)) {
+                    iconCacheList.put(key, BitmapDrawable.createFromStream(is = am.open(cfgs.getAsJsonObject(key).get("local_icon").getAsString()), null));
+                    is.close();
+                }
             }
             MyLog.w("loadWebList", Arrays.toString(webList));
         } catch (Exception e) {
@@ -485,6 +487,36 @@ public class GifActivity extends AppCompatActivity {
         webName = web;
         webCfg = getWebCfg(web);
         MyLog.w("setWebName", web);
+    }
+
+    /**
+     * 快速定位
+     * @param imgType String
+     * @param web Strng webName
+     * @param art String artId
+     * @param newPage int
+     */
+    private void locate(String imgType, String web, String art, int newPage) {
+        MyLog.w("locate", type + "#" + web + "#" + page);
+        okHttpClient.dispatcher().cancelAll();
+        if (!type.equals(imgType)) {
+            type = imgType;
+            loadWebList();
+            diskLruCache.serialize();
+            diskLruCache = DiskLruCache.newInstance(this, type);
+        }
+        webName = web;
+        webCfg = getWebCfg(webName);
+        //3dm切换，一键获取问题
+        if (webCfg == null) {
+            alert(getText(R.string.not_found).toString());
+        } else {
+            artId = art;
+            // loadDb，非network
+            fetchItemList();
+            mViewPager.setCurrentItem(newPage - 1, true);
+            refresh();
+        }
     }
 
     @NonNull
@@ -927,19 +959,9 @@ public class GifActivity extends AppCompatActivity {
     private void seek(int pos, boolean del) {
         LinkedList<HashMap<String,String>> bookmark = getBookmark();
         if (pos < bookmark.size() && pos >= 0) {
-            HashMap<String, String> mark = bookmark.get(pos);
-            setType(mark.get("type"));
-            setWebName(mark.get("web_name"));
-            artId = mark.get("art_id");
             try {
-                // loadDb，非network
-                fetchItemList();
-                int newPage = Integer.parseInt(mark.get("page"));
-                if (page == newPage) {
-                    currentFragment.refresh();
-                } else {
-                    mViewPager.setCurrentItem(newPage - 1, true);
-                }
+                HashMap<String, String> mark = bookmark.get(pos);
+                locate(mark.get("type"), mark.get("web_name"), mark.get("art_id"), Integer.parseInt(mark.get("page")));
                 if (del) {
                     bookmark.remove(pos);
                     Type typeToken = new TypeToken<LinkedList<HashMap<String,String>>>(){}.getType();
@@ -978,7 +1000,7 @@ public class GifActivity extends AppCompatActivity {
             switch (item1.getItemId()) {
                 case R.id.delete_history:
                     // 删除记录
-                    deleteHistoryAlert(pageListPopupWindow, position);
+                    deleteHistoryAlert(pageListPopupWindow.getItemData(position), () -> pageListPopupWindow.remove(position));
                     break;
                 case R.id.copy_history_artid:
                     String articleId = pageListPopupWindow.getItemData(position).get("art_id").toString();
@@ -1041,9 +1063,9 @@ public class GifActivity extends AppCompatActivity {
         return count;
     }
 
-    private void deleteHistoryAlert(PageListPopupWindow pageListPopupWindow, int position) {
-        String delArtId = pageListPopupWindow.getItemData(position).get("art_id").toString();
-        String delWebName = (String) pageListPopupWindow.getItemData(position).get("web_name");
+    private void deleteHistoryAlert(@NonNull Map<String, Object> item,@NonNull Runnable callback) {
+        String delArtId = item.get("art_id").toString();
+        String delWebName = (String) item.get("web_name");
         //创建对话框
         AlertDialog dialog2 = new AlertDialog.Builder(this)
                 // 设置图标
@@ -1052,7 +1074,7 @@ public class GifActivity extends AppCompatActivity {
                 .setTitle(R.string.delete)
                 .setPositiveButton(R.string.confirm, (dialog1, which) -> {
                     deleteHistory(delArtId, delWebName);
-                    pageListPopupWindow.remove(position);
+                    callback.run();
                 }).setNegativeButton(R.string.cancel, (dialog1, which) -> {
                 })
                 .create();
@@ -1183,28 +1205,23 @@ public class GifActivity extends AppCompatActivity {
                     // 设置标题
                     .setTitle(R.string.track_source)
                     .setPositiveButton(R.string.current_page, (dialog, which) -> {
-                        Cursor cursor2 = db.query(DbHelper.TB_IMG_WEB_ITEM, new String[]{"count(*)"}, "id < ?", new String[]{itemId}, null, null, null);
+                        Cursor cursor2 = db.query(DbHelper.TB_IMG_WEB_ITEM, new String[]{"count(*)"}, "id < ? and art_id = ? and web_name = ?", new String[]{itemId, art, web}, null, null, null);
                         cursor2.moveToFirst();
                         int offset = cursor2.getInt(0);
                         cursor2.close();
-                        setType(itemType);
-                        setWebName(web);
-                        artId = art;
-                        fetchItemList();
-                        mViewPager.setCurrentItem(offset / 3, true);
+                        locate(itemType, web, art, offset / 3 + 1);
                         dialog.dismiss();
                         callback.run();
                     }).setNegativeButton(R.string.cancel, (dialog, which) -> {
                     }).setNeutralButton(R.string.first_page, (dialog, which) -> {
-                        setType(itemType);
-                        setWebName(web);
-                        artId = art;
-                        initPage();
+                        locate(itemType, web, art, 1);
                         dialog.dismiss();
                         callback.run();
                     })
                     .create();
             dialog2.show();
+        } else {
+            alert(getText(R.string.not_found).toString());
         }
         cursor.close();
     }
@@ -1926,7 +1943,7 @@ public class GifActivity extends AppCompatActivity {
                 if (oldScrollY == 0 && scrollY > 0) {
                     refreshLayout.setEnabled(false);
                 }
-                if (oldScrollY > 0 && scrollY == 0) {
+                if (scrollY == 0) {
                     refreshLayout.setEnabled(true);
                 }
             });
