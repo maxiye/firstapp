@@ -7,7 +7,7 @@
     <string name="not_found">未找到</string>
     <string name="system_app">系统应用</string>
     <string name="create_db">创建数据库</string>
-    <string name="share">分享文件</string>
+    <string name="share">分享</string>
     <string name="net_set">网络设置ShortCut</string>
     <string name="send_intent">发送Intent</string>
     <string name="test_nfc">测试NFC</string>
@@ -126,4 +126,5 @@
     <string name="go_page">跳页</string>
     <string name="next_article">下一篇</string>
     <string name="prev_article">上一篇</string>
+    <string name="track_source">溯源</string>
 </resources>

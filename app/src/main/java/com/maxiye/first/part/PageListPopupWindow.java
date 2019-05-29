@@ -14,6 +14,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.maxiye.first.R;
 import com.maxiye.first.util.MyLog;
@@ -59,7 +60,7 @@ public class PageListPopupWindow {
     /**
      * 筛选条件，eg. art_id=5
      */
-    public String where;
+    private String where;
     private int windowHeight;
 
     private PageListPopupWindow(Context ctx) {
@@ -71,7 +72,7 @@ public class PageListPopupWindow {
         return total % pageSize == 0 ? total / pageSize : total / pageSize + 1;
     }
 
-    public void reset() {
+    private void reset() {
         total = listCountGetter.getListCount(where);
         pages = calcPages();
         page = 1;
@@ -115,8 +116,31 @@ public class PageListPopupWindow {
      * 获取总数
      * @return int
      */
-    public int getTotal() {
+    private int getTotal() {
         return total;
+    }
+
+    public String getWhere() {
+        return where;
+    }
+
+    /**
+     * 筛选数据
+     * @param conditions String
+     */
+    public void filter(String conditions) {
+        where = conditions;
+        try {
+            reset();
+            if (getTotal() == 0) {
+                throw new Exception("no data");
+            }
+        } catch (Exception e) {
+            Toast.makeText(context, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+            where = null;
+            reset();
+            e.printStackTrace();
+        }
     }
 
     /**

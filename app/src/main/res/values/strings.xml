@@ -6,7 +6,7 @@
     <string name="not_found">Not Found</string>
     <string name="system_app">System Apps</string>
     <string name="create_db">Create DB</string>
-    <string name="share">Share File</string>
+    <string name="share">Share</string>
     <string name="net_set">Network Shortcut</string>
     <string name="send_intent">Send Intent</string>
     <string name="test_nfc">Test NFC</string>
@@ -127,4 +127,5 @@
     <string name="go_page">Go to Page</string>
     <string name="next_article">Next Article</string>
     <string name="prev_article">Prev Article</string>
+    <string name="track_source">Track Origin</string>
 </resources>

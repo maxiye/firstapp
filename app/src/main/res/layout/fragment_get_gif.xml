@@ -18,6 +18,8 @@
             android:src="@drawable/ic_image_black_24dp"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:minHeight="40dp"
+            android:minWidth="40dp"
             android:layout_marginTop="20dp"
             android:contentDescription="@string/gif_desc"/>
         <TextView
@@ -32,6 +34,8 @@
             android:layout_marginTop="20dp"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:minHeight="40dp"
+            android:minWidth="40dp"
             android:contentDescription="@string/gif_desc"/>
         <TextView
             android:id="@+id/gtxt_2"
@@ -45,6 +49,8 @@
             android:layout_marginTop="20dp"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:minHeight="40dp"
+            android:minWidth="40dp"
             android:contentDescription="@string/gif_desc"/>
         <TextView
             android:id="@+id/gtxt_3"

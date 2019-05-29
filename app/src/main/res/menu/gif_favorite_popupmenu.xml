@@ -2,6 +2,7 @@
 <menu
     xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <item android:id="@+id/track_source" android:title="@string/track_source"/>
     <item android:id="@+id/delete_fav" android:title="@string/delete"/>
     <item android:id="@+id/find_repeated_files" android:title="@string/find_repeated_files"/>
     <item android:id="@+id/filter_where" android:title="@string/filter_where"/>
