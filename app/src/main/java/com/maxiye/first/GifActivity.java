@@ -240,7 +240,7 @@ public class GifActivity extends AppCompatActivity {
             @Override
             public void onAvailable(Network network) {
                 if (isGprs = NetworkUtil.isGprs(getApplicationContext())) {
-                    alert(getText(R.string.gprs_network).toString());
+                    alert(getString(R.string.gprs_network));
                     gprsContinue = false;
                 }
                 super.onAvailable(network);
@@ -248,7 +248,7 @@ public class GifActivity extends AppCompatActivity {
 
             @Override
             public void onLost(Network network) {
-                alert(getText(R.string.no_internet).toString());
+                alert(getString(R.string.no_internet));
                 super.onLost(network);
             }
         });
@@ -280,7 +280,7 @@ public class GifActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         if (isGprs = NetworkUtil.isGprs(this)) {
-            alert(getText(R.string.gprs_network).toString());
+            alert(getString(R.string.gprs_network));
             gprsContinue = false;
         }
         // fix nullPointerException
@@ -509,7 +509,7 @@ public class GifActivity extends AppCompatActivity {
         webCfg = getWebCfg(webName);
         //3dm切换，一键获取问题
         if (webCfg == null) {
-            alert(getText(R.string.not_found).toString());
+            alert(getString(R.string.not_found));
         } else {
             artId = art;
             // loadDb，非network
@@ -1167,7 +1167,8 @@ public class GifActivity extends AppCompatActivity {
                                         MyLog.w("getRepeatedItems", favIds);
                                         runOnUiThread(() -> {
                                             if (StringUtil.notBlank(favIds)) {
-                                                pageWin.filter("id in (" + favIds + ")");
+                                                // $ 表示特殊解析模式，使用 in 查询，排序输出
+                                                pageWin.filter("$" + favIds);
                                             }
                                             loading.dismiss();
                                         });
@@ -1221,7 +1222,7 @@ public class GifActivity extends AppCompatActivity {
                     .create();
             dialog2.show();
         } else {
-            alert(getText(R.string.not_found).toString());
+            alert(getString(R.string.not_found));
         }
         cursor.close();
     }
@@ -1255,6 +1256,7 @@ public class GifActivity extends AppCompatActivity {
      */
     @NonNull
     private String getRepeatedItems() {
+        MyLog.w("dddd", 0xffffffff + "");
         File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);
         File[] fileList = dir.listFiles(file -> file.isFile() && file.length() > 1024);
         Properties props = new Properties();
@@ -1277,7 +1279,7 @@ public class GifActivity extends AppCompatActivity {
                 }
                 boolean flg = false;
                 for (int j = i + 1; j < fileList.length; j++) {
-                    if (metas[i] == 0) {
+                    if (metas[i] == 0 || metas[i] == -1) {
                         continue;
                     }
                     if (BitmapUtil.cmpImgMeta2(metas[i], metas[j])) {
@@ -1318,6 +1320,10 @@ public class GifActivity extends AppCompatActivity {
     private int getFavoriteCount(String andWhere) {
         String where = "type = '" + type + "'";
         if (StringUtil.notBlank(andWhere)) {
+            // 处理查重特殊条件
+            if (andWhere.startsWith("$")) {
+                andWhere = "id in (" + andWhere.substring(1) + ")";
+            }
             where += " and " + andWhere;
         }
         Cursor cus = db.rawQuery("select count(*) from " + DbHelper.TB_IMG_FAVORITE + " where " + where, null);
@@ -1699,11 +1705,46 @@ public class GifActivity extends AppCompatActivity {
         MyLog.w("deleteFavorite", "id：" + delId);
     }
 
+    /**
+     * 根据查重排序where条件获取ids数组
+     * @param where 原始条件
+     * @param offset offset
+     * @return String[]
+     */
+    private String[] parseDuplicateCheckingIds(String where, int offset) {
+        String[] ids = where.split(",");
+        if (ids.length > offset) {
+            if (offset == 0) {
+                ids[0] = ids[0].substring(1);
+            }
+            int limit = ids.length >= offset + FAVORITE_PAGE_SIZE ? FAVORITE_PAGE_SIZE + offset : ids.length;
+            return Arrays.copyOfRange(ids, offset, limit + 1);
+        } else {
+            return null;
+        }
+    }
+
     @Contract("_, _, _ -> param2")
     private List<Map<String, Object>> getFavoriteList(int page, List<Map<String, Object>> favoriteList, String andWhere) {
         int offset = (page - 1) * FAVORITE_PAGE_SIZE;
         String where = "type = '" + type + "'";
+        String[] ids = null;
         if (andWhere != null) {
+            // 查重模式，需排序结果
+            if (andWhere.startsWith("$")) {
+                ids = parseDuplicateCheckingIds(andWhere, offset);
+                if (ids != null) {
+                    StringBuilder parsedWhere = new StringBuilder("id in (");
+                    for (String id : ids) {
+                        parsedWhere.append(id).append(",");
+                    }
+                    parsedWhere.append(ids[0]).append(")");
+                    andWhere = parsedWhere.toString();
+                    offset = 0;
+                } else {
+                    andWhere = "1 != 1";
+                }
+            }
             where += " and " + andWhere;
         }
         String sql = "select * from " + DbHelper.TB_IMG_FAVORITE + " where " + where + " order by id desc limit " + FAVORITE_PAGE_SIZE + " offset " + offset;
@@ -1758,6 +1799,18 @@ public class GifActivity extends AppCompatActivity {
             }
         }
         cus.close();
+        // 排序结果
+        if (ids != null) {
+            for (int i = 0, index = 0; i < ids.length; i++) {
+                for (int j = index; j < count; j++) {
+                    if (ids[i].equals(favoriteList.get(j).get("id").toString())) {
+                        Map<String, Object> tmp = favoriteList.set(index++, favoriteList.get(j));
+                        favoriteList.set(j, tmp);
+                        break;
+                    }
+                }
+            }
+        }
         return favoriteList;
     }
 
@@ -2132,7 +2185,7 @@ public class GifActivity extends AppCompatActivity {
             MyLog.w("info", "loadImg:" + startOffset);
             HashMap<String, String> imgInfo = activity.getImgInfo(startOffset);
             if (imgInfo == null) {
-                send(MSG_TYPE_EMPTY, nowPosition, 0, null);
+                activity.runOnUiThread(() -> activity.alert(getString(R.string.no_more)));
                 return;
             }
             String imgKey = activity.genCacheKey(startOffset + "", "");
