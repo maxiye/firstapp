@@ -1266,6 +1266,7 @@ public class GifActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         StringBuilder ids = new StringBuilder();
+        BitmapUtil bitmapUtil = new BitmapUtil(this);
         if (fileList != null) {
             long[] metas = new long[fileList.length];
             for (int i = 0; i < fileList.length; i++) {
@@ -1281,7 +1282,7 @@ public class GifActivity extends AppCompatActivity {
                     if (metas[i] == 0 || metas[i] == -1) {
                         continue;
                     }
-                    if (BitmapUtil.cmpImgMeta2(metas[i], metas[j])) {
+                    if (bitmapUtil.cmpImgMeta2(metas[i], metas[j])) {
                         flg = true;
                         /* MyLog.w("getRepeatedItems", fileList[j].getName() + "------" + Long.toBinaryString(metas[j])); */
                         metas[j] = 0;

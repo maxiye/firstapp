@@ -4,6 +4,7 @@
                 xmlns:tools="http://schemas.android.com/tools"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:id="@+id/setting_layout"
                 android:padding="15dp">
 
     <RelativeLayout
@@ -109,5 +110,73 @@
             android:textAlignment="textEnd"
             android:layout_alignParentEnd="true"
             tools:ignore="TextViewEdits"/>
+    </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/webdav_on_off_cfg"
+        android:padding="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/webdav_pwd_cfg"
+        tools:ignore="UselessParent">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:ignore="RelativeOverlap">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="17sp"
+                android:text="@string/use_webdav"
+                android:textColor="@color/actionTitle"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/use_webdav_tip"
+                android:textSize="13sp"
+                android:textColor="@color/colorDarkGray"/>
+        </LinearLayout>
+
+        <Switch
+            android:id="@+id/webdav_on_off"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"/>
+    </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/duplicate_level_cfg"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:layout_below="@id/webdav_on_off_cfg"
+        tools:ignore="UselessParent">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:ignore="RelativeOverlap">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="17sp"
+                android:text="@string/duplicate_level"
+                android:textColor="@color/actionTitle"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/duplicate_level_tip"
+                android:textSize="13sp"
+                android:textColor="@color/colorDarkGray"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/duplicate_level"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:lines="1"
+            android:layout_centerVertical="true"
+            android:textAlignment="textEnd"
+            android:layout_alignParentEnd="true"/>
     </RelativeLayout>
 </RelativeLayout>

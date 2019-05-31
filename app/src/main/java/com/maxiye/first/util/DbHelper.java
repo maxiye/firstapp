@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -210,9 +211,11 @@ public class DbHelper extends SQLiteOpenHelper {
         File bak = new File(downloadDir, DB_NAME + ".bak." + DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now()));
         try {
             Files.copy(db.toPath(), bak.toPath());
-            context.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE).edit().putLong(SettingActivity.BACKUP_TIME, System.currentTimeMillis()).apply();
+            SharedPreferences sp = context.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
+            sp.edit().putLong(SettingActivity.BACKUP_TIME, System.currentTimeMillis()).apply();
             MyLog.w("Dbhelper:backup db", WebdavUtil.BASE_URL + bak.getName());
-            boolean isSuccess = new WebdavUtil(context).put(WebdavUtil.BASE_URL + bak.getName(), db);
+            boolean useWebdav = sp.getBoolean(SettingActivity.WEBDAV_ON_OFF, true);
+            boolean isSuccess = !useWebdav || new WebdavUtil(context).put(WebdavUtil.BASE_URL + bak.getName(), db);
             if (isSuccess) {
                 Notification notification2 = new Notification.Builder(context, "1")
                         .setSmallIcon(R.drawable.ic_cloud_done_black_24dp)

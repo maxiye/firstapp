@@ -127,4 +127,8 @@
     <string name="next_article">下一篇</string>
     <string name="prev_article">上一篇</string>
     <string name="track_source">溯源</string>
+    <string name="use_webdav">Webdav备份</string>
+    <string name="use_webdav_tip">使用Web-Dav备份资料</string>
+    <string name="duplicate_level">查重等级</string>
+    <string name="duplicate_level_tip">查重收藏图片时的严格程度控制，越小越严苛，默认为5。</string>
 </resources>

@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -21,6 +22,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.maxiye.first.R;
+import com.maxiye.first.SettingActivity;
 
 import org.jetbrains.annotations.Contract;
 
@@ -40,6 +42,13 @@ import pl.droidsonroids.gif.GifImageView;
  * @date 2018/5/16
  */
 public class BitmapUtil {
+
+    private final int duplicateLevel;
+
+    public BitmapUtil(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
+        duplicateLevel = sharedPreferences.getInt(SettingActivity.DUPLICATE_LEVEL, 5);
+    }
 
     /**
      * 计算图片压缩倍率,降低内存消耗
@@ -79,7 +88,7 @@ public class BitmapUtil {
      * @return int
      */
     @Contract(pure = true)
-    @SuppressWarnings({"unused", "WeakerAccess"})
+    @SuppressWarnings({"unused"})
     public static int predictInSampleSize(long fileSize, String type) {
         if ("gif".equals(type)) {
             return 4;
@@ -459,8 +468,8 @@ public class BitmapUtil {
         return 0;
     }
 
-    public static boolean cmpImgMeta2(long meta1, long meta2) {
-        return Long.bitCount(meta1 ^ meta2) < 6;
+    public boolean cmpImgMeta2(long meta1, long meta2) {
+        return Long.bitCount(meta1 ^ meta2) <= duplicateLevel;
     }
 
     /*public static boolean compImgMeta2(String meta1, String meta2) {

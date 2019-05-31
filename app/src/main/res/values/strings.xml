@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">Maxiye</string>
-    <string name="edit_message">Package Name or App Name</string>
+    <string name="edit_message">Package name or app name</string>
     <string name="setting">Setting</string>
-    <string name="clip_toast">Copied to Clipboard</string>
+    <string name="clip_toast">Copied to clipboard</string>
     <string name="not_found">Not Found</string>
     <string name="system_app">System Apps</string>
     <string name="create_db">Create DB</string>
@@ -14,7 +14,7 @@
     <string name="test_camera">Test Camera</string>
     <string name="loading">Loading…</string>
     <string name="test">Test</string>
-    <string name="alert_exit">Press Once More to Exit</string>
+    <string name="alert_exit">Press once more to exit</string>
     <string name="app_icon">App Icon</string>
     <string name="search">Search</string>
     <string name="test_call">Test Call</string>
@@ -45,7 +45,7 @@
     <string name="confirm">OK</string>
     <string name="cancel">Cancel</string>
     <string name="gprs_network">GPRS Network!</string>
-    <string name="no_internet">Failed to Connect the Internet</string>
+    <string name="no_internet">Failed to connect the internet</string>
     <string name="alert">Alert</string>
     <string name="free_api">Free Api</string>
     <string name="weather">Weather</string>
@@ -80,19 +80,19 @@
     </plurals>
     <string name="delete_file">Delete File</string>
     <string name="delete_success">Delete Successfully</string>
-    <string name="file_is_lost">File Does Not Exist or File Is Deleted!</string>
+    <string name="file_is_lost">File does not exist or file is deleted!</string>
     <string name="delete_fav_and_file">Delete Favorite and File</string>
     <string name="input_page">Plz Input the Page Number</string>
     <string name="input_artid">Plz Input the Article Id</string>
-    <string name="artid_can_not_be_empty">The Article Id Can Not Be Empty</string>
+    <string name="artid_can_not_be_empty">The article id can not be empty</string>
     <string name="first_page">First Page</string>
     <string name="current_page">Current Page</string>
     <string name="downloading">Downloading…</string>
-    <string name="cache_is_lost">Cache File Is Lost</string>
+    <string name="cache_is_lost">Cache file is lost</string>
     <string name="download_success">Download Successfully</string>
     <string name="open">Open</string>
     <string name="download_err">Download Failed</string>
-    <string name="back_to_last_page">Back to the Last Page</string>
+    <string name="back_to_last_page">Back to the last page</string>
     <string name="choose_a_backup">Choose a Backup</string>
     <string name="copy_art_id">Copy Article Id</string>
     <string name="reload_art">Reload Content</string>
@@ -102,7 +102,7 @@
     <string name="current_type">Current Type</string>
     <string name="bookmark">Bookmark</string>
     <string name="add_bookmark">Add Bookmark</string>
-    <string name="not_existed_bookmark">Bookmark Is not Existed!</string>
+    <string name="not_existed_bookmark">Bookmark is not existed!</string>
     <string name="back">Back</string>
     <string name="error_tip">Error： %1$s</string>
     <string name="get_all">Get All</string>
@@ -119,13 +119,17 @@
     <string name="dot_bitmap_txt">Dot Bitmap Text</string>
     <string name="filter_where">Filter Conditions</string>
     <string name="webdav_user">WebDav Username</string>
-    <string name="webdav_user_tip">Setup the Username for WebDav</string>
+    <string name="webdav_user_tip">Setup the username for WebDav</string>
     <string name="webdav_password">WebDav Password</string>
-    <string name="webdav_password_tip">Setup the Password for WebDav</string>
+    <string name="webdav_password_tip">Setup the password for WebDav</string>
     <string name="not_set">Not Set</string>
     <string name="last_page">Last Page</string>
     <string name="go_page">Go to Page</string>
     <string name="next_article">Next Article</string>
     <string name="prev_article">Prev Article</string>
     <string name="track_source">Track Origin</string>
+    <string name="use_webdav">Webdav Backup</string>
+    <string name="use_webdav_tip">Backup your data by Web-Dav</string>
+    <string name="duplicate_level">Duplicate Level</string>
+    <string name="duplicate_level_tip">The control level when find duplicate images in the favorites,smaller is strictly,default is 5.</string>
 </resources>
