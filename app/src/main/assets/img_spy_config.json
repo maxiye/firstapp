@@ -146,10 +146,10 @@
       "img_web": "https://m.3dmgame.com/bagua/%1$s.html",
       "img_web_2nd": "https://m.3dmgame.com/bagua/%1$s_%2$d.html",
       "img_reg": {
-        "reg": "<p[^>]*>[\r\n\\s\t]*<img.*?src=\"([^\"]+?(\\.(gif|jpg|jpeg|png|bmp)))\"[^>]*>[\r\n\\s\t]*</p>([\r\n\\s\t]*<p style=\"text-align:\\s?center[^>]+>[\r\n\\s\t]*(<span[^>]*?>)?([^<]+)(</span>)?[\r\n\\s\t]*</p>)?",
+        "reg": "<p[^>]*>[\r\n\\s\t]*<img.*?src=\"([^\"]+?(\\.(gif|jpg|jpeg|png|bmp)))\"[^>]*>[\r\n\\s\t]*</p>([\r\n\\s\t]*<p (style=\"text-align:\\s?center|align=\"center)[^>]+>[\r\n\\s\t]*(<span[^>]*?>)?([^<]+)(</span>)?[\r\n\\s\t]*</p>)?",
         "img_url_idx": 1,
         "img_ext_idx": 2,
-        "img_title_idx": 6
+        "img_title_idx": 7
       },
       "title_reg": {
         "reg": "<title>([^<]+?)[_-]3DM单机</title>",

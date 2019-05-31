@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -22,7 +21,6 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.maxiye.first.R;
-import com.maxiye.first.SettingActivity;
 
 import org.jetbrains.annotations.Contract;
 
@@ -43,11 +41,10 @@ import pl.droidsonroids.gif.GifImageView;
  */
 public class BitmapUtil {
 
-    private final int duplicateLevel;
+    private static int DUPLICATE_LEVEL;
 
-    public BitmapUtil(Context context) {
-        SharedPreferences sharedPreferences = context.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
-        duplicateLevel = sharedPreferences.getInt(SettingActivity.DUPLICATE_LEVEL, 5);
+    public static void setDuplicateLevel(int val) {
+        DUPLICATE_LEVEL = val;
     }
 
     /**
@@ -440,7 +437,7 @@ public class BitmapUtil {
      * @param bmp bitmap
      * @return long
      */
-    @SuppressWarnings({"WeakerAccess"})
+    @SuppressWarnings({""})
     public static long calcImgMeta2(Bitmap bmp) {
         if (bmp != null) {
             try {
@@ -468,8 +465,8 @@ public class BitmapUtil {
         return 0;
     }
 
-    public boolean cmpImgMeta2(long meta1, long meta2) {
-        return Long.bitCount(meta1 ^ meta2) <= duplicateLevel;
+    public static boolean cmpImgMeta2(long meta1, long meta2) {
+        return Long.bitCount(meta1 ^ meta2) <= DUPLICATE_LEVEL;
     }
 
     /*public static boolean compImgMeta2(String meta1, String meta2) {

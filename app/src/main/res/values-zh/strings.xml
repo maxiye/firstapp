@@ -131,4 +131,6 @@
     <string name="use_webdav_tip">使用Web-Dav备份资料</string>
     <string name="duplicate_level">查重等级</string>
     <string name="duplicate_level_tip">查重收藏图片时的严格程度控制，越小越严苛，默认为5。</string>
+    <string name="image_meta">图片指纹</string>
+    <string name="copy">复制</string>
 </resources>

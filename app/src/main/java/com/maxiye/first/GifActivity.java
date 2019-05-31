@@ -54,6 +54,7 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -1017,7 +1018,7 @@ public class GifActivity extends AppCompatActivity {
                     pageListPopupWindow.dismiss();
                     break;
                 case R.id.filter_where:
-                    showFilterInput(pageListPopupWindow.getWhere(), pageListPopupWindow::filter);
+                    filterInputDialog(pageListPopupWindow.getWhere(), pageListPopupWindow::filter);
                     break;
                 default:
                     break;
@@ -1157,26 +1158,13 @@ public class GifActivity extends AppCompatActivity {
                                 deleteFavoriteAlert(pageWin.getItemData(position), () -> pageWin.remove(position));
                                 break;
                             case R.id.filter_where:
-                                showFilterInput(pageWin.getWhere(), pageWin::filter);
+                                filterInputDialog(pageWin.getWhere(), pageWin::filter);
+                                break;
+                            case R.id.image_meta:
+                                showImageMeta(pageWin.getItemData(position));
                                 break;
                             case R.id.find_repeated_files:
-                                loading();
-                                threadPoolExecutor.execute(() -> {
-                                    try {
-                                        String favIds = getRepeatedItems();
-                                        MyLog.w("getRepeatedItems", favIds);
-                                        runOnUiThread(() -> {
-                                            if (StringUtil.notBlank(favIds)) {
-                                                // $ 表示特殊解析模式，使用 in 查询，排序输出
-                                                pageWin.filter("$" + favIds);
-                                            }
-                                            loading.dismiss();
-                                        });
-                                    } catch (Exception e) {
-                                        runOnUiThread(() -> loaded(e.getLocalizedMessage()));
-                                        e.printStackTrace();
-                                    }
-                                });
+                                findRepeatedFilesDialog(pageWin::filter);
                                 break;
                             default:
                                 break;
@@ -1189,6 +1177,85 @@ public class GifActivity extends AppCompatActivity {
                 .setWindowHeight(ViewGroup.LayoutParams.MATCH_PARENT)
                 .build();
         pageWindow.showAtLocation(findViewById(R.id.gif_activity_fab), Gravity.BOTTOM, 0, 0);
+    }
+
+    private void showImageMeta(Map<String, Object> item) {
+        String path = item.get("path").toString();
+        if (StringUtil.notBlank(path)) {
+            long meta = BitmapUtil.calcImgMeta2(BitmapUtil.getBitmap(new File(path), 8, 8));
+            //创建对话框
+            AlertDialog dialog2 = new AlertDialog.Builder(this)
+                    // 设置图标
+                    .setIcon(R.drawable.ic_info_black_24dp)
+                    // 设置标题
+                    .setTitle(R.string.image_meta)
+                    .setMessage(String.valueOf(meta))
+                    .setPositiveButton(R.string.copy, (dialog, which) -> {
+                        ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                        assert clm != null;
+                        clm.setPrimaryClip(ClipData.newPlainText(null, String.valueOf(meta)));
+                        alert(getString(R.string.clip_toast));
+                    }).setNegativeButton(R.string.cancel, (dialog, which) -> {
+                    })
+                    .create();
+            dialog2.show();
+        } else {
+            alert(getString(R.string.not_found));
+        }
+    }
+
+    private void findRepeatedFilesDialog(Consumer<String> filter) {
+        View view = LayoutInflater.from(this).inflate(R.layout.gif_find_repeated_dialog, findViewById(R.id.page_list_popup_window), false);
+        SharedPreferences sharedPreferences = getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
+        int duplicateLevel = sharedPreferences.getInt(SettingActivity.DUPLICATE_LEVEL, 5);
+        SeekBar seekBar = view.findViewById(R.id.duplicate_level_seek_bar);
+        TextView textView = view.findViewById(R.id.duplicate_level_seek_bar_tip);
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                textView.setText(String.valueOf(progress));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+        seekBar.setProgress(duplicateLevel);
+        //创建对话框
+        AlertDialog dialog2 = new AlertDialog.Builder(this)
+                // 设置图标
+                .setIcon(R.drawable.ic_info_black_24dp)
+                // 设置标题
+                .setTitle(R.string.duplicate_level)
+                .setView(view)
+                .setPositiveButton(R.string.confirm, (dialog, which) -> {
+                    loading();
+                    threadPoolExecutor.execute(() -> {
+                        try {
+                            String favIds = getRepeatedItems(seekBar.getProgress());
+                            MyLog.w("getRepeatedItems", favIds);
+                            runOnUiThread(() -> {
+                                if (StringUtil.notBlank(favIds)) {
+                                    // $ 表示特殊解析模式，使用 in 查询，排序输出
+                                    filter.accept("$" + favIds);
+                                }
+                                loading.dismiss();
+                            });
+                        } catch (Exception e) {
+                            runOnUiThread(() -> loaded(e.getLocalizedMessage()));
+                            e.printStackTrace();
+                        }
+                    });
+                }).setNegativeButton(R.string.cancel, (dialog, which) -> {
+                })
+                .create();
+        dialog2.show();
     }
 
     private void trackSourceDialog(@NonNull Map<String, Object> item, @NonNull Runnable callback) {
@@ -1227,7 +1294,7 @@ public class GifActivity extends AppCompatActivity {
         cursor.close();
     }
 
-    private void showFilterInput(String conditions, @NonNull Consumer<String> consumer) {
+    private void filterInputDialog(String conditions, @NonNull Consumer<String> consumer) {
         //实例化布局
         View view2 = LayoutInflater.from(this).inflate(R.layout.dialog_edittext, findViewById(R.id.page_list_popup_window), false);
         EditText where = view2.findViewById(R.id.dialog_input);
@@ -1255,7 +1322,7 @@ public class GifActivity extends AppCompatActivity {
      * @return String
      */
     @NonNull
-    private String getRepeatedItems() {
+    private String getRepeatedItems(int level) {
         File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);
         File[] fileList = dir.listFiles(file -> file.isFile() && file.length() > 1024);
         Properties props = new Properties();
@@ -1266,7 +1333,7 @@ public class GifActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         StringBuilder ids = new StringBuilder();
-        BitmapUtil bitmapUtil = new BitmapUtil(this);
+        BitmapUtil.setDuplicateLevel(level);
         if (fileList != null) {
             long[] metas = new long[fileList.length];
             for (int i = 0; i < fileList.length; i++) {
@@ -1279,16 +1346,16 @@ public class GifActivity extends AppCompatActivity {
                 }
                 boolean flg = false;
                 for (int j = i + 1; j < fileList.length; j++) {
-                    if (metas[i] == 0 || metas[i] == -1) {
+                    if (metas[j] == 0 || metas[j] == -1) {
                         continue;
                     }
-                    if (bitmapUtil.cmpImgMeta2(metas[i], metas[j])) {
+                    if (BitmapUtil.cmpImgMeta2(metas[i], metas[j])) {
                         flg = true;
                         /* MyLog.w("getRepeatedItems", fileList[j].getName() + "------" + Long.toBinaryString(metas[j])); */
                         metas[j] = 0;
                         String fname = fileList[j].getName();
                         int idx = fname.indexOf("_");
-                        if (idx < 5 && idx > 0) {
+                        if (idx < 6 && idx > 0) {
                             ids.append(fname, 0, idx).append(",");
                         }
                     }
