@@ -72,6 +72,9 @@ public class PageListPopupWindow {
         return total % pageSize == 0 ? total / pageSize : total / pageSize + 1;
     }
 
+    /**
+     * 重置列表，返回第一页，刷新内容，重新计算分页等
+     */
     private void reset() {
         total = listCountGetter.getListCount(where);
         pages = calcPages();
@@ -88,6 +91,10 @@ public class PageListPopupWindow {
         ma.notifyDataSetChanged();
     }
 
+    /**
+     * 删除一个项目
+     * @param position 位置
+     */
     public void remove(int position) {
         list.remove(position);
         ma.notifyItemRemoved(position);
@@ -97,7 +104,7 @@ public class PageListPopupWindow {
     /**
      * 获取特定位置的item的view
      * 使用rv.getChildAt只能获取可见的item，0表示当前屏幕可见第一个item
-     * @param position int
+     * @param position 位置
      * @return view
      */
     public View getItemView(int position) {
@@ -108,6 +115,9 @@ public class PageListPopupWindow {
         return ma.getItemData(position);
     }
 
+    /**
+     * 窗口消失
+     */
     public void dismiss() {
         popupWindow.dismiss();
     }

@@ -4,7 +4,10 @@ import com.maxiye.first.util.TimeCounter;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -83,5 +86,34 @@ public class SortTests {
         arr[i] = tmp;
         quickSort0(arr, left, i - 1);
         quickSort0(arr, i + 1, right);
+    }
+
+    @Test
+    public void cusSortTest() {
+        ArrayList<Map<String, String>> list = new ArrayList<>(15);
+        for (int i = 1; i < 16; i++){
+            HashMap<String, String> map = new HashMap<>(2);
+            map.put("id", String.valueOf(i));
+            list.add(map);
+        }
+        String[] sort = new String[]{"1", "13", "2", "3", "9", "14", "4", "10", "5", "6", "15", "12", "7", "8", "11", "2", "8"};
+        for (int i = 0, index = 0; i < sort.length; i++) {
+            for (int j = index; j < list.size(); j++) {
+                if (sort[i].equals(list.get(j).get("id"))) {
+                    Map<String, String> tmp = list.set(index++, list.get(j));
+                    list.set(j, tmp);
+                    break;
+                }
+            }
+        }
+        System.out.println(list);
+    }
+
+    @Test
+    public void copyRangeTest() {
+        int[] ints = new int[]{1,2,3,4,5,6,7};//
+        int off = 1, len = 7;
+        int to = ints.length >= off + len ? len + off : ints.length;
+        System.out.println(Arrays.toString(Arrays.copyOfRange(ints, 1, 7)));
     }
 }

@@ -572,14 +572,17 @@ public class BitmapUtil {
 
     /**
      * 获取图片指纹并缓存
-     * @param file File
-     * @return long
+     * @param file 计算meta的图片文件
+     * @param props 缓存properties实例
+     * @return meta
      */
-    public static long cachedImgMeta(@NonNull File file, Properties props) {
+    public static long getCachedImgMeta(@NonNull File file, Properties props) {
         String fName = file.getName();
         if (fName.length() > 6) {
             fName = fName.substring(0, 6);
         }
+        // 原来使用Base64.DEFAULT当字符串过长（一般超过76）时会自动在中间加一个换行符，字符串最后也会加一个换行符
+        // NO_PADDING 省略后边的‘=’，NO_WRAP 不换行
         String hash = Base64.encodeToString(fName.getBytes(), Base64.NO_PADDING | Base64.NO_WRAP);
         long meta;
         if (props.containsKey(hash)) {

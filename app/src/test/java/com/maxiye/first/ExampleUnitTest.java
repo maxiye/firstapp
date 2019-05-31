@@ -4,6 +4,7 @@ import android.support.annotation.NonNull;
 
 import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.StringUtil;
+import com.maxiye.first.util.TimeCounter;
 import com.maxiye.first.util.Util;
 
 import org.junit.Test;
@@ -12,7 +13,9 @@ import org.w3c.dom.NodeList;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -313,6 +316,66 @@ public class ExampleUnitTest {
         System.out.println(total);
         total = total.subtract(sub2);
         System.out.println(total);
+    }
+
+    /**
+     * 测试bit位操作的性能优劣
+     */
+    @Test
+    public void bitOpTest() {
+        TimeCounter.run(() -> {
+            for (int i = 0; i < 100000; i++) {
+                long l = 0,m = 0,n = 0,q = 0;
+                for (int j = 0; j < 64; j++) {
+                    l = l << 1 | 1;
+                }
+                for (int j = 0; j < 64; j++) {
+                    m = m << 1 | 1;
+                }
+                for (int j = 0; j < 64; j++) {
+                    n = n << 1 | 1;
+                }
+                for (int j = 0; j < 64; j++) {
+                    q = q << 1 | 1;
+                }
+                String s = Long.toHexString(l) + Long.toHexString(m) + Long.toHexString(n) + Long.toHexString(q);
+            }
+        });
+        TimeCounter.run(() -> {
+            for (int i = 0; i < 100000; i++) {
+                long l = 0,m = 0,n = 0,q = 0;
+                for (int j = 0; j < 256; j++) {
+                    if (j < 64) {
+                        l = l << 1 | 1;continue;
+                    }
+                    if (j < 128) {
+                        m = m << 1 | 1;continue;
+                    }
+                    if (j < 192) {
+                        n = n << 1 | 1;continue;
+                    }
+                    q = q << 1 | 1;
+                }
+                String s = Long.toHexString(l) + Long.toHexString(m) + Long.toHexString(n) + Long.toHexString(q);
+            }
+        });
+        TimeCounter.run(() -> {
+            for (int i = 0; i < 100000; i++) {
+                BigInteger bigInteger = new BigInteger(new byte[256]);
+                for (int j = 0; j < 256; j++) {
+                    bigInteger = bigInteger.shiftLeft(1).or(BigInteger.ONE);
+                }
+                String s = bigInteger.toString(16);
+            }
+        });
+        TimeCounter.run(() -> {
+            for (int i = 0; i < 100000; i++) {
+                BitSet bitSet = new BitSet(256);
+                for (int j = 0; j < 256; j++) {
+                    bitSet.set(j);
+                }
+            }
+        });
     }
 
 }

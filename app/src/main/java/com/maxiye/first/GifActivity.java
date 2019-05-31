@@ -1256,7 +1256,6 @@ public class GifActivity extends AppCompatActivity {
      */
     @NonNull
     private String getRepeatedItems() {
-        MyLog.w("dddd", 0xffffffff + "");
         File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);
         File[] fileList = dir.listFiles(file -> file.isFile() && file.length() > 1024);
         Properties props = new Properties();
@@ -1270,11 +1269,11 @@ public class GifActivity extends AppCompatActivity {
         if (fileList != null) {
             long[] metas = new long[fileList.length];
             for (int i = 0; i < fileList.length; i++) {
-                metas[i] = BitmapUtil.cachedImgMeta(fileList[i], props);
+                metas[i] = BitmapUtil.getCachedImgMeta(fileList[i], props);
                 /* MyLog.w("getRepeatedItems", fileList[i].getName() + "------" + Long.toBinaryString(metas[i])); */
             }
             for (int i = 0; i < fileList.length; i++) {
-                if (metas[i] == 0) {
+                if (metas[i] == 0 || metas[i] == -1) {
                     continue;
                 }
                 boolean flg = false;
@@ -1718,7 +1717,7 @@ public class GifActivity extends AppCompatActivity {
                 ids[0] = ids[0].substring(1);
             }
             int limit = ids.length >= offset + FAVORITE_PAGE_SIZE ? FAVORITE_PAGE_SIZE + offset : ids.length;
-            return Arrays.copyOfRange(ids, offset, limit + 1);
+            return Arrays.copyOfRange(ids, offset, limit);
         } else {
             return null;
         }
