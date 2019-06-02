@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Contract;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -378,7 +379,8 @@ public class BitmapUtil {
     @NonNull
     @Contract("_ -> new")
     @SuppressWarnings({"unused"})
-    public static float[] calcImgMeta(File file) {
+    @Deprecated
+    public static float[] calcImgMeta0(File file) {
         try {
             Bitmap bitmap = getBitmap(file, 64, 64);
             assert bitmap != null;
@@ -415,8 +417,9 @@ public class BitmapUtil {
         }
     }
 
+    @Deprecated
     @SuppressWarnings({"unused"})
-    public static boolean cmpImgMata(@NonNull float[] meta1, @NonNull float[] meta2) {
+    public static boolean cmpImgMata0(@NonNull float[] meta1, @NonNull float[] meta2) {
         float offAvg = Math.abs(meta1[0] - meta2[0]);
         float offDx = Math.abs(meta1[1] - meta2[1]);
         return offAvg < 1 && offDx < 160;
@@ -438,7 +441,7 @@ public class BitmapUtil {
      * @return long
      */
     @SuppressWarnings({""})
-    public static long calcImgMeta2(Bitmap bmp) {
+    public static long calcImgMeta(Bitmap bmp) {
         if (bmp != null) {
             try {
                 int width = 8, height = 8;
@@ -455,7 +458,7 @@ public class BitmapUtil {
                 avg = avg >> 6;
                 long meta = 0;
                 for (int pix : pixels) {
-                    meta = meta << 1 | (pix >= avg ? 1 : 0);
+                    meta = meta << 1 | (pix > avg ? 1 : 0);
                 }
                 return meta;
             } catch (Exception e) {
@@ -465,7 +468,7 @@ public class BitmapUtil {
         return 0;
     }
 
-    public static boolean cmpImgMeta2(long meta1, long meta2) {
+    public static boolean cmpImgMeta(long meta1, long meta2) {
         return Long.bitCount(meta1 ^ meta2) <= DUPLICATE_LEVEL;
     }
 
@@ -480,6 +483,64 @@ public class BitmapUtil {
         }
         return diffNum < 5;
     }*/
+
+    /**
+     * 计算图片meta，16 * 16大小
+     * @param bmp 图片
+     * @return meta
+     */
+    public static String calcImgMeta2(Bitmap bmp) {
+        if (bmp != null) {
+            try {
+                int width = 16, height = 16;
+                Bitmap bitmap = ThumbnailUtils.extractThumbnail(bmp, width, height);
+                bitmap = convertGray(bitmap);
+                int[] pixels = new int[256];
+                bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+                int avg = 0;
+                for (int i = 0; i < pixels.length; i++) {
+                    pixels[i] &= 0xFF;
+                    avg += pixels[i];
+                }
+                // improve / 256
+                avg = avg >> 8;
+                long meta1 = 0;
+                for (int i = 0; i < 64; i++) {
+                    meta1 = meta1 << 1 | (pixels[i] > avg ? 1 : 0);
+                }
+                long meta2 = 0;
+                for (int i = 64; i < 128; i++) {
+                    meta2 = meta2 << 1 | (pixels[i] > avg ? 1 : 0);
+                }
+                long meta3 = 0;
+                for (int i = 128; i < 192; i++) {
+                    meta3 = meta3 << 1 | (pixels[i] > avg ? 1 : 0);
+                }
+                long meta4 = 0;
+                for (int i = 192; i < 256; i++) {
+                    meta4 = meta4 << 1 | (pixels[i] > avg ? 1 : 0);
+                }
+                if (meta1 != 0 || meta2 != 0 || meta3 != 0 || meta4 != 0) {
+                    return Long.toString(meta1, 16) + "," + Long.toString(meta2, 16) + "," + Long.toString(meta3, 16) + "," + Long.toString(meta4, 16);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return "";
+    }
+
+    public static boolean cmpImgMeta2(String meta1, String meta2) {
+        if (meta1.length() > 0 && meta2.length() > 0) {
+            String[] metaArray = (meta1 + "," + meta2).split(",");
+            int diffCount = 0;
+            for (int i = 0; i < 4; i++) {
+                diffCount += Long.bitCount(Long.valueOf(metaArray[i], 16) ^ Long.valueOf(metaArray[i + 4], 16));
+            }
+            return diffCount <= DUPLICATE_LEVEL;
+        }
+        return false;
+    }
 
     /**
      * 加载图片动画
@@ -594,7 +655,7 @@ public class BitmapUtil {
         if (props.containsKey(hash)) {
             meta = Long.valueOf(props.getProperty(hash));
         } else {
-            meta = BitmapUtil.calcImgMeta2(BitmapUtil.getBitmap(file, 8, 8));
+            meta = BitmapUtil.calcImgMeta(BitmapUtil.getBitmap(file, 8, 8));
             props.setProperty(hash, String.valueOf(meta));
         }
         return meta;

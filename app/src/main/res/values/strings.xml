@@ -134,4 +134,6 @@
     <string name="duplicate_level_tip">The control level when find duplicate images in the favorites,smaller is strictly,default is 5.</string>
     <string name="image_meta">Image Meta</string>
     <string name="copy">Copy</string>
+    <string name="cmp_256_bit">256-Bit Compare</string>
+    <string name="cmp_64_bit">64-Bit Compare</string>
 </resources>

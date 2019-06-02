@@ -15,6 +15,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -376,6 +377,15 @@ public class ExampleUnitTest {
                 }
             }
         });
+    }
+
+    @Test
+    public void stringToLongTest() {
+        System.out.println(Long.toHexString(10868888L));
+        System.out.println(Long.toString(-1945866206988825602L, 16));
+        System.out.println(Long.valueOf("-1b011b0170017402", 16));
+        BitSet bitSet = BitSet.valueOf(new long[]{2323234L,-123432342342L,3232323L,323433234234L});
+        System.out.println(bitSet.toString());
     }
 
 }
