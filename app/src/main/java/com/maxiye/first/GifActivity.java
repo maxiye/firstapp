@@ -156,7 +156,7 @@ public class GifActivity extends AppCompatActivity {
     /**
      * 收藏id的最大位数
      */
-    private static int FAVORITE_ID_LENGTH = 6;
+    public static int FAVORITE_ID_LENGTH = 6;
 
     /**
      * 是否获取新的文章
@@ -1186,18 +1186,18 @@ public class GifActivity extends AppCompatActivity {
     private void showImageMeta(Map<String, Object> item) {
         String path = item.get("path").toString();
         if (StringUtil.notBlank(path)) {
-            String meta = BitmapUtil.calcImgMeta2(BitmapUtil.getBitmap(new File(path), 16, 16));
+            long[] meta = BitmapUtil.calcImgMeta2(BitmapUtil.getBitmap(new File(path), 16, 16));
             //创建对话框
             AlertDialog dialog2 = new AlertDialog.Builder(this)
                     // 设置图标
                     .setIcon(R.drawable.ic_info_black_24dp)
                     // 设置标题
                     .setTitle(R.string.image_meta)
-                    .setMessage(meta)
+                    .setMessage(Arrays.toString(meta))
                     .setPositiveButton(R.string.copy, (dialog, which) -> {
                         ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                         assert clm != null;
-                        clm.setPrimaryClip(ClipData.newPlainText(null, meta));
+                        clm.setPrimaryClip(ClipData.newPlainText(null, Arrays.toString(meta)));
                         alert(getString(R.string.clip_toast));
                     }).setNegativeButton(R.string.cancel, (dialog, which) -> {
                     })
@@ -1242,7 +1242,7 @@ public class GifActivity extends AppCompatActivity {
                     loading();
                     threadPoolExecutor.execute(() -> {
                         try {
-                            String favIds = getRepeatedItems2(seekBar.getProgress());
+                            String favIds = BitmapUtil.getDuplicateIds(type, seekBar.getProgress());
                             MyLog.w("getRepeatedItems", favIds);
                             runOnUiThread(() -> {
                                 if (StringUtil.notBlank(favIds)) {
@@ -1390,75 +1390,6 @@ public class GifActivity extends AppCompatActivity {
                     if (idx < FAVORITE_ID_LENGTH && idx > 0) {
                         ids.append(fname, 0, idx).append(",");
                     }
-                }
-            }
-            if (ids.length() > 0) {
-                ids.deleteCharAt(ids.lastIndexOf(","));
-            }
-        }
-        MyLog.w("getRepeatedItems:ret", ids.toString());
-        try (FileWriter fw = new FileWriter(propFile)) {
-            props.store(fw, "img meta");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return ids.toString();
-    }
-
-    /**
-     * 查询重复的图片的favId
-     * {@code 第9条：优先使用try-with-resources而不是try-finally}
-     * @return String
-     */
-    @NonNull
-    private String getRepeatedItems2(int level) {
-        File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);
-        File[] fileList = dir.listFiles(file -> file.isFile() && file.length() > 1024);
-        Properties props = new Properties();
-        File propFile = new File(dir, "meta16");
-        try (FileReader fr = new FileReader(propFile)) {
-            props.load(fr);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        StringBuilder ids = new StringBuilder();
-        BitmapUtil.setDuplicateLevel(level);
-        if (fileList != null) {
-            String[] metas = new String[fileList.length];
-            String[] indexes = new String[fileList.length];
-            for (int i = 0; i < fileList.length; i++) {
-                String fname = fileList[i].getName();
-                int idx = fname.indexOf("_");
-                if (idx < FAVORITE_ID_LENGTH && idx > 0) {
-                    indexes[i] = fname.substring(0, idx);
-                } else {
-                    indexes[i] = "";
-                }
-                if (props.containsKey(indexes[i])) {
-                    metas[i] = props.getProperty(indexes[i]);
-                } else {
-                    props.setProperty(indexes[i], metas[i] = BitmapUtil.calcImgMeta2(BitmapUtil.getBitmap(fileList[i], 16, 16)));
-                }
-                /* MyLog.w("getRepeatedItems", fileList[i].getName() + "------" + Long.toBinaryString(metas[i])); */
-            }
-            for (int i = 0; i < fileList.length; i++) {
-                if (indexes[i].length() == 0 || metas[i].length() == 0) {
-                    continue;
-                }
-                boolean flg = false;
-                for (int j = i + 1; j < fileList.length; j++) {
-                    if (indexes[j].length() == 0 || metas[j].length() == 0) {
-                        continue;
-                    }
-                    if (BitmapUtil.cmpImgMeta2(metas[i], metas[j])) {
-                        flg = true;
-                        metas[j] = "";
-                        ids.append(indexes[j]).append(",");
-                    }
-                }
-                if (flg) {
-                    metas[i] = "";
-                    ids.append(indexes[i]).append(",");
                 }
             }
             if (ids.length() > 0) {

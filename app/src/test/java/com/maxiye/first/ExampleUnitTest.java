@@ -386,6 +386,9 @@ public class ExampleUnitTest {
         System.out.println(Long.valueOf("-1b011b0170017402", 16));
         BitSet bitSet = BitSet.valueOf(new long[]{2323234L,-123432342342L,3232323L,323433234234L});
         System.out.println(bitSet.toString());
+        System.out.println(Arrays.toString(new int[55]));
+
+
     }
 
 }

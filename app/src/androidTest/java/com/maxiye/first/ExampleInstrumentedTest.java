@@ -5,11 +5,19 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.graphics.Color;
+import android.os.Environment;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
+
+import com.maxiye.first.util.TimeCounter;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.HashMap;
 
 import static org.junit.Assert.*;
 
@@ -57,5 +65,48 @@ public class ExampleInstrumentedTest {
                 .build();
         notificationManager.notify(1, notification2);
         Thread.sleep(10000);
+    }
+
+    @Test
+    public void HashKeyTest() {
+        File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + "bitmap");
+        File[] fileList = dir.listFiles(file -> file.isFile() && file.length() > 1024);
+        int count = fileList.length;
+        long t1 = TimeCounter.run(() -> {
+            HashMap<File, Integer> name2IdMap = new HashMap<>(count);
+            for (File f : fileList) {
+                String name = f.getName();
+                int pos = name.indexOf("_");
+                int id = Integer.MAX_VALUE;
+                if (pos < 6 && pos > 0) {
+                    id = Integer.valueOf(name.substring(0, pos));
+                }
+                name2IdMap.put(f, id);
+            }
+            Arrays.sort(fileList, (f1, f2) -> {
+                int id1 = name2IdMap.get(f1);
+                int id2 = name2IdMap.get(f2);
+                return Integer.compare(id1, id2);
+            });
+        });
+        long t2 = TimeCounter.run(() -> {
+            HashMap<String, Integer> name2IdMap = new HashMap<>(count);
+            for (File f : fileList) {
+                String name = f.getName();
+                int pos = name.indexOf("_");
+                int id = Integer.MAX_VALUE;
+                if (pos < 6 && pos > 0) {
+                    id = Integer.valueOf(name.substring(0, pos));
+                }
+                name2IdMap.put(name, id);
+            }
+            Arrays.sort(fileList, (f1, f2) -> {
+                int id1 = name2IdMap.get(f1.getName());
+                int id2 = name2IdMap.get(f2.getName());
+                return Integer.compare(id1, id2);
+            });
+        });
+        Log.w("ttt1", t1 + "");
+        Log.w("ttt2", t2 + "");
     }
 }
