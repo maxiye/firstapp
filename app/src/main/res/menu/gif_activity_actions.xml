@@ -1,7 +1,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto"
       xmlns:tools="http://schemas.android.com/tools"
-      tools:context="com.maxiye.first.GifActivity">
+      tools:context="com.maxiye.first.GifActivity"
+      tools:ignore="AlwaysShowAction">
     <!--<item
         android:orderInCategory="100"
         android:icon="@drawable/ic_refresh_black_24dp"
@@ -25,13 +26,13 @@
         android:orderInCategory="100"
         android:icon="@drawable/ic_history_black_24dp"
         android:title="@string/history"
-        android:onClick="listHistory"
+        android:onClick="history"
         app:showAsAction="always"/>
     <item
         android:orderInCategory="100"
         android:icon="@drawable/ic_cloud_done_black_24dp"
         android:title="@string/favorite"
-        android:onClick="listFavorite"
+        android:onClick="favorites"
         app:showAsAction="always"/>
     <item
         android:orderInCategory="100"

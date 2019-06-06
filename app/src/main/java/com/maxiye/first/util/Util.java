@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.view.Menu;
 
 import java.io.File;
@@ -177,5 +178,34 @@ public class Util {
                     new LinkedBlockingQueue<>(5), new MyThreadFactory(), new ThreadPoolExecutor.AbortPolicy());
         }
         return singleThreadPool;
+    }
+
+    public static String implode(@Nullable int[] array) {
+        if (array == null) {
+            return "";
+        }
+        StringBuilder build = new StringBuilder();
+        for (Object item : array) {
+            build.append(item).append(",");
+        }
+        if (array.length > 0) {
+            build.deleteCharAt(build.lastIndexOf(","));
+        }
+        return build.toString();
+    }
+
+
+    /**
+     * 通过收藏文件名获取收藏数据库id
+     * @param fileName 文件名
+     * @return id
+     */
+    public static int getFavId(String fileName) {
+        int pos = fileName.indexOf("_");
+        // id < 99999
+        if (pos < 6 && pos > 0) {
+            return Integer.valueOf(fileName.substring(0, pos));
+        }
+        return 0;
     }
 }

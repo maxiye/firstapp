@@ -9,7 +9,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.BitmapDrawable;
@@ -68,6 +67,7 @@ import com.maxiye.first.spy.SpyGetter;
 import com.maxiye.first.util.BitmapUtil;
 import com.maxiye.first.util.DbHelper;
 import com.maxiye.first.util.DiskLruCache;
+import com.maxiye.first.util.IntList;
 import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.NetworkUtil;
 import com.maxiye.first.util.PermissionUtil;
@@ -151,12 +151,6 @@ public class GifActivity extends AppCompatActivity {
     private static final String DEFAULT_TITLE = "动态图";
     public static final String TYPE_GIF = "gif";
     public static final String TYPE_BITMAP = "bitmap";
-    private static final int HISTORY_PAGE_SIZE = 10;
-    private static final int FAVORITE_PAGE_SIZE = 15;
-    /**
-     * 收藏id的最大位数
-     */
-    public static int FAVORITE_ID_LENGTH = 6;
 
     /**
      * 是否获取新的文章
@@ -197,6 +191,7 @@ public class GifActivity extends AppCompatActivity {
     private JsonObject webCfg;
     private String[] webList;
     private HashMap<String, Drawable> iconCacheList;
+    private Properties prop = new Properties();
     private OkHttpClient okHttpClient;
     private ThreadPoolExecutor threadPoolExecutor;
     private DiskLruCache diskLruCache;
@@ -311,7 +306,7 @@ public class GifActivity extends AppCompatActivity {
      *
      * @param msg 消息
      */
-    private void alert(String msg) {
+    public void alert(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
@@ -420,26 +415,47 @@ public class GifActivity extends AppCompatActivity {
         return "";
     }
 
+    public Drawable getCachedIcon(String name) {
+        if (iconCacheList == null) {
+            iconCacheList = new HashMap<>(8);
+            iconCacheList.put("default", getDrawable(R.drawable.ic_image_black_24dp));
+            iconCacheList.put("loading", getDrawable(R.drawable.ic_autorenew_black_24dp));
+            try (InputStream is = getAssets().open("img_spy_config.json")) {
+                JsonObject icons = new Gson().fromJson(new InputStreamReader(is), JsonObject.class).getAsJsonObject("icon");
+                for (String key : icons.keySet()) {
+                    prop.setProperty(key + "-icon", icons.get(key).getAsString());
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        if (iconCacheList.containsKey(name)) {
+            return iconCacheList.get(name);
+        } else {
+            String iconPath = prop.getProperty(name + "-icon");
+            try (InputStream is = getAssets().open(iconPath)) {
+                Drawable icon = BitmapDrawable.createFromStream(is, null);
+                iconCacheList.put(name, icon);
+                return icon;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return iconCacheList.get("default");
+        }
+    }
+
     private JsonObject getWebCfg(String webName) {
         JsonObject webCfg = null;
-        try {
-            AssetManager am = getAssets();
-            InputStream is = am.open("img_spy_config.json");
+        try (InputStream is = getAssets().open("img_spy_config.json")) {
             JsonObject cfgs = new Gson().fromJson(new InputStreamReader(is), JsonObject.class).getAsJsonObject(type);
-            is.close();
             webCfg = cfgs.getAsJsonObject(webName);
             if (webList == null) {
-                iconCacheList = new HashMap<>(8);
                 webList = new String[cfgs.size()];
                 int index = 0;
                 for (String key : cfgs.keySet()) {
                     webList[index++] = key;
-                    iconCacheList.put(key, BitmapDrawable.createFromStream(is = am.open(cfgs.getAsJsonObject(key).get("local_icon").getAsString()), null));
-                    is.close();
                 }
-                iconCacheList.put("default", getDrawable(R.drawable.ic_image_black_24dp));
-                iconCacheList.put("loading", getDrawable(R.drawable.ic_autorenew_black_24dp));
-                MyLog.w("getWebCfg-webList", Arrays.toString(webList) + " -- " + iconCacheList.toString());
+                MyLog.w("getWebCfg-webList", Arrays.toString(webList));
             }
             if (webCfg != null) {
                 webCfg.addProperty("name", webName);
@@ -452,19 +468,12 @@ public class GifActivity extends AppCompatActivity {
     }
 
     private void loadWebList() {
-        try {
-            AssetManager am = getAssets();
-            InputStream is = am.open("img_spy_config.json");
+        try (InputStream is = getAssets().open("img_spy_config.json")) {
             JsonObject cfgs = new Gson().fromJson(new InputStreamReader(is), JsonObject.class).getAsJsonObject(type);
-            is.close();
             webList = new String[cfgs.size()];
             int index = 0;
             for (String key : cfgs.keySet()) {
                 webList[index++] = key;
-                if (!iconCacheList.containsKey(key)) {
-                    iconCacheList.put(key, BitmapDrawable.createFromStream(is = am.open(cfgs.getAsJsonObject(key).get("local_icon").getAsString()), null));
-                    is.close();
-                }
             }
             MyLog.w("loadWebList", Arrays.toString(webList));
         } catch (Exception e) {
@@ -725,7 +734,7 @@ public class GifActivity extends AppCompatActivity {
             if (t.equals(type)) {
                 t += "          √";
             }
-            menu.add(Menu.NONE, i, Menu.NONE, t).setIcon(iconCacheList.get("default"));
+            menu.add(Menu.NONE, i, Menu.NONE, t).setIcon(getCachedIcon("default"));
         }
         pMenu.setOnMenuItemClickListener(item1 -> {
             setType(typeList[item1.getItemId()]);
@@ -741,7 +750,7 @@ public class GifActivity extends AppCompatActivity {
         Menu menu = Util.enableMenuIcon(pMenu.getMenu());
         for (int i = 0; i < webList.length; i++) {
             String web = webList[i];
-            MenuItem mItem = menu.add(Menu.NONE, i, Menu.NONE, web).setIcon(BitmapUtil.scaleDrawable(iconCacheList.get(web), 100, 0));
+            MenuItem mItem = menu.add(Menu.NONE, i, Menu.NONE, web).setIcon(BitmapUtil.scaleDrawable(getCachedIcon(web), 100, 0));
             if (web.equals(webName)) {
                 mItem.setTitle(web + "          √");
             }
@@ -778,7 +787,7 @@ public class GifActivity extends AppCompatActivity {
         if (loading == null) {
             loading = new Dialog(this, android.R.style.Theme_Material_Dialog_Alert);
             GifImageView imgView = new GifImageView(this);
-            imgView.setImageDrawable(iconCacheList.get("loading"));
+            imgView.setImageDrawable(getCachedIcon("loading"));
             imgView.setMinimumHeight(180);
             imgView.setMinimumWidth(180);
             Animation anim = AnimationUtils.loadAnimation(this, R.anim.load_rotate);
@@ -883,7 +892,7 @@ public class GifActivity extends AppCompatActivity {
                 .setListGetter((page, list, where) -> {
                     markList.forEach(hm -> {
                                 HashMap<String, Object> item = new HashMap<>(2);
-                                item.put("icon", iconCacheList.get(hm.get("web_name")));
+                                item.put("icon", getCachedIcon(hm.get("web_name")));
                                 item.put("name", String.format("%s，%s，%s，%s，%s", hm.get("title"), hm.get("web_name"), hm.get("type"), hm.get("art_id"), hm.get("page")));
                                 list.add(item);
                             });
@@ -997,40 +1006,149 @@ public class GifActivity extends AppCompatActivity {
         }
     }
 
-    private boolean longClickOnHistory(@NonNull PageListPopupWindow pageListPopupWindow, int position) {
-        // 使用rv.getChildAt只能获取可见的item，0表示当前屏幕可见第一个item
-        PopupMenu pMenu = new PopupMenu(this, pageListPopupWindow.getItemView(position));
-        pMenu.getMenuInflater().inflate(R.menu.gif_history_popupmenu, pMenu.getMenu());
-        pMenu.setOnMenuItemClickListener(item1 -> {
-            switch (item1.getItemId()) {
-                case R.id.delete_history:
-                    // 删除记录
-                    deleteHistoryAlert(pageListPopupWindow.getItemData(position), () -> pageListPopupWindow.remove(position));
-                    break;
-                case R.id.copy_history_artid:
-                    String articleId = pageListPopupWindow.getItemData(position).get("art_id").toString();
-                    ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                    assert clm != null;
-                    clm.setPrimaryClip(ClipData.newPlainText(null, articleId));
-                    alert(getString(R.string.clip_toast) + "：" + articleId);
-                    break;
-                case R.id.reload_art:
-                    artId = (String) pageListPopupWindow.getItemData(position).get("art_id");
-                    setWebName((String) pageListPopupWindow.getItemData(position).get("web_name"));
-                    deleteHistory(artId, webName);
-                    initPage();
-                    pageListPopupWindow.dismiss();
-                    break;
-                case R.id.filter_where:
-                    filterInputDialog(pageListPopupWindow.getWhere(), pageListPopupWindow::filter);
-                    break;
-                default:
-                    break;
+    class History {
+        private static final int PAGE_SIZE = 10;
+        /**
+         * {@code 第43条：方法引用优于lambda表达式}
+         */
+        @SuppressLint({"SetTextI18n"})
+        void show() {
+            PopupWindow pageWindow = new PageListPopupWindow.Builder(GifActivity.this)
+                    .setListCountGetter(this::getCount)
+                    .setListGetter(this::getList)
+                    .setItemClickListener((pageWin, position) -> {
+                        setWebName((String) pageWin.getItemData(position).get("web_name"));
+                        artId = (String) pageWin.getItemData(position).get("art_id");
+                        initPage();
+                        MyLog.w("historyClick", webName);
+                        pageWin.dismiss();
+                    })
+                    .setItemLongClickListener(this::longClickCallback)
+                    .setPageSize(PAGE_SIZE)
+                    .setWindowHeight(ViewGroup.LayoutParams.WRAP_CONTENT)
+                    .build();
+            pageWindow.showAtLocation(findViewById(R.id.gif_activity_fab), Gravity.BOTTOM, 0, 0);
+        }
+
+        private int getCount(String andWhere) {
+            String where = "art_id <> '' and type = '" + type + "'";
+            if (StringUtil.notBlank(andWhere)) {
+                where += " and " + andWhere;
             }
-            return false;
-        });
-        pMenu.show();
-        return true;
+            Cursor cus = db.rawQuery("select count(*) from " + DbHelper.TB_IMG_WEB + " where " + where, null);
+            cus.moveToFirst();
+            int count = cus.getInt(0);
+            cus.close();
+            return count;
+        }
+
+        private void deleteAlert(@NonNull Map<String, Object> item, @NonNull Runnable callback) {
+            String delArtId = item.get("art_id").toString();
+            String delWebName = (String) item.get("web_name");
+            //创建对话框
+            AlertDialog dialog2 = new AlertDialog.Builder(GifActivity.this)
+                    // 设置图标
+                    .setIcon(R.drawable.ic_info_black_24dp)
+                    // 设置标题
+                    .setTitle(R.string.delete)
+                    .setPositiveButton(R.string.confirm, (dialog1, which) -> {
+                        delete(delArtId, delWebName);
+                        callback.run();
+                    }).setNegativeButton(R.string.cancel, (dialog1, which) -> {
+                    })
+                    .create();
+            dialog2.show();
+        }
+
+        /**
+         * 删除历史记录
+         * @param delArtId artId
+         * @param delWebName webName
+         */
+        private void delete(String delArtId, String delWebName) {
+            MyLog.w("delete", "art_id：" + delArtId + "，web_name：" + delWebName);
+            db.delete(DbHelper.TB_IMG_WEB, "art_id = ? and web_name = ?", new String[]{delArtId, delWebName});
+            db.delete(DbHelper.TB_IMG_WEB_ITEM, "art_id = ? and web_name = ?", new String[]{delArtId, delWebName});
+        }
+
+        /**
+         * 填充历史列表
+         * {@code 第57条：最小化局部变量的作用域}
+         * 优先选择for循环而不是while循环，最小化了局部变量的作用域 ：listSize
+         * {@code 第64条：通过接口引用对象}
+         * @param page int
+         * @param historyList List
+         * @param andWhere String
+         * @return List
+         */
+        @Contract("_, _, _ -> param2")
+        private List<Map<String, Object>> getList(int page, List<Map<String, Object>> historyList, String andWhere) {
+            int offset = (page - 1) * PAGE_SIZE;
+            String where = "art_id <> '' and type = '" + type + "'";
+            if (andWhere != null) {
+                where += " and " + andWhere;
+            }
+            String sql = "select * from " + DbHelper.TB_IMG_WEB + " where " + where +  " order by id desc limit " + PAGE_SIZE + " offset " + offset;
+            Cursor cus = db.rawQuery(sql, null);
+            int count = cus.getCount();
+            MyLog.w("getList：", count + "");
+            cus.moveToFirst();
+            for (int i = 0, listSize = historyList.size(); i < PAGE_SIZE; i++) {
+                Map<String, Object> item;
+                if (i < listSize) {
+                    item = historyList.get(i);
+                } else {
+                    historyList.add(item = new HashMap<>(4));
+                }
+                if (count > i) {
+                    String web = cus.getString(cus.getColumnIndex("web_name"));
+                    item.put("web_name", web);
+                    item.put("name", cus.getString(cus.getColumnIndex("title")));
+                    item.put("art_id", cus.getString(cus.getColumnIndex("art_id")));
+                    item.put("icon", getCachedIcon(web));
+                    cus.moveToNext();
+                } else {
+                    item.clear();
+                }
+            }
+            cus.close();
+            return historyList;
+        }
+        private boolean longClickCallback(@NonNull PageListPopupWindow pageListPopupWindow, int position) {
+            // 使用rv.getChildAt只能获取可见的item，0表示当前屏幕可见第一个item
+            PopupMenu pMenu = new PopupMenu(GifActivity.this, pageListPopupWindow.getItemView(position));
+            pMenu.getMenuInflater().inflate(R.menu.gif_history_popupmenu, pMenu.getMenu());
+            pMenu.setOnMenuItemClickListener(item1 -> {
+                switch (item1.getItemId()) {
+                    case R.id.delete_history:
+                        // 删除记录
+                        deleteAlert(pageListPopupWindow.getItemData(position), () -> pageListPopupWindow.remove(position));
+                        break;
+                    case R.id.copy_history_artid:
+                        String articleId = pageListPopupWindow.getItemData(position).get("art_id").toString();
+                        ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                        assert clm != null;
+                        clm.setPrimaryClip(ClipData.newPlainText(null, articleId));
+                        alert(getString(R.string.clip_toast) + "：" + articleId);
+                        break;
+                    case R.id.reload_art:
+                        artId = (String) pageListPopupWindow.getItemData(position).get("art_id");
+                        setWebName((String) pageListPopupWindow.getItemData(position).get("web_name"));
+                        delete(artId, webName);
+                        initPage();
+                        pageListPopupWindow.dismiss();
+                        break;
+                    case R.id.filter_where:
+                        filterInputDialog(pageListPopupWindow.getWhere(), pageListPopupWindow::filter);
+                        break;
+                    default:
+                        break;
+                }
+                return false;
+            });
+            pMenu.show();
+            return true;
+        }
     }
 
     /**
@@ -1038,281 +1156,537 @@ public class GifActivity extends AppCompatActivity {
      * @param item MenuItem
      */
     @SuppressLint({"SetTextI18n"})
-    public void listHistory(MenuItem item) {
-        PopupWindow pageWindow = new PageListPopupWindow.Builder(this)
-                .setListCountGetter(this::getHistoryCount)
-                .setListGetter(this::getHistoryList)
-                .setItemClickListener((pageWin, position) -> {
-                    setWebName((String) pageWin.getItemData(position).get("web_name"));
-                    artId = (String) pageWin.getItemData(position).get("art_id");
-                    initPage();
-                    MyLog.w("historyClick", webName);
-                    pageWin.dismiss();
-                })
-                .setItemLongClickListener(this::longClickOnHistory)
-                .setPageSize(HISTORY_PAGE_SIZE)
-                .setWindowHeight(ViewGroup.LayoutParams.WRAP_CONTENT)
-                .build();
-        pageWindow.showAtLocation(findViewById(R.id.gif_activity_fab), Gravity.BOTTOM, 0, 0);
-    }
-
-    private int getHistoryCount(String andWhere) {
-        String where = "art_id <> '' and type = '" + type + "'";
-        if (StringUtil.notBlank(andWhere)) {
-            where += " and " + andWhere;
-        }
-        Cursor cus = db.rawQuery("select count(*) from " + DbHelper.TB_IMG_WEB + " where " + where, null);
-        cus.moveToFirst();
-        int count = cus.getInt(0);
-        cus.close();
-        return count;
-    }
-
-    private void deleteHistoryAlert(@NonNull Map<String, Object> item,@NonNull Runnable callback) {
-        String delArtId = item.get("art_id").toString();
-        String delWebName = (String) item.get("web_name");
-        //创建对话框
-        AlertDialog dialog2 = new AlertDialog.Builder(this)
-                // 设置图标
-                .setIcon(R.drawable.ic_info_black_24dp)
-                // 设置标题
-                .setTitle(R.string.delete)
-                .setPositiveButton(R.string.confirm, (dialog1, which) -> {
-                    deleteHistory(delArtId, delWebName);
-                    callback.run();
-                }).setNegativeButton(R.string.cancel, (dialog1, which) -> {
-                })
-                .create();
-        dialog2.show();
-    }
-
-    /**
-     * 删除历史记录
-     * @param delArtId artId
-     * @param delWebName webName
-     */
-    private void deleteHistory(String delArtId, String delWebName) {
-        MyLog.w("deleteHistory", "art_id：" + delArtId + "，web_name：" + delWebName);
-        db.delete(DbHelper.TB_IMG_WEB, "art_id = ? and web_name = ?", new String[]{delArtId, delWebName});
-        db.delete(DbHelper.TB_IMG_WEB_ITEM, "art_id = ? and web_name = ?", new String[]{delArtId, delWebName});
-    }
-
-    /**
-     * 填充历史列表
-     * {@code 第57条：最小化局部变量的作用域}
-     * 优先选择for循环而不是while循环，最小化了局部变量的作用域 ：listSize
-     * {@code 第64条：通过接口引用对象}
-     * @param page int
-     * @param historyList List
-     * @param andWhere String
-     * @return List
-     */
-    @Contract("_, _, _ -> param2")
-    private List<Map<String, Object>> getHistoryList(int page, List<Map<String, Object>> historyList, String andWhere) {
-        int offset = (page - 1) * HISTORY_PAGE_SIZE;
-        String where = "art_id <> '' and type = '" + type + "'";
-        if (andWhere != null) {
-            where += " and " + andWhere;
-        }
-        String sql = "select * from " + DbHelper.TB_IMG_WEB + " where " + where +  " order by id desc limit " + HISTORY_PAGE_SIZE + " offset " + offset;
-        Cursor cus = db.rawQuery(sql, null);
-        int count = cus.getCount();
-        MyLog.w("getHistoryList：", count + "");
-        cus.moveToFirst();
-        for (int i = 0, listSize = historyList.size(); i < HISTORY_PAGE_SIZE; i++) {
-            Map<String, Object> item;
-            if (i < listSize) {
-                item = historyList.get(i);
-            } else {
-                historyList.add(item = new HashMap<>(4));
-            }
-            if (count > i) {
-                String web = cus.getString(cus.getColumnIndex("web_name"));
-                item.put("web_name", web);
-                item.put("name", cus.getString(cus.getColumnIndex("title")));
-                item.put("art_id", cus.getString(cus.getColumnIndex("art_id")));
-                item.put("icon", iconCacheList.get(web));
-                cus.moveToNext();
-            } else {
-                item.clear();
-            }
-        }
-        cus.close();
-        return historyList;
+    public void history(MenuItem item) {
+        History history = new History();
+        history.show();
     }
 
     @SuppressLint({"SetTextI18n"})
-    public void listFavorite(MenuItem item) {
-        PopupWindow pageWindow = new PageListPopupWindow.Builder(this)
-                .setListCountGetter(this::getFavoriteCount)
-                .setListGetter(this::getFavoriteList)
-                .setItemClickListener(this::viewFav)
-                .setItemLongClickListener((pageWin, position) -> {
-                    // 使用rv.getChildAt只能获取可见的item，0表示当前屏幕可见第一个item
-                    PopupMenu pMenu = new PopupMenu(this, pageWin.getItemView(position));
-                    pMenu.getMenuInflater().inflate(R.menu.gif_favorite_popupmenu, pMenu.getMenu());
-                    pMenu.setOnMenuItemClickListener(item1 -> {
-                        switch (item1.getItemId()) {
-                            case R.id.track_source:
-                                //删除记录
-                                trackSourceDialog(pageWin.getItemData(position), pageWin::dismiss);
-                                break;
-                            case R.id.delete_fav:
-                                //删除记录
-                                deleteFavoriteAlert(pageWin.getItemData(position), () -> pageWin.remove(position));
-                                break;
-                            case R.id.filter_where:
-                                filterInputDialog(pageWin.getWhere(), pageWin::filter);
-                                break;
-                            case R.id.image_meta:
-                                showImageMeta(pageWin.getItemData(position));
-                                break;
-                            case R.id.find_repeated_files:
-                                findRepeatedFilesDialog(pageWin::filter);
-                                break;
-                            default:
-                                break;
+    public void favorites(MenuItem item) {
+        Favorite favorite = new Favorite();
+        favorite.show();
+    }
+
+    /**
+     * 收藏列表
+     */
+    class Favorite {
+        private static final int PAGE_SIZE = 15;
+        /**
+         * 查重时暂存重复fav_id
+         */
+        private int[] duplicateIds;
+
+        @SuppressLint({"SetTextI18n"})
+        void show() {
+            PopupWindow pageWindow = new PageListPopupWindow.Builder(GifActivity.this)
+                    .setListCountGetter(this::getCount)
+                    .setListGetter(this::getList)
+                    .setItemClickListener(this::viewFav)
+                    .setItemLongClickListener((pageWin, position) -> {
+                        // 使用rv.getChildAt只能获取可见的item，0表示当前屏幕可见第一个item
+                        PopupMenu pMenu = new PopupMenu(GifActivity.this, pageWin.getItemView(position));
+                        pMenu.getMenuInflater().inflate(R.menu.gif_favorite_popupmenu, pMenu.getMenu());
+                        pMenu.setOnMenuItemClickListener(item1 -> {
+                            switch (item1.getItemId()) {
+                                case R.id.track_source:
+                                    //删除记录
+                                    trackSourceDialog(pageWin.getItemData(position), pageWin::dismiss);
+                                    break;
+                                case R.id.delete_fav:
+                                    //删除记录
+                                    deleteAlert(pageWin.getItemData(position), () -> pageWin.remove(position));
+                                    break;
+                                case R.id.filter_where:
+                                    filterInputDialog(pageWin.getWhere(), pageWin::filter);
+                                    break;
+                                case R.id.image_meta:
+                                    showImageMeta(pageWin.getItemData(position));
+                                    break;
+                                case R.id.find_repeated_files:
+                                    findRepeatedFilesDialog(pageWin::filter);
+                                    break;
+                                default:
+                                    break;
+                            }
+                            return false;
+                        });
+                        pMenu.show();
+                        return true;
+                    }).setPageSize(PAGE_SIZE)
+                    .setWindowHeight(ViewGroup.LayoutParams.MATCH_PARENT)
+                    .build();
+            pageWindow.showAtLocation(findViewById(R.id.gif_activity_fab), Gravity.BOTTOM, 0, 0);
+        }
+
+        private void showImageMeta(Map<String, Object> item) {
+            String path = item.get("path").toString();
+            if (StringUtil.notBlank(path)) {
+                long[] meta = BitmapUtil.calcImgMeta2(BitmapUtil.getBitmap(new File(path), 16, 16));
+                //创建对话框
+                AlertDialog dialog2 = new AlertDialog.Builder(GifActivity.this)
+                        // 设置图标
+                        .setIcon(R.drawable.ic_info_black_24dp)
+                        // 设置标题
+                        .setTitle(R.string.image_meta)
+                        .setMessage(Arrays.toString(meta))
+                        .setPositiveButton(R.string.copy, (dialog, which) -> {
+                            ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                            assert clm != null;
+                            clm.setPrimaryClip(ClipData.newPlainText(null, Arrays.toString(meta)));
+                            alert(getString(R.string.clip_toast));
+                        }).setNegativeButton(R.string.cancel, (dialog, which) -> {
+                        })
+                        .create();
+                dialog2.show();
+            } else {
+                alert(getString(R.string.not_found));
+            }
+        }
+
+        private void findRepeatedFilesDialog(Consumer<String> filter) {
+            View view = LayoutInflater.from(GifActivity.this).inflate(R.layout.gif_find_repeated_dialog, findViewById(R.id.page_list_popup_window), false);
+            SharedPreferences sharedPreferences = getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
+            int duplicateLevel = sharedPreferences.getInt(SettingActivity.DUPLICATE_LEVEL, 5);
+            SeekBar seekBar = view.findViewById(R.id.duplicate_level_seek_bar);
+            TextView textView = view.findViewById(R.id.duplicate_level_seek_bar_tip);
+            seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    textView.setText(String.valueOf(progress));
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+
+                }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+
+                }
+            });
+            seekBar.setProgress(duplicateLevel);
+            //创建对话框
+            AlertDialog dialog2 = new AlertDialog.Builder(GifActivity.this)
+                    // 设置图标
+                    .setIcon(R.drawable.ic_info_black_24dp)
+                    // 设置标题
+                    .setTitle(R.string.duplicate_level)
+                    .setView(view)
+                    .setPositiveButton(R.string.cmp_256_bit, (dialog, which) -> {
+                        loading();
+                        threadPoolExecutor.execute(() -> {
+                            try {
+                                int[] favIds = BitmapUtil.getDuplicateIds(type, seekBar.getProgress());
+                                runOnUiThread(() -> {
+                                    duplicateIds = favIds;
+                                    // $ 表示特殊解析模式，使用 in 查询，排序输出
+                                    filter.accept("$dupl");
+                                    loading.dismiss();
+                                });
+                            } catch (Exception e) {
+                                runOnUiThread(() -> loaded(e.getLocalizedMessage()));
+                                e.printStackTrace();
+                            }
+                        });
+                    }).setNegativeButton(R.string.cmp_64_bit, (dialog, which) -> {
+                        loading();
+                        threadPoolExecutor.execute(() -> {
+                            try {
+                                int[] favIds = getRepeatedItems(seekBar.getProgress());
+                                MyLog.w("getRepeatedItems", Arrays.toString(favIds));
+                                runOnUiThread(() -> {
+                                    duplicateIds = favIds;
+                                    // $ 表示特殊解析模式，使用 in 查询，排序输出
+                                    filter.accept("$dupl");
+                                    loading.dismiss();
+                                });
+                            } catch (Exception e) {
+                                runOnUiThread(() -> loaded(e.getLocalizedMessage()));
+                                e.printStackTrace();
+                            }
+                        });
+                    })
+                    .create();
+            dialog2.show();
+        }
+
+        private void trackSourceDialog(@NonNull Map<String, Object> item, @NonNull Runnable callback) {
+            String itemId = item.get("item_id").toString();
+            Cursor cursor = db.query(DbHelper.TB_IMG_WEB_ITEM, new String[]{"web_name", "type", "art_id"}, "id = ?", new String[]{itemId}, null, null, null);
+            if (cursor.getCount() == 1) {
+                cursor.moveToFirst();
+                String web = cursor.getString(0);
+                String itemType = cursor.getString(1);
+                String art = cursor.getString(2);
+                //创建对话框
+                AlertDialog dialog2 = new AlertDialog.Builder(GifActivity.this)
+                        // 设置图标
+                        .setIcon(R.drawable.ic_info_black_24dp)
+                        // 设置标题
+                        .setTitle(R.string.track_source)
+                        .setPositiveButton(R.string.current_page, (dialog, which) -> {
+                            Cursor cursor2 = db.query(DbHelper.TB_IMG_WEB_ITEM, new String[]{"count(*)"}, "id < ? and art_id = ? and web_name = ?", new String[]{itemId, art, web}, null, null, null);
+                            cursor2.moveToFirst();
+                            int offset = cursor2.getInt(0);
+                            cursor2.close();
+                            locate(itemType, web, art, offset / 3 + 1);
+                            dialog.dismiss();
+                            callback.run();
+                        }).setNegativeButton(R.string.cancel, (dialog, which) -> {
+                        }).setNeutralButton(R.string.first_page, (dialog, which) -> {
+                            locate(itemType, web, art, 1);
+                            dialog.dismiss();
+                            callback.run();
+                        })
+                        .create();
+                dialog2.show();
+            } else {
+                alert(getString(R.string.not_found));
+            }
+            cursor.close();
+        }
+
+        /**
+         * 查询重复的图片的favId
+         * {@code 第9条：优先使用try-with-resources而不是try-finally}
+         * @return String
+         */
+        @NonNull
+        private int[] getRepeatedItems(int level) {
+            File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);
+            File[] fileList = dir.listFiles(file -> file.isFile() && file.length() > 1024);
+            int count = fileList.length;
+            Properties props = new Properties();
+            File propFile = new File(dir, "meta");
+            try (FileReader fr = new FileReader(propFile)) {
+                props.load(fr);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            IntList ids = new IntList((count >> 3) * level);
+            BitmapUtil.setDuplicateLevel(level);
+            long[] metas = new long[count];
+            for (int i = 0; i < count; i++) {
+                metas[i] = BitmapUtil.getCachedImgMeta(fileList[i], props);
+                /* MyLog.w("getRepeatedItems", fileList[i].getName() + "------" + Long.toBinaryString(metas[i])); */
+            }
+            for (int i = 0; i < count; i++) {
+                if (metas[i] == 0 || metas[i] == -1) {
+                    continue;
+                }
+                boolean flg = false;
+                for (int j = i + 1; j < count; j++) {
+                    if (metas[j] == 0 || metas[j] == -1) {
+                        continue;
+                    }
+                    if (BitmapUtil.cmpImgMeta(metas[i], metas[j])) {
+                        flg = true;
+                        /* MyLog.w("getRepeatedItems", fileList[j].getName() + "------" + Long.toBinaryString(metas[j])); */
+                        metas[j] = 0;
+                        String fname = fileList[j].getName();
+                        int id = Util.getFavId(fname);
+                        if (id > 0) {
+                            ids.add(id);
                         }
-                        return false;
-                    });
-                    pMenu.show();
+                    }
+                }
+                if (flg) {
+                    /* MyLog.w("getRepeatedItems", fileList[i].getName() + "------" + Long.toBinaryString(metas[i])); */
+                    metas[i] = 0;
+                    String fname = fileList[i].getName();
+                    int id = Util.getFavId(fname);
+                    /* MyLog.w("getRepeatedItems", "___________________"); */
+                    if (id > 0) {
+                        ids.add(id);
+                    }
+                }
+            }
+            MyLog.w("getRepeatedItems:ret", ids.toString());
+            try (FileWriter fw = new FileWriter(propFile)) {
+                props.store(fw, "img meta");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return ids.toArray();
+        }
+
+        private int getCount(String andWhere) {
+            String where = "type = '" + type + "'";
+            if (StringUtil.notBlank(andWhere)) {
+                // 处理查重特殊条件
+                if (andWhere.startsWith("$")) {
+                    andWhere = "id in (" + andWhere.substring(1) + ")";
+                }
+                where += " and " + andWhere;
+            }
+            Cursor cus = db.rawQuery("select count(*) from " + DbHelper.TB_IMG_FAVORITE + " where " + where, null);
+            cus.moveToFirst();
+            int count = cus.getInt(0);
+            cus.close();
+            MyLog.w("getCount", count + "");
+            return count;
+        }
+
+        @SuppressLint("ClickableViewAccessibility")
+        private void viewFav(@NonNull PageListPopupWindow listPopupWindow, int position) {
+            final Dialog dialog = new Dialog(GifActivity.this, android.R.style.Theme_Material_Dialog_Alert);
+            GifImageView imgView = new GifImageView(GifActivity.this);
+            List<Map<String, Object>> favoriteList = listPopupWindow.getList();
+            imgView.setImageDrawable(getCachedIcon("default"));
+            imgView.setOnLongClickListener(v -> {
+                Map<String, Object> item = favoriteList.get(position);
+                String id = (String) item.get("id");
+                String name = id + "_" + item.get("title");
+                String cacheKey = genCacheKey(item.get("id").toString(), "favorite");
+                // 混合图网页（3dm）
+                download(item.get("type") + "/" + name, cacheKey);
+                return false;
+            });
+            imgView.setOnTouchListener(new View.OnTouchListener() {
+                private int favImgPos = position;
+                private int vScrollX;
+                private float mPosX, mPosY, mCurPosX, mCurPosY;
+                private final Runnable runnable = imgView::performLongClick;
+
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            vScrollX = v.getScrollX();
+                            mPosX = mCurPosX = event.getX();
+                            mPosY = mCurPosY = event.getY();
+                            MyHandler.instance.postDelayed(runnable, 500);
+                            break;
+                        case MotionEvent.ACTION_MOVE:
+                            if (mCurPosX == mPosX) {
+                                MyHandler.instance.removeCallbacks(runnable);
+                            }
+                            mCurPosX = event.getX();
+                            v.setScrollX((int) (mPosX - mCurPosX + vScrollX));
+                            break;
+                        case MotionEvent.ACTION_UP:
+                            mCurPosY = event.getY();
+                            v.setScrollX(vScrollX);
+                            MyHandler.instance.removeCallbacks(runnable);
+//                        if (mCurPosY - mPosY > 0
+//                                && (Math.abs(mCurPosY - mPosY) > 25)) {//向下滑動
+//                        } else if (mCurPosY - mPosY < 0
+//                                && (Math.abs(mCurPosY - mPosY) > 25)) {//向上滑动
+//                        }
+                            // 向左滑動
+                            int hInterval = 200, vInterval = 250;
+                            if (mCurPosX - mPosX > hInterval) {
+                                viewPre();
+                                break;
+                                // 向右滑动
+                            } else if (mCurPosX - mPosX < -hInterval) {
+                                viewNext();
+                                break;
+                            }
+                            if (mCurPosY - mPosY > vInterval) {
+                                dialog.dismiss();
+                                break;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
                     return true;
-                }).setPageSize(FAVORITE_PAGE_SIZE)
-                .setWindowHeight(ViewGroup.LayoutParams.MATCH_PARENT)
-                .build();
-        pageWindow.showAtLocation(findViewById(R.id.gif_activity_fab), Gravity.BOTTOM, 0, 0);
-    }
+                }
 
-    private void showImageMeta(Map<String, Object> item) {
-        String path = item.get("path").toString();
-        if (StringUtil.notBlank(path)) {
-            long[] meta = BitmapUtil.calcImgMeta2(BitmapUtil.getBitmap(new File(path), 16, 16));
+                private void viewPre() {
+                    if (favImgPos > 0) {
+                        favImgPos--;
+                    } else {
+                        if (listPopupWindow.hasPrePage()) {
+                            listPopupWindow.prePage();
+                            favImgPos = PAGE_SIZE - 1;
+                        } else {
+                            GifActivity.this.alert(getString(R.string.no_more));
+                            return;
+                        }
+                    }
+                    loadFavImg(dialog, imgView, favoriteList.get(favImgPos));
+                }
+
+                private void viewNext() {
+                    if (favImgPos < favoriteList.size() - 1) {
+                        if (favoriteList.get(favImgPos + 1).isEmpty()) {
+                            GifActivity.this.alert(getString(R.string.no_more));
+                            return;
+                        }
+                        ++favImgPos;
+                    } else {
+                        if (listPopupWindow.hasNextPage()) {
+                            favImgPos = 0;
+                            listPopupWindow.nextPage();
+                        } else {
+                            GifActivity.this.alert(getString(R.string.no_more));
+                            return;
+                        }
+                    }
+                    loadFavImg(dialog, imgView, favoriteList.get(favImgPos));
+                }
+            });
+            Objects.requireNonNull(dialog.getWindow()).setBackgroundDrawable(new ColorDrawable(0x3f009688));
+            dialog.setContentView(imgView);
+            loadFavImg(dialog, imgView, favoriteList.get(position));
+            dialog.show();
+        }
+
+        private void loadFavImg(@NonNull Dialog dialog, GifImageView imgView, @NonNull Map<String, Object> item) {
+            String title = (String) item.get("title");
+            String url = (String) item.get("real_url");
+            url = StringUtil.notBlank(url) ? url : (String) item.get("url");
+            dialog.setTitle(Html.fromHtml("<p style='color: #F66725; text-align: center'>" + title + "</p>", Html.FROM_HTML_MODE_COMPACT));
+            ImgViewTask.newInstance(imgView, GifActivity.this)
+                    .executeOnExecutor(threadPoolExecutor, title, url, (String) item.get("id"), (String) item.get("path"));
+        }
+
+        private void deleteAlert(@NonNull Map<String, Object> item, @NonNull Runnable callback) {
+            String id = (String) item.get("id");
+            String itemId = (String) item.get("item_id");
             //创建对话框
-            AlertDialog dialog2 = new AlertDialog.Builder(this)
+            AlertDialog dialog = new AlertDialog.Builder(GifActivity.this)
                     // 设置图标
                     .setIcon(R.drawable.ic_info_black_24dp)
                     // 设置标题
-                    .setTitle(R.string.image_meta)
-                    .setMessage(Arrays.toString(meta))
-                    .setPositiveButton(R.string.copy, (dialog, which) -> {
-                        ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                        assert clm != null;
-                        clm.setPrimaryClip(ClipData.newPlainText(null, Arrays.toString(meta)));
-                        alert(getString(R.string.clip_toast));
-                    }).setNegativeButton(R.string.cancel, (dialog, which) -> {
-                    })
-                    .create();
-            dialog2.show();
-        } else {
-            alert(getString(R.string.not_found));
-        }
-    }
-
-    private void findRepeatedFilesDialog(Consumer<String> filter) {
-        View view = LayoutInflater.from(this).inflate(R.layout.gif_find_repeated_dialog, findViewById(R.id.page_list_popup_window), false);
-        SharedPreferences sharedPreferences = getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
-        int duplicateLevel = sharedPreferences.getInt(SettingActivity.DUPLICATE_LEVEL, 5);
-        SeekBar seekBar = view.findViewById(R.id.duplicate_level_seek_bar);
-        TextView textView = view.findViewById(R.id.duplicate_level_seek_bar_tip);
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                textView.setText(String.valueOf(progress));
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
-        seekBar.setProgress(duplicateLevel);
-        //创建对话框
-        AlertDialog dialog2 = new AlertDialog.Builder(this)
-                // 设置图标
-                .setIcon(R.drawable.ic_info_black_24dp)
-                // 设置标题
-                .setTitle(R.string.duplicate_level)
-                .setView(view)
-                .setPositiveButton(R.string.cmp_256_bit, (dialog, which) -> {
-                    loading();
-                    threadPoolExecutor.execute(() -> {
-                        try {
-                            String favIds = BitmapUtil.getDuplicateIds(type, seekBar.getProgress());
-                            MyLog.w("getRepeatedItems", favIds);
-                            runOnUiThread(() -> {
-                                if (StringUtil.notBlank(favIds)) {
-                                    // $ 表示特殊解析模式，使用 in 查询，排序输出
-                                    filter.accept("$" + favIds);
-                                }
-                                loading.dismiss();
-                            });
-                        } catch (Exception e) {
-                            runOnUiThread(() -> loaded(e.getLocalizedMessage()));
-                            e.printStackTrace();
-                        }
-                    });
-                }).setNegativeButton(R.string.cmp_64_bit, (dialog, which) -> {
-                    loading();
-                    threadPoolExecutor.execute(() -> {
-                        try {
-                            String favIds = getRepeatedItems(seekBar.getProgress());
-                            MyLog.w("getRepeatedItems", favIds);
-                            runOnUiThread(() -> {
-                                if (StringUtil.notBlank(favIds)) {
-                                    // $ 表示特殊解析模式，使用 in 查询，排序输出
-                                    filter.accept("$" + favIds);
-                                }
-                                loading.dismiss();
-                            });
-                        } catch (Exception e) {
-                            runOnUiThread(() -> loaded(e.getLocalizedMessage()));
-                            e.printStackTrace();
-                        }
-                    });
-                })
-                .create();
-        dialog2.show();
-    }
-
-    private void trackSourceDialog(@NonNull Map<String, Object> item, @NonNull Runnable callback) {
-        String itemId = item.get("item_id").toString();
-        Cursor cursor = db.query(DbHelper.TB_IMG_WEB_ITEM, new String[]{"web_name", "type", "art_id"}, "id = ?", new String[]{itemId}, null, null, null);
-        if (cursor.getCount() == 1) {
-            cursor.moveToFirst();
-            String web = cursor.getString(0);
-            String itemType = cursor.getString(1);
-            String art = cursor.getString(2);
-            //创建对话框
-            AlertDialog dialog2 = new AlertDialog.Builder(this)
-                    // 设置图标
-                    .setIcon(R.drawable.ic_info_black_24dp)
-                    // 设置标题
-                    .setTitle(R.string.track_source)
-                    .setPositiveButton(R.string.current_page, (dialog, which) -> {
-                        Cursor cursor2 = db.query(DbHelper.TB_IMG_WEB_ITEM, new String[]{"count(*)"}, "id < ? and art_id = ? and web_name = ?", new String[]{itemId, art, web}, null, null, null);
-                        cursor2.moveToFirst();
-                        int offset = cursor2.getInt(0);
-                        cursor2.close();
-                        locate(itemType, web, art, offset / 3 + 1);
-                        dialog.dismiss();
+                    .setTitle(R.string.delete)
+                    .setPositiveButton(R.string.delete, (dialog1, which) -> {
+                        delete(id, itemId);
                         callback.run();
-                    }).setNegativeButton(R.string.cancel, (dialog, which) -> {
-                    }).setNeutralButton(R.string.first_page, (dialog, which) -> {
-                        locate(itemType, web, art, 1);
-                        dialog.dismiss();
+                    }).setNegativeButton(R.string.delete_file, (dialog1, which) -> {
+                        File favFile = new File((String) item.get("path"));
+                        if (favFile.exists() && favFile.delete()) {
+                            alert(getString(R.string.delete_success));
+                        } else {
+                            alert(getString(R.string.file_is_lost));
+                        }
+                    }).setNeutralButton(R.string.delete_fav_and_file, (dialogInterface, i) -> {
+                        File favFile = new File((String) item.get("path"));
+                        if (favFile.exists() && favFile.delete()) {
+                            alert(getString(R.string.delete_success));
+                        } else {
+                            alert(getString(R.string.file_is_lost));
+                        }
+                        delete(id, itemId);
                         callback.run();
                     })
                     .create();
-            dialog2.show();
-        } else {
-            alert(getString(R.string.not_found));
+            dialog.show();
         }
-        cursor.close();
+
+        /**
+         * 删除收藏
+         * @param delId fav_id
+         * @param itemId art_id
+         */
+        private void delete(String delId, String itemId) {
+            ContentValues ctv = new ContentValues(1);
+            ctv.put("fav_flg", 0);
+            int rows = db.update(DbHelper.TB_IMG_WEB_ITEM, ctv, "id = ?", new String[]{itemId});
+            MyLog.w("db_item_remove_fav: ", rows + "");
+            db.delete(DbHelper.TB_IMG_FAVORITE, "id = ?", new String[]{delId});
+            MyLog.w("delete", "id：" + delId);
+        }
+
+        /**
+         * 根据offset切出当前需要的部分id
+         * @param offset offset
+         * @return String[]
+         */
+        @Nullable
+        private int[] cutOffIds(int offset) {
+            if (duplicateIds.length > offset) {
+                int limit = duplicateIds.length >= offset + PAGE_SIZE ? PAGE_SIZE + offset : duplicateIds.length;
+                return Arrays.copyOfRange(duplicateIds, offset, limit);
+            } else {
+                return null;
+            }
+        }
+
+        @Contract("_, _, _ -> param2")
+        private List<Map<String, Object>> getList(int page, List<Map<String, Object>> favoriteList, String andWhere) {
+            int offset = (page - 1) * PAGE_SIZE;
+            String where = "type = '" + type + "'";
+            int[] ids = null;
+            if (andWhere != null) {
+                // 查重模式，需排序结果
+                if ("$dupl".equals(andWhere)) {
+                    ids = cutOffIds(offset);
+                    andWhere = "id in (" + Util.implode(ids) + ")";
+                    offset = 0;
+                }
+                where += " and " + andWhere;
+            }
+            String sql = "select * from " + DbHelper.TB_IMG_FAVORITE + " where " + where + " order by id desc limit " + PAGE_SIZE + " offset " + offset;
+            Cursor cus = db.rawQuery(sql, null);
+            int count = cus.getCount();
+            MyLog.w("getList：", count + "");
+            cus.moveToFirst();
+            String dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type + "/";
+            for (int i = 0, listSize = favoriteList.size(); i < PAGE_SIZE; i++) {
+                Map<String, Object> item;
+                if (i < listSize) {
+                    item = favoriteList.get(i);
+                } else {
+                    favoriteList.add(item = new HashMap<>(9));
+                }
+                if (count > i) {
+                    item.put("id", cus.getString(cus.getColumnIndex("id")));
+                    item.put("item_id", cus.getString(cus.getColumnIndex("item_id")));
+                    String title = cus.getString(cus.getColumnIndex("title"));
+                    item.put("title", title);
+                    item.put("url", cus.getString(cus.getColumnIndex("url")));
+                    item.put("real_url", cus.getString(cus.getColumnIndex("real_url")));
+                    item.put("type", cus.getString(cus.getColumnIndex("type")));
+                    String name = item.get("id") + "_" + title;
+                    cus.moveToNext();
+                    File file = new File(dir + name);
+                    if (file.exists()) {
+                        item.put("path", dir + name);
+                        // KB
+                        long size = file.length() >> 10;
+                        item.put("name", title + "（" + size + "K）" + "<span style='color: #13b294'>&emsp;√</span>");
+                    } else {
+                        item.put("path", "");
+                        item.put("name", title);
+                        file = diskLruCache.get(genCacheKey(item.get("id").toString(), "favorite"));
+                        if (file == null) {
+                            item.put("icon", getCachedIcon("default"));
+                            continue;
+                        }
+                        // KB
+                        long size = file.length() >> 10;
+                        item.put("name", title + "（" + size + "K）");
+                    }
+                    try {
+                        item.put("icon", new BitmapDrawable(getResources(), BitmapUtil.getBitmap(file, 50, 50)));
+                        /* MyLog.w("getList-oompress", "fileSize：" + file.length() >> 10 + " kB；compress：" + newOpts.inSampleSize); */
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    item.clear();
+                }
+            }
+            cus.close();
+            // 排序结果
+            if (ids != null) {
+                for (int i = 0, index = 0; i < ids.length; i++) {
+                    for (int j = index; j < count; j++) {
+                        if (ids[i] == Integer.valueOf((favoriteList.get(j).get("id").toString()))) {
+                            Map<String, Object> tmp = favoriteList.set(index++, favoriteList.get(j));
+                            favoriteList.set(j, tmp);
+                            break;
+                        }
+                    }
+                }
+            }
+            return favoriteList;
+        }
     }
 
     private void filterInputDialog(String conditions, @NonNull Consumer<String> consumer) {
@@ -1335,198 +1709,6 @@ public class GifActivity extends AppCompatActivity {
                 .create();
         dialog2.show();
         Objects.requireNonNull(dialog2.getWindow()).setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-    }
-
-    /**
-     * 查询重复的图片的favId
-     * {@code 第9条：优先使用try-with-resources而不是try-finally}
-     * @return String
-     */
-    @NonNull
-    private String getRepeatedItems(int level) {
-        File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);
-        File[] fileList = dir.listFiles(file -> file.isFile() && file.length() > 1024);
-        Properties props = new Properties();
-        File propFile = new File(dir, "meta");
-        try (FileReader fr = new FileReader(propFile)) {
-            props.load(fr);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        StringBuilder ids = new StringBuilder();
-        BitmapUtil.setDuplicateLevel(level);
-        if (fileList != null) {
-            long[] metas = new long[fileList.length];
-            for (int i = 0; i < fileList.length; i++) {
-                metas[i] = BitmapUtil.getCachedImgMeta(fileList[i], props);
-                /* MyLog.w("getRepeatedItems", fileList[i].getName() + "------" + Long.toBinaryString(metas[i])); */
-            }
-            for (int i = 0; i < fileList.length; i++) {
-                if (metas[i] == 0 || metas[i] == -1) {
-                    continue;
-                }
-                boolean flg = false;
-                for (int j = i + 1; j < fileList.length; j++) {
-                    if (metas[j] == 0 || metas[j] == -1) {
-                        continue;
-                    }
-                    if (BitmapUtil.cmpImgMeta(metas[i], metas[j])) {
-                        flg = true;
-                        /* MyLog.w("getRepeatedItems", fileList[j].getName() + "------" + Long.toBinaryString(metas[j])); */
-                        metas[j] = 0;
-                        String fname = fileList[j].getName();
-                        int idx = fname.indexOf("_");
-                        if (idx < FAVORITE_ID_LENGTH && idx > 0) {
-                            ids.append(fname, 0, idx).append(",");
-                        }
-                    }
-                }
-                if (flg) {
-                    /* MyLog.w("getRepeatedItems", fileList[i].getName() + "------" + Long.toBinaryString(metas[i])); */
-                    metas[i] = 0;
-                    String fname = fileList[i].getName();
-                    int idx = fname.indexOf("_");
-                    /* MyLog.w("getRepeatedItems", "___________________"); */
-                    if (idx < FAVORITE_ID_LENGTH && idx > 0) {
-                        ids.append(fname, 0, idx).append(",");
-                    }
-                }
-            }
-            if (ids.length() > 0) {
-                ids.deleteCharAt(ids.lastIndexOf(","));
-            }
-        }
-        MyLog.w("getRepeatedItems:ret", ids.toString());
-        try (FileWriter fw = new FileWriter(propFile)) {
-            props.store(fw, "img meta");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return ids.toString();
-    }
-
-    private int getFavoriteCount(String andWhere) {
-        String where = "type = '" + type + "'";
-        if (StringUtil.notBlank(andWhere)) {
-            // 处理查重特殊条件
-            if (andWhere.startsWith("$")) {
-                andWhere = "id in (" + andWhere.substring(1) + ")";
-            }
-            where += " and " + andWhere;
-        }
-        Cursor cus = db.rawQuery("select count(*) from " + DbHelper.TB_IMG_FAVORITE + " where " + where, null);
-        cus.moveToFirst();
-        int count = cus.getInt(0);
-        cus.close();
-        MyLog.w("getFavoriteCount", count + "");
-        return count;
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    private void viewFav(@NonNull PageListPopupWindow listPopupWindow, int position) {
-        final Dialog dialog = new Dialog(this, android.R.style.Theme_Material_Dialog_Alert);
-        GifImageView imgView = new GifImageView(this);
-        List<Map<String, Object>> favoriteList = listPopupWindow.getList();
-        imgView.setImageDrawable(iconCacheList.get("default"));
-        imgView.setOnLongClickListener(v -> {
-            Map<String, Object> item = favoriteList.get(position);
-            String id = (String) item.get("id");
-            String name = id + "_" + item.get("title");
-            String cacheKey = genCacheKey(item.get("id").toString(), "favorite");
-            // 混合图网页（3dm）
-            download(item.get("type") + "/" + name, cacheKey);
-            return false;
-        });
-        imgView.setOnTouchListener(new View.OnTouchListener() {
-            private int favImgPos = position;
-            private int vScrollX;
-            private float mPosX, mPosY, mCurPosX, mCurPosY;
-            private final Runnable runnable = imgView::performLongClick;
-
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        vScrollX = v.getScrollX();
-                        mPosX = mCurPosX = event.getX();
-                        mPosY = mCurPosY = event.getY();
-                        MyHandler.instance.postDelayed(runnable, 500);
-                        break;
-                    case MotionEvent.ACTION_MOVE:
-                        if (mCurPosX == mPosX) {
-                            MyHandler.instance.removeCallbacks(runnable);
-                        }
-                        mCurPosX = event.getX();
-                        v.setScrollX((int) (mPosX - mCurPosX + vScrollX));
-                        break;
-                    case MotionEvent.ACTION_UP:
-                        mCurPosY = event.getY();
-                        v.setScrollX(vScrollX);
-                        MyHandler.instance.removeCallbacks(runnable);
-//                        if (mCurPosY - mPosY > 0
-//                                && (Math.abs(mCurPosY - mPosY) > 25)) {//向下滑動
-//                        } else if (mCurPosY - mPosY < 0
-//                                && (Math.abs(mCurPosY - mPosY) > 25)) {//向上滑动
-//                        }
-                        // 向左滑動
-                        int hInterval = 200, vInterval = 250;
-                        if (mCurPosX - mPosX > hInterval) {
-                            viewPre();
-                            break;
-                        // 向右滑动
-                        } else if (mCurPosX - mPosX < -hInterval) {
-                            viewNext();
-                            break;
-                        }
-                        if (mCurPosY - mPosY > vInterval) {
-                            dialog.dismiss();
-                            break;
-                        }
-                        break;
-                    default:
-                        break;
-                }
-                return true;
-            }
-
-            private void viewPre() {
-                if (favImgPos > 0) {
-                    favImgPos--;
-                } else {
-                    if (listPopupWindow.hasPrePage()) {
-                        listPopupWindow.prePage();
-                        favImgPos = FAVORITE_PAGE_SIZE - 1;
-                    } else {
-                        GifActivity.this.alert(getString(R.string.no_more));
-                        return;
-                    }
-                }
-                loadFavImg(dialog, imgView, favoriteList.get(favImgPos));
-            }
-
-            private void viewNext() {
-                if (favImgPos < favoriteList.size() - 1) {
-                    if (favoriteList.get(favImgPos + 1).isEmpty()) {
-                        GifActivity.this.alert(getString(R.string.no_more));
-                        return;
-                    }
-                    ++favImgPos;
-                } else {
-                    if (listPopupWindow.hasNextPage()) {
-                        favImgPos = 0;
-                        listPopupWindow.nextPage();
-                    } else {
-                        GifActivity.this.alert(getString(R.string.no_more));
-                        return;
-                    }
-                }
-                loadFavImg(dialog, imgView, favoriteList.get(favImgPos));
-            }
-        });
-        Objects.requireNonNull(dialog.getWindow()).setBackgroundDrawable(new ColorDrawable(0x3f009688));
-        dialog.setContentView(imgView);
-        loadFavImg(dialog, imgView, favoriteList.get(position));
-        dialog.show();
     }
 
     /**
@@ -1586,23 +1768,6 @@ public class GifActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         });
-    }
-
-    private void loadFavImg(@NonNull Dialog dialog, GifImageView imgView, @NonNull Map<String, Object> item) {
-        String title = (String) item.get("title");
-        String url = (String) item.get("real_url");
-        url = StringUtil.notBlank(url) ? url : (String) item.get("url");
-        dialog.setTitle(Html.fromHtml("<p style='color: #F66725; text-align: center'>" + title + "</p>", Html.FROM_HTML_MODE_COMPACT));
-        ImgViewTask.newInstance(imgView, this)
-                .executeOnExecutor(threadPoolExecutor, title, url, (String) item.get("id"), (String) item.get("path"));
-    }
-
-    @NonNull
-    private String genCacheKey(String subfix, @NonNull String keyType) {
-        if ("favorite".equals(keyType)) {
-            return "favorite_" + type + "-" + subfix;
-        }
-        return webName + "_" + ART_ID_PATTERN.matcher(artId).replaceAll("#") + "-" + subfix;
     }
 
     /**
@@ -1746,160 +1911,12 @@ public class GifActivity extends AppCompatActivity {
         }
     }
 
-    private void deleteFavoriteAlert(@NonNull Map<String, Object> item,@NonNull Runnable callback) {
-        String id = (String) item.get("id");
-        String itemId = (String) item.get("item_id");
-        //创建对话框
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                // 设置图标
-                .setIcon(R.drawable.ic_info_black_24dp)
-                // 设置标题
-                .setTitle(R.string.delete)
-                .setPositiveButton(R.string.delete, (dialog1, which) -> {
-                    deleteFavorite(id, itemId);
-                    callback.run();
-                }).setNegativeButton(R.string.delete_file, (dialog1, which) -> {
-                    File favFile = new File((String) item.get("path"));
-                    if (favFile.exists() && favFile.delete()) {
-                        alert(getString(R.string.delete_success));
-                    } else {
-                        alert(getString(R.string.file_is_lost));
-                    }
-                }).setNeutralButton(R.string.delete_fav_and_file, (dialogInterface, i) -> {
-                    File favFile = new File((String) item.get("path"));
-                    if (favFile.exists() && favFile.delete()) {
-                        alert(getString(R.string.delete_success));
-                    } else {
-                        alert(getString(R.string.file_is_lost));
-                    }
-                    deleteFavorite(id, itemId);
-                    callback.run();
-                })
-                .create();
-        dialog.show();
-    }
-
-    /**
-     * 删除收藏
-     * @param delId fav_id
-     * @param itemId art_id
-     */
-    private void deleteFavorite(String delId, String itemId) {
-        ContentValues ctv = new ContentValues(1);
-        ctv.put("fav_flg", 0);
-        int rows = db.update(DbHelper.TB_IMG_WEB_ITEM, ctv, "id = ?", new String[]{itemId});
-        MyLog.w("db_item_remove_fav: ", rows + "");
-        db.delete(DbHelper.TB_IMG_FAVORITE, "id = ?", new String[]{delId});
-        MyLog.w("deleteFavorite", "id：" + delId);
-    }
-
-    /**
-     * 根据查重排序where条件获取ids数组
-     * @param where 原始条件
-     * @param offset offset
-     * @return String[]
-     */
-    private String[] parseDuplicateCheckingIds(String where, int offset) {
-        String[] ids = where.split(",");
-        if (ids.length > offset) {
-            if (offset == 0) {
-                ids[0] = ids[0].substring(1);
-            }
-            int limit = ids.length >= offset + FAVORITE_PAGE_SIZE ? FAVORITE_PAGE_SIZE + offset : ids.length;
-            return Arrays.copyOfRange(ids, offset, limit);
-        } else {
-            return null;
+    @NonNull
+    private String genCacheKey(String subfix, @NonNull String keyType) {
+        if ("favorite".equals(keyType)) {
+            return "favorite_" + type + "-" + subfix;
         }
-    }
-
-    @Contract("_, _, _ -> param2")
-    private List<Map<String, Object>> getFavoriteList(int page, List<Map<String, Object>> favoriteList, String andWhere) {
-        int offset = (page - 1) * FAVORITE_PAGE_SIZE;
-        String where = "type = '" + type + "'";
-        String[] ids = null;
-        if (andWhere != null) {
-            // 查重模式，需排序结果
-            if (andWhere.startsWith("$")) {
-                ids = parseDuplicateCheckingIds(andWhere, offset);
-                if (ids != null) {
-                    StringBuilder parsedWhere = new StringBuilder("id in (");
-                    for (String id : ids) {
-                        parsedWhere.append(id).append(",");
-                    }
-                    parsedWhere.append(ids[0]).append(")");
-                    andWhere = parsedWhere.toString();
-                    offset = 0;
-                } else {
-                    andWhere = "1 != 1";
-                }
-            }
-            where += " and " + andWhere;
-        }
-        String sql = "select * from " + DbHelper.TB_IMG_FAVORITE + " where " + where + " order by id desc limit " + FAVORITE_PAGE_SIZE + " offset " + offset;
-        Cursor cus = db.rawQuery(sql, null);
-        int count = cus.getCount();
-        MyLog.w("getFavoriteList：", count + "");
-        cus.moveToFirst();
-        String dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type + "/";
-        for (int i = 0, listSize = favoriteList.size(); i < FAVORITE_PAGE_SIZE; i++) {
-            Map<String, Object> item;
-            if (i < listSize) {
-                item = favoriteList.get(i);
-            } else {
-                favoriteList.add(item = new HashMap<>(9));
-            }
-            if (count > i) {
-                item.put("id", cus.getString(cus.getColumnIndex("id")));
-                item.put("item_id", cus.getString(cus.getColumnIndex("item_id")));
-                String title = cus.getString(cus.getColumnIndex("title"));
-                item.put("title", title);
-                item.put("url", cus.getString(cus.getColumnIndex("url")));
-                item.put("real_url", cus.getString(cus.getColumnIndex("real_url")));
-                item.put("type", cus.getString(cus.getColumnIndex("type")));
-                String name = item.get("id") + "_" + title;
-                cus.moveToNext();
-                File file = new File(dir + name);
-                if (file.exists()) {
-                    item.put("path", dir + name);
-                    // KB
-                    long size = file.length() >> 10;
-                    item.put("name", title + "（" + size + "K）" + "<span style='color: #13b294'>&emsp;√</span>");
-                } else {
-                    item.put("path", "");
-                    item.put("name", title);
-                    file = diskLruCache.get(genCacheKey(item.get("id").toString(), "favorite"));
-                    if (file == null) {
-                        item.put("icon", iconCacheList.get("default"));
-                        continue;
-                    }
-                    // KB
-                    long size = file.length() >> 10;
-                    item.put("name", title + "（" + size + "K）");
-                }
-                try {
-                    item.put("icon", new BitmapDrawable(getResources(), BitmapUtil.getBitmap(file, 50, 50)));
-                    /* MyLog.w("getFavoriteList-oompress", "fileSize：" + file.length() >> 10 + " kB；compress：" + newOpts.inSampleSize); */
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } else {
-                item.clear();
-            }
-        }
-        cus.close();
-        // 排序结果
-        if (ids != null) {
-            for (int i = 0, index = 0; i < ids.length; i++) {
-                for (int j = index; j < count; j++) {
-                    if (ids[i].equals(favoriteList.get(j).get("id").toString())) {
-                        Map<String, Object> tmp = favoriteList.set(index++, favoriteList.get(j));
-                        favoriteList.set(j, tmp);
-                        break;
-                    }
-                }
-            }
-        }
-        return favoriteList;
+        return webName + "_" + ART_ID_PATTERN.matcher(artId).replaceAll("#") + "-" + subfix;
     }
 
     private void checkPageEnd() {
@@ -2451,7 +2468,7 @@ public class GifActivity extends AppCompatActivity {
                     TextView tv = rootView.findViewById(fragment.getResources().getIdentifier("gtxt_" + position, "id", activity.getPackageName()));
                     tv.setText((String) msg.obj);
                     if (activity.diskLruCache.isNotExists(activity.genCacheKey(String.valueOf(fragment.getImgOffset(position)), ""))) {
-                        imageView.setImageDrawable(activity.iconCacheList.get("loading"));
+                        imageView.setImageDrawable(activity.getCachedIcon("loading"));
                         imageView.setMinimumHeight(90);
                         imageView.setMinimumWidth(90);
                         imageView.setAnimation(AnimationUtils.loadAnimation(activity, R.anim.load_rotate));

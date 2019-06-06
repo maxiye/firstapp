@@ -387,8 +387,14 @@ public class ExampleUnitTest {
         BitSet bitSet = BitSet.valueOf(new long[]{2323234L,-123432342342L,3232323L,323433234234L});
         System.out.println(bitSet.toString());
         System.out.println(Arrays.toString(new int[55]));
-
-
     }
 
+    @Test
+    public void arrayCopyTest() {
+        int[] t = new int[]{1, 5, 22, 999, 22};
+        int[] t1 = Arrays.copyOf(t, t.length + (t.length >> 1));
+        int[] t2 = Arrays.copyOf(t, t.length >> 1);
+        System.out.println(Arrays.toString(t1));
+        System.out.println(Arrays.toString(t2));
+    }
 }

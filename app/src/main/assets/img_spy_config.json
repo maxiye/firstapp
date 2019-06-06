@@ -1,4 +1,12 @@
 {
+  "icon": {
+    "gamersky": "gamersky.png",
+    "yxdown": "yxdown.png",
+    "duowan": "duowan.jpg",
+    "17173": "17173.ico",
+    "ali213": "ali213.png",
+    "3dm": "3dm.png"
+  },
   "gif": {
     "gamersky": {
       "web_root": "http://www.gamersky.com",

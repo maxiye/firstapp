@@ -22,7 +22,6 @@ import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.maxiye.first.GifActivity;
 import com.maxiye.first.R;
 
 import org.jetbrains.annotations.Contract;
@@ -542,111 +541,97 @@ public class BitmapUtil {
         return diffCount <= DUPLICATE_LEVEL;
     }
 
-    /**
-     * 获取重复图片项
-     * @param type 图片类型
-     * @param level 查重等级
-     * @return ids
-     */
-    public static String getDuplicateIds(String type, int level) {
-        File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);
-        File[] fileList = dir.listFiles(file -> file.isFile() && file.length() > 1024);
-        int count = fileList.length;
-        RandomAccessFile raf;
-        File cache = new File(dir, "meta256");
-        SparseArray<long[]> metas = new SparseArray<>(count);
-        try {
-            if (!cache.exists() && !cache.createNewFile()) {
-                throw new IOException("File create fail");
-            }
-            raf = new RandomAccessFile(cache, "rw");
-            long readed = 0, length = raf.length();
-            if (length % 36 != 0) {
-                if (!cache.delete()) {
-                    throw new IOException("Cache delete failed");
+    private static class ImageMetaCache {
+        private SparseArray<long[]> mArr;
+        private RandomAccessFile raf;
+
+        ImageMetaCache(File dir, int count) {
+            mArr = new SparseArray<>(count);
+            File file = new File(dir, "meta256");
+            try {
+                if (!file.exists() && !file.createNewFile()) {
+                    throw new IOException("File create fail");
                 }
-                throw new IOException("Cache file is invalid");
-            }
-            while (readed < length) {
-                int index = raf.readInt();
-                long[] meta = new long[]{
-                        raf.readLong(),
-                        raf.readLong(),
-                        raf.readLong(),
-                        raf.readLong()
-                };
-                metas.append(index, meta);
-                // int(4) + long(8) * 4 = 36;
-                readed += 36;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            return "";
-        }
-        StringBuilder ids = new StringBuilder();
-        setDuplicateLevel(level);
-        int[] idArray = new int[count];
-        long[][] metaArray = new long[count][4];
-        for (int i = 0; i < count; i++) {
-            String fname = fileList[i].getName();
-            int pos = fname.indexOf("_");
-            if (pos < GifActivity.FAVORITE_ID_LENGTH && pos > 0) {
-                int id = Integer.valueOf(fname.substring(0, pos));
-                int index = metas.indexOfKey(id);
-                long[] meta;
-                if (index >= 0) {
-                    meta = metaArray[i] = metas.valueAt(index);
+                raf = new RandomAccessFile(file, "rw");
+                long length = raf.length();
+                if (length % 36 != 0) {
+                    if (!file.delete()) {
+                        MyLog.w("ImageMetaCache", "Meta file delete failed!");
+                    }
                 } else {
-                    meta = metaArray[i] = BitmapUtil.calcImgMeta2(BitmapUtil.getBitmap(fileList[i], 16, 16));
-                    metas.append(id, meta);
+                    long readed = 0;
+                    mArr.append(0, new long[]{0, 0, 0, 0});
+                    while (readed < length) {
+                        int index = raf.readInt();
+                        long[] meta = new long[]{
+                                raf.readLong(),
+                                raf.readLong(),
+                                raf.readLong(),
+                                raf.readLong()
+                        };
+                        mArr.append(index, meta);
+                        // int(4) + long(8) * 4 = 36;
+                        readed += 36;
+                    }
                 }
-                if (meta[0] != 0 || meta[1] != 0 || meta[2] != 0 || meta[3] != 0) {
-                    idArray[i] = id;
-                }
-            }
-            /* MyLog.w("getRepeatedItems", fileList[i].getName() + "------" + Long.toBinaryString(metas[i])); */
-        }
-        for (int i = 0; i < count; i++) {
-            long[] metaI = metaArray[i];
-            if (idArray[i] == 0 || metaI == null) {
-                continue;
-            }
-            boolean flg = false;
-            for (int j = i + 1; j < count; j++) {
-                long[] metaJ = metaArray[j];
-                if (idArray[j] == 0 || metaJ == null) {
-                    continue;
-                }
-                if (BitmapUtil.cmpImgMeta2(metaI, metaJ)) {
-                    flg = true;
-                    ids.append(idArray[j]).append(",");
-                    idArray[j] = 0;
-                }
-            }
-            if (flg) {
-                ids.append(idArray[i]).append(",");
-                idArray[i] = 0;
+            } catch (IOException e) {
+                e.printStackTrace();
+                MyLog.w("ImageMetaCache", e.getLocalizedMessage());
             }
         }
-        if (ids.length() > 0) {
-            ids.deleteCharAt(ids.lastIndexOf(","));
+
+        int size() {
+            return mArr.size();
         }
-        MyLog.w("getRepeatedItems:ret", ids.toString());
-        try {
-            raf.seek(0);
-            for (int i = 0; i < metas.size(); i++) {
-                int key = metas.keyAt(i);
-                raf.writeInt(key);
-                long[] meta = metas.valueAt(i);
-                for (long l : meta) {
-                    raf.writeLong(l);
-                }
+
+        /**
+         * 根据key获取meta
+         * @param key arrayKey
+         * @return meta
+         */
+        long[] getMeta(int key, File file) {
+            int index = mArr.indexOfKey(key);
+            if (index >= 0) {
+                return mArr.valueAt(index);
+            } else {
+                long[] meta = BitmapUtil.calcImgMeta2(BitmapUtil.getBitmap(file, 16, 16));
+                mArr.append(key, meta);
+                return meta;
             }
-            raf.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-        return ids.toString();
+
+        /**
+         * 刷新缓存文件并关闭资源
+         */
+        void flushAndClose() {
+            try {
+                raf.seek(0);
+                for (int i = 0; i < mArr.size(); i++) {
+                    int key = mArr.keyAt(i);
+                    raf.writeInt(key);
+                    long[] meta = mArr.valueAt(i);
+                    for (long l : meta) {
+                        raf.writeLong(l);
+                    }
+                }
+                mArr = null;
+                raf.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        int keyAt(int index) {
+            return mArr.keyAt(index);
+        }
+
+        long[] valueAt(int index) {
+            return mArr.valueAt(index);
+        }
+
+        void append(int id, long[] meta) {
+            mArr.append(id, meta);
+        }
     }
 
     /**
@@ -655,8 +640,57 @@ public class BitmapUtil {
      * @param level 查重等级
      * @return ids
      */
+    public static int[] getDuplicateIds(String type, int level) {
+        File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);
+        File[] fileList = dir.listFiles(file -> file.isFile() && file.length() > 1024);
+        int count = fileList.length;
+        ImageMetaCache metaCache = new ImageMetaCache(dir, count);
+        setDuplicateLevel(level);
+        int[] idArray = new int[count];
+        // 根据meta类型
+        long[][] metaArray = new long[count][4];
+        for (int i = 0; i < count; i++) {
+            String fname = fileList[i].getName();
+            int id = Util.getFavId(fname);
+            long[] meta = metaArray[i] = metaCache.getMeta(id, fileList[i]);
+            if (meta[0] != 0 || meta[1] != 0 || meta[2] != 0 || meta[3] != 0) {
+                idArray[i] = id;
+            }
+        }
+        IntList ids = new IntList((count >> 10) * level);
+        for (int i = 0; i < count; i++) {
+            if (idArray[i] == 0) {
+                continue;
+            }
+            boolean flg = false;
+            for (int j = i + 1; j < count; j++) {
+                if (idArray[j] == 0) {
+                    continue;
+                }
+                if (cmpImgMeta2(metaArray[i], metaArray[j])) {
+                    flg = true;
+                    ids.add(idArray[j]);
+                    idArray[j] = 0;
+                }
+            }
+            if (flg) {
+                ids.add(idArray[i]);
+                idArray[i] = 0;
+            }
+        }
+        MyLog.w("getRepeatedItems:ret", ids.toString());
+        metaCache.flushAndClose();
+        return ids.toArray();
+    }
+
+    /**
+     * 获取重复图片项数据量增大后优化方法
+     * @param type 图片类型
+     * @param level 查重等级
+     * @return ids
+     */
     @SuppressWarnings("unused")
-    public static String getDuplicateIdsExt(String type, int level) {
+    public static int[] getDuplicateIdsExt(String type, int level) {
         File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);
         File[] fileList = dir.listFiles(file -> file.isFile() && file.length() > 1024);
         int count = fileList.length;
@@ -664,11 +698,7 @@ public class BitmapUtil {
         HashMap<String, Integer> name2IdMap = new HashMap<>(count);
         for (File f : fileList) {
             String name = f.getName();
-            int pos = name.indexOf("_");
-            int id = Integer.MAX_VALUE;
-            if (pos < GifActivity.FAVORITE_ID_LENGTH && pos > 0) {
-                id = Integer.valueOf(name.substring(0, pos));
-            }
+            int id = Util.getFavId(name);
             name2IdMap.put(name, id);
         }
         // id递增排序
@@ -677,38 +707,7 @@ public class BitmapUtil {
             int id2 = name2IdMap.get(f2.getName());
             return Integer.compare(id1, id2);
         });
-        RandomAccessFile raf;
-        File cache = new File(dir, "meta256");
-        SparseArray<long[]> metas = new SparseArray<>(count);
-        try {
-            if (!cache.exists() && !cache.createNewFile()) {
-                throw new IOException("File create fail");
-            }
-            raf = new RandomAccessFile(cache, "rw");
-            long readed = 0, length = raf.length();
-            if (length % 36 != 0) {
-                if (!cache.delete()) {
-                    throw new IOException("Cache delete failed");
-                }
-                throw new IOException("Cache file is invalid");
-            }
-            while (readed < length) {
-                int index = raf.readInt();
-                long[] meta = new long[]{
-                        raf.readLong(),
-                        raf.readLong(),
-                        raf.readLong(),
-                        raf.readLong()
-                };
-                metas.append(index, meta);
-                // int(4) + long(8) * 4 = 36;
-                readed += 36;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            return "";
-        }
-        StringBuilder ids = new StringBuilder();
+        ImageMetaCache metaCache = new ImageMetaCache(dir, count);
         setDuplicateLevel(level);
         int[] idArray = new int[count];
         long[][] metaArray = new long[count][4];
@@ -716,16 +715,16 @@ public class BitmapUtil {
             String fname = fileList[i].getName();
             int id = name2IdMap.get(fname);
             if (id != 0) {
-                int key = 0, mSize = metas.size();
-                while (j < mSize && (key = metas.keyAt(j)) < id) {
+                int key = 0, mSize = metaCache.size();
+                while (j < mSize && (key = metaCache.keyAt(j)) < id) {
                     ++j;
                 }
                 long[] meta;
                 if (key == id) {
-                    meta = metaArray[i] = metas.valueAt(j);
+                    meta = metaArray[i] = metaCache.valueAt(j);
                 } else {
                     meta = metaArray[i] = BitmapUtil.calcImgMeta2(BitmapUtil.getBitmap(fileList[i], 16, 16));
-                    metas.append(id, meta);
+                    metaCache.append(id, meta);
                 }
                 if (meta[0] != 0 || meta[1] != 0 || meta[2] != 0 || meta[3] != 0) {
                     idArray[i] = id;
@@ -733,6 +732,7 @@ public class BitmapUtil {
             }
             /* MyLog.w("getRepeatedItems", fileList[i].getName() + "------" + Long.toBinaryString(metas[i])); */
         }
+        IntList ids = new IntList((count >> 10) * level);
         for (int i = 0; i < count; i++) {
             long[] metaI = metaArray[i];
             if (idArray[i] == 0 || metaI == null) {
@@ -746,34 +746,17 @@ public class BitmapUtil {
                 }
                 if (BitmapUtil.cmpImgMeta2(metaI, metaJ)) {
                     flg = true;
-                    ids.append(idArray[j]).append(",");
+                    ids.add(idArray[j]);
                     idArray[j] = 0;
                 }
             }
             if (flg) {
-                ids.append(idArray[i]).append(",");
+                ids.add(idArray[i]);
                 idArray[i] = 0;
             }
         }
-        if (ids.length() > 0) {
-            ids.deleteCharAt(ids.lastIndexOf(","));
-        }
-        MyLog.w("getRepeatedItems:ret", ids.toString());
-        try {
-            raf.seek(0);
-            for (int i = 0; i < metas.size(); i++) {
-                int key = metas.keyAt(i);
-                raf.writeInt(key);
-                long[] meta = metas.valueAt(i);
-                for (long l : meta) {
-                    raf.writeLong(l);
-                }
-            }
-            raf.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return ids.toString();
+        metaCache.flushAndClose();
+        return ids.toArray();
     }
 
     /**
