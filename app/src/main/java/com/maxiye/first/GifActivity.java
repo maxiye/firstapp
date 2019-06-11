@@ -147,7 +147,11 @@ public class GifActivity extends AppCompatActivity {
      */
     public static final String GET_NEW_FLG_ARG = "GifActivity.getNewFlg";
     public static final String WEB_NAME_ARG = "GifActivity.webName";
-    private static final Pattern ART_ID_PATTERN = Pattern.compile("[?*:\"\\\\<>/|]");
+    private static final Pattern ART_FILTER_PATTERN = Pattern.compile("[?*:\"\\\\<>/|]");
+    /**
+     * 当前art_id 匹配模式 ，以后可能更新
+     */
+    private static final Pattern ART_ID_PATTERN = Pattern.compile("[\\d_/\\-]{1,20}");
     private static final String DEFAULT_TITLE = "动态图";
     public static final String TYPE_GIF = "gif";
     public static final String TYPE_BITMAP = "bitmap";
@@ -236,28 +240,10 @@ public class GifActivity extends AppCompatActivity {
         // db获取,ui线程运行的 toast 可能报错
         db = DbHelper.newDb(this);
         // 网络监听
-        NetworkUtil.register(this, new ConnectivityManager.NetworkCallback() {
-            @Override
-            public void onAvailable(Network network) {
-                if (isGprs = NetworkUtil.isGprs(getApplicationContext())) {
-                    alert(getString(R.string.gprs_network));
-                    gprsContinue = false;
-                }
-                super.onAvailable(network);
-            }
-
-            @Override
-            public void onLost(Network network) {
-                alert(getString(R.string.no_internet));
-                super.onLost(network);
-            }
-        });
+        watchNetwork();
         initPage();
-        SwipeRefreshLayout refreshLayout = findViewById(R.id.gif_swipe_layout);
-        refreshLayout.setOnRefreshListener(() -> {
-            refresh();
-            refreshLayout.setRefreshing(false);
-        });
+        // 下拉刷新配置
+        swipeRefresh();
         MyLog.w("end", "onCreateOver");
     }
 
@@ -294,6 +280,63 @@ public class GifActivity extends AppCompatActivity {
     protected void onPause() {
         diskLruCache.serialize();
         super.onPause();
+    }
+
+    private void watchNetwork() {
+        NetworkUtil.register(this, new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onAvailable(Network network) {
+                if (isGprs = NetworkUtil.isGprs(getApplicationContext())) {
+                    alert(getString(R.string.gprs_network));
+                    gprsContinue = false;
+                }
+                super.onAvailable(network);
+            }
+
+            @Override
+            public void onLost(Network network) {
+                alert(getString(R.string.no_internet));
+                super.onLost(network);
+            }
+        });
+    }
+
+    private void swipeRefresh() {
+        SwipeRefreshLayout refreshLayout = findViewById(R.id.gif_swipe_layout);
+        refreshLayout.setOnRefreshListener(() -> {
+            refresh();
+            refreshLayout.setRefreshing(false);
+        });
+        mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            private int startPage = 0;
+            private int endPage = 0;
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                // MyLog.w("onPageScrolled", position + ";" + positionOffset + ";" + positionOffsetPixels);
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                // onPageSelected先触发，然后onPageScrollStateChanged state == 0 触发
+                endPage = position;
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                // MyLog.w("onPageScrollStateChanged", state + "");
+                // 左右滑动开始
+                if (state == 1) {
+                    startPage = endPage;
+                    refreshLayout.setEnabled(false);
+                }
+                // 2 左划停止，开始右滑，或相反
+                // 左右滚动停止
+                if (state == 0 && startPage == endPage) {
+                    // 滑动后返回原页开启下滑刷新
+                    refreshLayout.setEnabled(true);
+                }
+            }
+        });
     }
 
     @Override
@@ -686,8 +729,18 @@ public class GifActivity extends AppCompatActivity {
         //实例化布局
         View view2 = LayoutInflater.from(this).inflate(R.layout.dialog_edittext, findViewById(R.id.get_img_ll), false);
         EditText articleId = view2.findViewById(R.id.dialog_input);
+        ClipboardManager clm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData primaryClip;
+        CharSequence copiedId = null;
         articleId.setHint(R.string.input_artid);
+        if (clm != null && (primaryClip = clm.getPrimaryClip()) != null) {
+            copiedId = primaryClip.getItemAt(0).getText();
+            if (ART_ID_PATTERN.matcher(copiedId).matches()) {
+                articleId.setHint(copiedId);
+            }
+        }
         //创建对话框
+        String finalCopiedId = copiedId == null ? "" : copiedId.toString();
         AlertDialog dialog2 = new AlertDialog.Builder(this)
                 // 设置图标
                 .setIcon(R.drawable.ic_info_black_24dp)
@@ -697,7 +750,7 @@ public class GifActivity extends AppCompatActivity {
                 .setView(view2)
                 .setPositiveButton(R.string.go_to, (dialog1, which) -> {
                     String txt = articleId.getText().toString();
-                    if (StringUtil.notBlank(txt)) {
+                    if (StringUtil.notBlank(txt) || StringUtil.notBlank((txt = finalCopiedId))) {
                         artId = txt;
                         initPage();
                     } else {
@@ -1278,9 +1331,8 @@ public class GifActivity extends AppCompatActivity {
                         loading();
                         threadPoolExecutor.execute(() -> {
                             try {
-                                int[] favIds = BitmapUtil.getDuplicateIds(type, seekBar.getProgress());
+                                duplicateIds = BitmapUtil.getDuplicateIds(type, seekBar.getProgress());
                                 runOnUiThread(() -> {
-                                    duplicateIds = favIds;
                                     // $ 表示特殊解析模式，使用 in 查询，排序输出
                                     filter.accept("$dupl");
                                     loading.dismiss();
@@ -1294,10 +1346,9 @@ public class GifActivity extends AppCompatActivity {
                         loading();
                         threadPoolExecutor.execute(() -> {
                             try {
-                                int[] favIds = getRepeatedItems(seekBar.getProgress());
-                                MyLog.w("getRepeatedItems", Arrays.toString(favIds));
+                                duplicateIds = getRepeatedItems(seekBar.getProgress());
+                                MyLog.w("getRepeatedItems", Arrays.toString(duplicateIds));
                                 runOnUiThread(() -> {
-                                    duplicateIds = favIds;
                                     // $ 表示特殊解析模式，使用 in 查询，排序输出
                                     filter.accept("$dupl");
                                     loading.dismiss();
@@ -1320,18 +1371,25 @@ public class GifActivity extends AppCompatActivity {
                 String web = cursor.getString(0);
                 String itemType = cursor.getString(1);
                 String art = cursor.getString(2);
-                //创建对话框
+                // 查询计算页码
+                Cursor cursor2 = db.query(DbHelper.TB_IMG_WEB_ITEM, new String[]{"count(*)"}, "id < ? and art_id = ? and web_name = ?", new String[]{itemId, art, web}, null, null, null);
+                cursor2.moveToFirst();
+                int pageAt = cursor2.getInt(0) / 3 + 1;
+                cursor2.close();
+                // 查询文章标题
+                Cursor cursor3 = db.query(DbHelper.TB_IMG_WEB, new String[]{"title"}, "web_name = ? and art_id = ?", new String[]{web, art}, null, null, null);
+                cursor3.moveToFirst();
+                String head = cursor3.getCount() > 0 ? cursor3.getString(0) : "";
+                cursor3.close();
+                // 创建对话框
                 AlertDialog dialog2 = new AlertDialog.Builder(GifActivity.this)
                         // 设置图标
                         .setIcon(R.drawable.ic_info_black_24dp)
                         // 设置标题
                         .setTitle(R.string.track_source)
+                        .setMessage(web + "," + itemType + "," + head + "," + pageAt)
                         .setPositiveButton(R.string.current_page, (dialog, which) -> {
-                            Cursor cursor2 = db.query(DbHelper.TB_IMG_WEB_ITEM, new String[]{"count(*)"}, "id < ? and art_id = ? and web_name = ?", new String[]{itemId, art, web}, null, null, null);
-                            cursor2.moveToFirst();
-                            int offset = cursor2.getInt(0);
-                            cursor2.close();
-                            locate(itemType, web, art, offset / 3 + 1);
+                            locate(itemType, web, art, pageAt);
                             dialog.dismiss();
                             callback.run();
                         }).setNegativeButton(R.string.cancel, (dialog, which) -> {
@@ -1415,9 +1473,9 @@ public class GifActivity extends AppCompatActivity {
         private int getCount(String andWhere) {
             String where = "type = '" + type + "'";
             if (StringUtil.notBlank(andWhere)) {
-                // 处理查重特殊条件
-                if (andWhere.startsWith("$")) {
-                    andWhere = "id in (" + andWhere.substring(1) + ")";
+                // 查重模式，需排序结果
+                if ("$dupl".equals(andWhere)) {
+                    andWhere = "id in (" + DbHelper.buildInCondition(duplicateIds) + ")";
                 }
                 where += " and " + andWhere;
             }
@@ -1616,7 +1674,7 @@ public class GifActivity extends AppCompatActivity {
                 // 查重模式，需排序结果
                 if ("$dupl".equals(andWhere)) {
                     ids = cutOffIds(offset);
-                    andWhere = "id in (" + Util.implode(ids) + ")";
+                    andWhere = "id in (" + DbHelper.buildInCondition(ids) + ")";
                     offset = 0;
                 }
                 where += " and " + andWhere;
@@ -1916,7 +1974,7 @@ public class GifActivity extends AppCompatActivity {
         if ("favorite".equals(keyType)) {
             return "favorite_" + type + "-" + subfix;
         }
-        return webName + "_" + ART_ID_PATTERN.matcher(artId).replaceAll("#") + "-" + subfix;
+        return webName + "_" + ART_FILTER_PATTERN.matcher(artId).replaceAll("#") + "-" + subfix;
     }
 
     private void checkPageEnd() {
@@ -2231,7 +2289,6 @@ public class GifActivity extends AppCompatActivity {
                         ContentValues ctv = new ContentValues(10);
                         ctv.put("item_id", cus.getLong(cus.getColumnIndex("id")));
                         ctv.put("art_id", cus.getString(cus.getColumnIndex("art_id")));
-                        ctv.put("page", cus.getInt(cus.getColumnIndex("page")));
                         ctv.put("web_name", cus.getString(cus.getColumnIndex("web_name")));
                         ctv.put("type", cus.getString(cus.getColumnIndex("type")));
                         ctv.put("title", cus.getString(cus.getColumnIndex("title")));
@@ -2247,7 +2304,7 @@ public class GifActivity extends AppCompatActivity {
                         MyLog.w("db_web_item_update: ", rows + "");
                         activity.alert(getString(R.string.add_successfully));
                     } else {
-                        Cursor cus2 = activity.db.query(DbHelper.TB_IMG_FAVORITE, new String[]{"id"}, "item_id = ?", new String[]{cus.getString(cus.getColumnIndex("id"))}, null, null, "id desc", "1");
+                        Cursor cus2 = activity.db.query(DbHelper.TB_IMG_FAVORITE, new String[]{"id"}, "type = ? and item_id = ?", new String[]{type, cus.getString(cus.getColumnIndex("id"))}, null, null, "id desc", "1");
                         cus2.moveToFirst();
                         favId = cus2.getLong(cus.getColumnIndex("id"));
                         cus2.close();

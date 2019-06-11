@@ -7,7 +7,6 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.view.Menu;
 
 import java.io.File;
@@ -178,20 +177,6 @@ public class Util {
                     new LinkedBlockingQueue<>(5), new MyThreadFactory(), new ThreadPoolExecutor.AbortPolicy());
         }
         return singleThreadPool;
-    }
-
-    public static String implode(@Nullable int[] array) {
-        if (array == null) {
-            return "";
-        }
-        StringBuilder build = new StringBuilder();
-        for (Object item : array) {
-            build.append(item).append(",");
-        }
-        if (array.length > 0) {
-            build.deleteCharAt(build.lastIndexOf(","));
-        }
-        return build.toString();
     }
 
 

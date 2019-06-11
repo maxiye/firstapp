@@ -4,6 +4,8 @@ import com.google.gson.JsonObject;
 import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.StringUtil;
 
+import java.util.HashMap;
+
 import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -49,6 +51,14 @@ final class GamerskySpy extends BaseSpy {
     @Override
     String handleContent(String content) {
         return StringUtil.unescape(content);
+    }
+
+    @Override
+    void handleImgInfo(HashMap<String, String> imgInfo) {
+        // gif时不取真实大图地址
+        if (".gif".equals(imgInfo.get("ext"))) {
+            imgInfo.put("real_url", "");
+        }
     }
 
     /**

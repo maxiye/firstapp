@@ -11,6 +11,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.widget.Toast;
 
 import com.maxiye.first.GifActivity;
@@ -48,46 +49,44 @@ public class DbHelper extends SQLiteOpenHelper {
             + "pages integer default 0, "
             + "name text default '')";
     private static final String CREATE_IMG_WEB = "create table " + TB_IMG_WEB + "("
-            + "id integer primary key autoincrement,"
-            + "web_name text default '', "
-            + "type text default '', "//gif|bitmap
-            + "art_id TEXT(35) default 0, "
-            + "web_url text default '', "
-            + "title text default '', "
-            + "pages integer default 0, "
-            + "time text default '')";
+            + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + "web_name TEXT DEFAULT '', "
+            + "type TEXT DEFAULT '', "//gif|bitmap
+            + "art_id TEXT(35) DEFAULT '', "
+            + "web_url TEXT DEFAULT '', "
+            + "title TEXT DEFAULT '', "
+            + "pages INTEGER DEFAULT 0, "
+            + "time TEXT DEFAULT '')";
     /**
      * 索引名不能相同
      */
-    private static final String INDEX_IMG_WEB = "CREATE INDEX IF NOT EXISTS web_idx_art_id on " + TB_IMG_WEB + " (art_id, web_name)";
+    private static final String INDEX_IMG_WEB = "CREATE INDEX IF NOT EXISTS web_idx_art_id on " + TB_IMG_WEB + " (web_name, art_id)";
     private static final String CREATE_IMG_WEB_ITEM = "create table " + TB_IMG_WEB_ITEM + "("
-            + "id integer primary key autoincrement,"
-            + "web_name text default '', "
-            + "type text default '', "
-            + "art_id TEXT(35) default 0, "
-            + "page integer default 0, "
-            + "title text default '', "
-            + "url text default '', "
-            + "real_url text default '', "//真实图片地址
-            + "fav_flg integer default 0, "//1已收藏，0未收藏
-            + "ext text default '', "//gif|jpg|jpeg|bmp|png
-            + "time text default '')";
-    private static final String INDEX_IMG_WEB_ITEM = "CREATE INDEX IF NOT EXISTS web_item_idx_art_id on " + TB_IMG_WEB_ITEM + " (art_id, web_name)";
+            + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + "web_name TEXT DEFAULT '', "
+            + "type TEXT DEFAULT '', "
+            + "art_id TEXT(35) DEFAULT '', "
+            + "page INTEGER DEFAULT 0, "
+            + "title TEXT DEFAULT '', "
+            + "url TEXT DEFAULT '', "
+            + "real_url TEXT DEFAULT '', "//真实图片地址
+            + "fav_flg INTEGER DEFAULT 0, "//1已收藏，0未收藏
+            + "ext TEXT DEFAULT '')";//gif|jpg|jpeg|bmp|png
+    private static final String INDEX_IMG_WEB_ITEM = "CREATE INDEX IF NOT EXISTS web_item_idx_art_id on " + TB_IMG_WEB_ITEM + " (web_name, art_id)";
 
 
     private static final String CREATE_IMG_FAVORITE = "create table " + TB_IMG_FAVORITE + "("
-            + "id integer primary key autoincrement, "
-            + "item_id integer default 0, "
-            + "web_name text default '', "
-            + "type text default '', "
-            + "art_id TEXT(35) default 0, "
-            + "page integer default 0, "
-            + "title text default '', "
-            + "url text default '', "
-            + "real_url text default '', "
-            + "ext text default '', "//gif|jpg|jpeg|bmp|png
-            + "time text default '')";
-    private static final String INDEX_IMG_FAVORITE = "CREATE INDEX IF NOT EXISTS img_favorite_idx_art_id on " + TB_IMG_FAVORITE + " (art_id, web_name)";
+            + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            + "item_id INTEGER DEFAULT 0, "
+            + "web_name TEXT DEFAULT '', "
+            + "type TEXT DEFAULT '', "
+            + "art_id TEXT(35) default '', "
+            + "title TEXT DEFAULT '', "
+            + "url TEXT DEFAULT '', "
+            + "real_url TEXT DEFAULT '', "
+            + "ext TEXT DEFAULT '', "//gif|jpg|jpeg|bmp|png
+            + "time TEXT DEFAULT '')";
+    private static final String INDEX_IMG_FAVORITE = "CREATE INDEX IF NOT EXISTS img_favorite_idx_art_id on " + TB_IMG_FAVORITE + " (type, item_id)";
 
     private static final String DROP_BOOK = "DROP TABLE IF EXISTS " + TB_BOOK;
     private static final String DROP_IMG_WEB = "DROP TABLE IF EXISTS " + TB_IMG_WEB;
@@ -284,7 +283,6 @@ public class DbHelper extends SQLiteOpenHelper {
                             ContentValues ctv = new ContentValues(10);
                             ctv.put("item_id", cus.getInt(cus.getColumnIndex("id")));
                             ctv.put("art_id", cus.getInt(cus.getColumnIndex("art_id")));
-                            ctv.put("page", cus.getInt(cus.getColumnIndex("page")));
                             ctv.put("web_name", cus.getString(cus.getColumnIndex("web_name")));
                             ctv.put("type", cus.getString(cus.getColumnIndex("type")));
                             ctv.put("title", cus.getString(cus.getColumnIndex("title")));
@@ -336,5 +334,23 @@ public class DbHelper extends SQLiteOpenHelper {
             }
         }
         return count;
+    }
+
+    /**
+     * 通过数组创建sql中的 in (条件)
+     * @param array in数组
+     * @return 逗号分隔的字符串
+     */
+    @NonNull
+    public static String buildInCondition(@Nullable int[] array) {
+        if (array == null || array.length == 0) {
+            return "0";
+        }
+        StringBuilder build = new StringBuilder();
+        build.append(array[0]);
+        for (int i = 1; i < array.length; i++) {
+            build.append(",").append(array[i]);
+        }
+        return build.toString();
     }
 }
