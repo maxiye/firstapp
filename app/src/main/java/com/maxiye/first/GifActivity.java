@@ -53,6 +53,7 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
+import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -333,7 +334,8 @@ public class GifActivity extends AppCompatActivity {
                 // 左右滚动停止
                 if (state == 0 && startPage == endPage) {
                     // 滑动后返回原页开启下滑刷新
-                    refreshLayout.setEnabled(true);
+                    ScrollView scrollView = findViewById(R.id.gif_scroll_view);
+                    refreshLayout.setEnabled(scrollView.getScrollY() == 0);
                 }
             }
         });
@@ -1365,21 +1367,25 @@ public class GifActivity extends AppCompatActivity {
 
         private void trackSourceDialog(@NonNull Map<String, Object> item, @NonNull Runnable callback) {
             String itemId = item.get("item_id").toString();
-            Cursor cursor = db.query(DbHelper.TB_IMG_WEB_ITEM, new String[]{"web_name", "type", "art_id"}, "id = ?", new String[]{itemId}, null, null, null);
+            Cursor cursor = db.query(DbHelper.TB_IMG_WEB_ITEM, new String[]{"web_name", "art_id"}, "id = ?", new String[]{itemId}, null, null, null);
             if (cursor.getCount() == 1) {
                 cursor.moveToFirst();
                 String web = cursor.getString(0);
-                String itemType = cursor.getString(1);
-                String art = cursor.getString(2);
+                String art = cursor.getString(1);
                 // 查询计算页码
                 Cursor cursor2 = db.query(DbHelper.TB_IMG_WEB_ITEM, new String[]{"count(*)"}, "id < ? and art_id = ? and web_name = ?", new String[]{itemId, art, web}, null, null, null);
                 cursor2.moveToFirst();
                 int pageAt = cursor2.getInt(0) / 3 + 1;
                 cursor2.close();
                 // 查询文章标题
-                Cursor cursor3 = db.query(DbHelper.TB_IMG_WEB, new String[]{"title"}, "web_name = ? and art_id = ?", new String[]{web, art}, null, null, null);
+                Cursor cursor3 = db.query(DbHelper.TB_IMG_WEB, new String[]{"type", "title"}, "web_name = ? and art_id = ?", new String[]{web, art}, null, null, null);
+                if (cursor3.getCount() == 0) {
+                    alert(getString(R.string.not_found));
+                    return;
+                }
                 cursor3.moveToFirst();
-                String head = cursor3.getCount() > 0 ? cursor3.getString(0) : "";
+                String itemType = cursor3.getString(0);
+                String head = cursor3.getString(1);
                 cursor3.close();
                 // 创建对话框
                 AlertDialog dialog2 = new AlertDialog.Builder(GifActivity.this)
@@ -2078,11 +2084,11 @@ public class GifActivity extends AppCompatActivity {
         Cursor cus = db.query(DbHelper.TB_IMG_WEB, new String[]{"id"}, "art_id = ? and web_name = ?", new String[]{artId, webName}, null, null, "id desc", "1");
         if (cus.getCount() > 0) {
             cus.moveToFirst();
-            String id = cus.getString(cus.getColumnIndex("id"));
+            String id = cus.getString(0);
             Cursor cus2 = db.query(DbHelper.TB_IMG_WEB, new String[]{"art_id"}, "id > ? and web_name = ? and type = ?", new String[]{id, webName, type}, null, null, "id asc", "1");
             if (cus2.getCount() > 0) {
                 cus2.moveToFirst();
-                return cus2.getString(cus2.getColumnIndex("art_id"));
+                return cus2.getString(0);
             }
             cus2.close();
         }
@@ -2098,11 +2104,11 @@ public class GifActivity extends AppCompatActivity {
         Cursor cus = db.query(DbHelper.TB_IMG_WEB, new String[]{"id"}, "art_id = ? and web_name = ?", new String[]{artId, webName}, null, null, "id desc", "1");
         if (cus.getCount() > 0) {
             cus.moveToFirst();
-            String id = cus.getString(cus.getColumnIndex("id"));
+            String id = cus.getString(0);
             Cursor cus2 = db.query(DbHelper.TB_IMG_WEB, new String[]{"art_id"}, "id < ? and web_name = ? and type = ?", new String[]{id, webName, type}, null, null, "id desc", "1");
             if (cus2.getCount() > 0) {
                 cus2.moveToFirst();
-                return cus2.getString(cus2.getColumnIndex("art_id"));
+                return cus2.getString(0);
             }
             cus2.close();
         }
@@ -2304,9 +2310,10 @@ public class GifActivity extends AppCompatActivity {
                         MyLog.w("db_web_item_update: ", rows + "");
                         activity.alert(getString(R.string.add_successfully));
                     } else {
-                        Cursor cus2 = activity.db.query(DbHelper.TB_IMG_FAVORITE, new String[]{"id"}, "type = ? and item_id = ?", new String[]{type, cus.getString(cus.getColumnIndex("id"))}, null, null, "id desc", "1");
+                        // 3dm位图类型bitmap，web类型gif，特殊处理。
+                        Cursor cus2 = activity.db.query(DbHelper.TB_IMG_FAVORITE, new String[]{"id"}, "type = ? and item_id = ?", new String[]{cus.getString(cus.getColumnIndex("type")), cus.getString(cus.getColumnIndex("id"))}, null, null, "id desc", "1");
                         cus2.moveToFirst();
-                        favId = cus2.getLong(cus.getColumnIndex("id"));
+                        favId = cus2.getLong(0);
                         cus2.close();
                         activity.alert(getString(R.string.already_in_fav));
                     }
