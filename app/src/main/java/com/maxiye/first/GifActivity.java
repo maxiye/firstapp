@@ -237,7 +237,6 @@ public class GifActivity extends AppCompatActivity {
         // onkey 发生拥堵 --已修复
         threadPoolExecutor = new ThreadPoolExecutor(4, 7, 30, TimeUnit.SECONDS, new LinkedBlockingDeque<>(), new ThreadPoolExecutor.DiscardOldestPolicy());
         diskLruCache = DiskLruCache.newInstance(this, type);
-        MyHandler.init(this);
         // db获取,ui线程运行的 toast 可能报错
         db = DbHelper.newDb(this);
         // 网络监听
@@ -256,7 +255,6 @@ public class GifActivity extends AppCompatActivity {
         getSpy().close();
         NetworkUtil.unregister(this);
         db.close();
-        MyHandler.close();
         okHttpClient.dispatcher().cancelAll();
         okHttpClient = null;
         currentFragment.activity = null;
@@ -1244,8 +1242,13 @@ public class GifActivity extends AppCompatActivity {
                         pMenu.getMenuInflater().inflate(R.menu.gif_favorite_popupmenu, pMenu.getMenu());
                         pMenu.setOnMenuItemClickListener(item1 -> {
                             switch (item1.getItemId()) {
+                                case R.id.share_fav:
+                                    // 分享
+                                    File favFile = new File((String) pageWin.getItemData(position).get("path"));
+                                    Util.share(favFile, GifActivity.this);
+                                    break;
                                 case R.id.track_source:
-                                    //删除记录
+                                    // 溯源
                                     trackSourceDialog(pageWin.getItemData(position), pageWin::dismiss);
                                     break;
                                 case R.id.delete_fav:
@@ -1513,6 +1516,7 @@ public class GifActivity extends AppCompatActivity {
                 private int vScrollX;
                 private float mPosX, mPosY, mCurPosX, mCurPosY;
                 private final Runnable runnable = imgView::performLongClick;
+                private final Handler handler = new Handler();
 
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
@@ -1521,11 +1525,11 @@ public class GifActivity extends AppCompatActivity {
                             vScrollX = v.getScrollX();
                             mPosX = mCurPosX = event.getX();
                             mPosY = mCurPosY = event.getY();
-                            MyHandler.instance.postDelayed(runnable, 500);
+                            handler.postDelayed(runnable, 500);
                             break;
                         case MotionEvent.ACTION_MOVE:
                             if (mCurPosX == mPosX) {
-                                MyHandler.instance.removeCallbacks(runnable);
+                                handler.removeCallbacks(runnable);
                             }
                             mCurPosX = event.getX();
                             v.setScrollX((int) (mPosX - mCurPosX + vScrollX));
@@ -1533,7 +1537,7 @@ public class GifActivity extends AppCompatActivity {
                         case MotionEvent.ACTION_UP:
                             mCurPosY = event.getY();
                             v.setScrollX(vScrollX);
-                            MyHandler.instance.removeCallbacks(runnable);
+                            handler.removeCallbacks(runnable);
 //                        if (mCurPosY - mPosY > 0
 //                                && (Math.abs(mCurPosY - mPosY) > 25)) {//向下滑動
 //                        } else if (mCurPosY - mPosY < 0
@@ -2133,6 +2137,7 @@ public class GifActivity extends AppCompatActivity {
         private static final int MSG_TYPE_PRELOAD = 103;
         private static final int MSG_TYPE_LOADING = 104;
         private GifActivity activity;
+        private MyHandler handler;
 
         public PlaceholderFragment() {
         }
@@ -2140,6 +2145,7 @@ public class GifActivity extends AppCompatActivity {
         @Override
         public void onDestroy() {
             activity = null;
+            handler = null;
             super.onDestroy();
         }
 
@@ -2151,6 +2157,7 @@ public class GifActivity extends AppCompatActivity {
             PlaceholderFragment fragment = new PlaceholderFragment();
             fragment.page = page;
             fragment.activity = activity;
+            fragment.handler = new MyHandler(fragment);
             return fragment;
         }
 
@@ -2181,7 +2188,6 @@ public class GifActivity extends AppCompatActivity {
         public void setUserVisibleHint(boolean isVisibleToUser) {
             super.setUserVisibleHint(isVisibleToUser);
             activity.okHttpClient.dispatcher().cancelAll();
-            MyHandler.instance.removeCallbacksAndMessages(null);
             if (isVisibleToUser) {
                 // 滑动冲突解决
                 View view = getView();
@@ -2195,8 +2201,8 @@ public class GifActivity extends AppCompatActivity {
         }
 
         void send(int what, int arg1, int arg2, Object obj) {
-            if (activity != null && page == activity.page && MyHandler.instance != null) {
-                MyHandler.instance.obtainMessage(what, arg1, arg2, obj).sendToTarget();
+            if (activity != null && activity.page == this.page) {
+                handler.obtainMessage(what, arg1, arg2, obj).sendToTarget();
             }
         }
 
@@ -2223,7 +2229,9 @@ public class GifActivity extends AppCompatActivity {
                         activity.mark();
                         break;
                     case 1:
-                        share();
+                        String cacheKey1 = activity.genCacheKey(String.valueOf(getImgOffset(focusedPosition)), "");
+                        File img = activity.diskLruCache.get(cacheKey1);
+                        Util.share(img, activity);
                         break;
                     case 2:
                         addFav();
@@ -2249,35 +2257,6 @@ public class GifActivity extends AppCompatActivity {
             return true;
         }
 
-        /**
-         * 分享
-         */
-        private void share() {
-            String cacheKey = activity.genCacheKey(String.valueOf(getImgOffset(focusedPosition)), "");
-            File img = activity.diskLruCache.get(cacheKey);
-            if (img != null && img.exists()) {
-                try {
-                    Uri fileUri = FileProvider.getUriForFile(activity, "com.maxiye.first.fileprovider", img);
-                    if (fileUri != null) {
-                    /*Intent itt = new Intent(Intent.ACTION_VIEW,fileUri);// 错误？不能直接使用fileUri
-                    itt.setType(getContentResolver().getType(fileUri));*/
-                        Intent intent = new Intent(Intent.ACTION_SEND);
-                        // "image/jpeg"也可
-                        // 微信 qq 获取资源失败
-                        // intent.setDataAndType(fileUri, activity.getContentResolver().getType(fileUri));
-                        // intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        intent.putExtra(Intent.EXTRA_STREAM, fileUri);
-                        intent.setType(activity.getContentResolver().getType(fileUri));
-                        startActivity(Intent.createChooser(intent, "Share Image"));
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    activity.alert("文件获取错误");
-                }
-            } else {
-                activity.alert("文件获取错误");
-            }
-        }
         /**
          * 添加收藏
          * @return long
@@ -2489,38 +2468,21 @@ public class GifActivity extends AppCompatActivity {
         /**
          * {@code 第7条：消除过时的对象引用}
          */
-        private final WeakReference<GifActivity> activityWR;
-        static MyHandler instance;
+        private final WeakReference<PlaceholderFragment> fragmentRef;
 
-        static void init(GifActivity activity) {
-            if (instance == null) {
-                instance = new MyHandler(activity);
-            }
-        }
-
-        MyHandler(GifActivity activity) {
-            activityWR = new WeakReference<>(activity);
-        }
-
-        static void close() {
-            if (instance != null) {
-                instance.activityWR.clear();
-                instance = null;
-            }
+        MyHandler(PlaceholderFragment fragment) {
+            fragmentRef = new WeakReference<>(fragment);
         }
 
         @SuppressLint("SetTextI18n")
         @Override
         public void handleMessage(Message msg) {
-            GifActivity activity = activityWR.get();
-            if (activity == null) {
+            PlaceholderFragment fragment = fragmentRef.get();
+            if (fragment == null || fragment.activity == null || fragment.getView() == null) {
                 return;
             }
-            PlaceholderFragment fragment = activity.currentFragment;
+            GifActivity activity = fragment.activity;
             View rootView = fragment.getView();
-            if (rootView == null) {
-                return;
-            }
             int position = msg.arg1;
             GifImageView imageView = rootView.findViewById(fragment.getResources().getIdentifier("gif_" + position, "id", activity.getPackageName()));
             switch (msg.what) {

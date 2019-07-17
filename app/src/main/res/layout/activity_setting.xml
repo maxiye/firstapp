@@ -12,6 +12,7 @@
         android:padding="10dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/divider"
         tools:ignore="UselessParent">
         <LinearLayout
             android:orientation="vertical"
@@ -117,6 +118,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/webdav_pwd_cfg"
+        android:background="@drawable/divider"
         tools:ignore="UselessParent">
         <LinearLayout
             android:orientation="vertical"

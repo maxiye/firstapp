@@ -26,8 +26,8 @@ public class WebdavTest {
 
     @Test
     public void putTest() throws IOException {
-        WebdavUtil webdavUtil = new WebdavUtil("912877398@qq.com", "avcm4cpviyp3p4hx");
-        boolean res = webdavUtil.put("https://dav.jianguoyun.com/dav/maxiye/jdd2", new File("D:\\java\\jd-gui.cfg"));
+        WebdavUtil webdavUtil = new WebdavUtil("912877398@qq.com", "");
+        boolean res = webdavUtil.put("https://dav.jianguoyun.com/dav/maxiye/jdd2", new File("D:\\phplist.txt"));
         System.out.println(res);
     }
 

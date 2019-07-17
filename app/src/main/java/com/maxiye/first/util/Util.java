@@ -1,13 +1,16 @@
 package com.maxiye.first.util;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.support.annotation.NonNull;
+import android.support.v4.content.FileProvider;
 import android.view.Menu;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -192,5 +195,33 @@ public class Util {
             return Integer.valueOf(fileName.substring(0, pos));
         }
         return 0;
+    }
+
+    /**
+     * 分享
+     */
+    public static void share(File file, Activity activity) {
+        if (file != null && file.exists()) {
+            try {
+                Uri fileUri = FileProvider.getUriForFile(activity, "com.maxiye.first.fileprovider", file);
+                if (fileUri != null) {
+                    /*Intent itt = new Intent(Intent.ACTION_VIEW,fileUri);// 错误？不能直接使用fileUri
+                    itt.setType(getContentResolver().getType(fileUri));*/
+                    Intent intent = new Intent(Intent.ACTION_SEND);
+                    // "image/jpeg"也可
+                    // 微信 qq 获取资源失败
+                    // intent.setDataAndType(fileUri, activity.getContentResolver().getType(fileUri));
+                    // intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    intent.putExtra(Intent.EXTRA_STREAM, fileUri);
+                    intent.setType(activity.getContentResolver().getType(fileUri));
+                    activity.startActivity(Intent.createChooser(intent, "Share Image"));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(activity, "文件获取错误", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(activity, "文件获取错误", Toast.LENGTH_SHORT).show();
+        }
     }
 }

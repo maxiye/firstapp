@@ -188,6 +188,36 @@ public class BitmapUtil {
         return Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888);
     }
 
+    public static Bitmap convertSingleChannel(@NonNull Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+        for (int i = 0; i < pixels.length; i++) {
+            int color = pixels[i];
+            int r = (color & 0x00FF0000) >> 16;
+            int g = (color & 0x0000FF00) >> 8;
+            int b = color & 0x000000FF;
+            if (r > g) {
+                g = 0;
+                if (r > b) {
+                    b = 0;
+                } else {
+                    r = 0;
+                }
+            } else {
+                r = 0;
+                if (g > b) {
+                    b = 0;
+                } else {
+                    g = 0;
+                }
+            }
+            pixels[i] = 0xFF | (r << 16) | (g << 8) | b;
+        }
+        return Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888);
+    }
+
     /**
      * 转换为只有黑白色的位图
      * @param bitmap Bitmap
