@@ -136,4 +136,8 @@
     <string name="copy">Copy</string>
     <string name="cmp_256_bit">256-Bit Compare</string>
     <string name="cmp_64_bit">64-Bit Compare</string>
+    <string name="proxy">Proxy</string>
+    <string name="host">Host</string>
+    <string name="port">Port</string>
+    <string name="proxy_shortcut">Proxy Shortcut</string>
 </resources>

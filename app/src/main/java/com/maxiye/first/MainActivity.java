@@ -134,7 +134,9 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 share();
                 return true;
             case R.id.test_action_net_set:
-                addShortcut();
+                addNetSetShortcut();
+            case R.id.proxy_shortcut:
+                addProxyShortcut();
                 return true;
             case R.id.main_action_setting:
                 startActivity(new Intent(this, SettingActivity.class));
@@ -391,7 +393,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     }
 
     //添加快捷方式
-    private void addShortcut() {
+    private void addNetSetShortcut() {
         /*if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             Intent addShortcutIntent = new Intent("com.android.launcher.action.INSTALL_SHORTCUT");//"com.android.launcher.action.INSTALL_SHORTCUT"
             // 不允许重复创建
@@ -429,6 +431,21 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         assert scm != null;
         scm.requestPinShortcut(si, null);
 
+    }
+
+    private void addProxyShortcut() {
+        ShortcutManager scm = (ShortcutManager) getSystemService(SHORTCUT_SERVICE);
+        // 设置网络页面intent
+        Intent launcherIntent = new Intent(this, CommonActivity.class);
+        launcherIntent.putExtra(CommonActivity.TYPE, CommonActivity.TYPE_PROXY);
+        launcherIntent.setAction(Intent.ACTION_VIEW);
+        ShortcutInfo si = new ShortcutInfo.Builder(this, "proxy_setting")
+                .setIcon(Icon.createWithResource(this, R.drawable.ic_near_me_black_24dp))
+                .setShortLabel("代理设置")
+                .setIntent(launcherIntent)
+                .build();
+        assert scm != null;
+        scm.requestPinShortcut(si, null);
     }
 
     public void testNFC(View view) {
@@ -746,5 +763,11 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "bitmap_txt/" + UUID.randomUUID().toString() + "_dot.txt");
         Util.saveFileEx(file, dotTxt);
         alert(getString(R.string.success));
+    }
+
+    public void proxySetting(View view) {
+        Intent proxy = new Intent(this, CommonActivity.class);
+        proxy.putExtra(CommonActivity.TYPE, CommonActivity.TYPE_PROXY);
+        startActivity(proxy);
     }
 }

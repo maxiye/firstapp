@@ -135,4 +135,8 @@
     <string name="copy">复制</string>
     <string name="cmp_256_bit">256位比较</string>
     <string name="cmp_64_bit">64位比较</string>
+    <string name="proxy">代理</string>
+    <string name="host">主机</string>
+    <string name="port">端口</string>
+    <string name="proxy_shortcut">代理Shortcut</string>
 </resources>

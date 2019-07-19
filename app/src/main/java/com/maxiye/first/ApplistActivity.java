@@ -14,6 +14,7 @@ import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.maxiye.first.part.ApplistFragment;
 import com.maxiye.first.util.CacheUtil;
 
 
@@ -132,8 +133,7 @@ public class ApplistActivity extends AppCompatActivity implements ApplistFragmen
      */
     private void search(String search) {
         if (frg != null) {
-            frg.keyword = search;
-            frg.search();
+            frg.search(search);
         }
     }
 }

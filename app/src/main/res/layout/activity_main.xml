@@ -150,5 +150,13 @@
             android:onClick="dotBitmapTxt"
             android:drawableTop="@drawable/ic_blur_circular_black_24dp"
             android:text="@string/dot_bitmap_txt"/>
+        <Button
+            style="@style/MyButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="proxySetting"
+            android:drawableTop="@drawable/ic_near_me_black_24dp"
+            android:text="@string/proxy"/>
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>

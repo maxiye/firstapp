@@ -8,12 +8,9 @@
     <uses-permission android:name="android.permission.CALL_PHONE"/>
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.NFC"/>
-    <!-- 添加快捷方式 -->
-    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
-    <!-- 移除快捷方式 -->
-    <uses-permission android:name="com.android.launcher.permission.UNINSTALL_SHORTCUT"/>
-    <!-- 查询快捷方式 -->
+    <uses-permission android:name="android.permission.NFC"/> <!-- 添加快捷方式 -->
+    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/> <!-- 移除快捷方式 -->
+    <uses-permission android:name="com.android.launcher.permission.UNINSTALL_SHORTCUT"/> <!-- 查询快捷方式 -->
     <uses-permission android:name="com.android.launcher.permission.READ_SETTINGS"/>
     <uses-permission android:name="android.permission.INTERNET"/>
 
@@ -35,6 +32,11 @@
         android:roundIcon="@drawable/ic_palette_orange_24dp"
         android:supportsRtl="true"
         android:theme="@style/MyTheme">
+        <activity android:name=".CommonActivity"
+                  android:label="@string/proxy"
+                  android:parentActivityName=".MainActivity">
+        </activity>
+
         <provider
             android:name="android.support.v4.content.FileProvider"
             android:authorities="com.maxiye.first.fileprovider"
@@ -49,8 +51,8 @@
             android:name=".MainActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:icon="@drawable/ic_palette_orange_24dp"
-            android:roundIcon="@drawable/ic_palette_orange_24dp"
-            android:label="@string/app_name">
+            android:label="@string/app_name"
+            android:roundIcon="@drawable/ic_palette_orange_24dp">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -104,8 +106,8 @@
         <activity
             android:name=".GifActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
-            android:label="@string/get_gif"
             android:icon="@drawable/ic_filter_vintage_black_24dp"
+            android:label="@string/get_gif"
             android:roundIcon="@drawable/ic_filter_vintage_black_24dp">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -127,12 +129,30 @@
             android:logo="@drawable/ic_cloud_queue_black_24dp"
             android:parentActivityName=".MainActivity">
         </activity>
-        <activity android:name=".api.IpAddressActivity" android:parentActivityName=".MainActivity" android:label="@string/ip_address"/>
-        <activity android:name=".api.PhoneAddressActivity" android:parentActivityName=".MainActivity" android:label="@string/phone_address"/>
-        <activity android:name=".api.IdAddressActivity" android:parentActivityName=".MainActivity" android:label="@string/id_address"/>
-        <activity android:name=".api.PostcodeActivity" android:parentActivityName=".MainActivity" android:label="@string/postcode"/>
-        <activity android:name=".api.BjTimeActivity" android:parentActivityName=".MainActivity" android:label="@string/bj_time"/>
-        <activity android:name=".api.WorkdayActivity" android:parentActivityName=".MainActivity" android:label="@string/workday"/>
+        <activity
+            android:name=".api.IpAddressActivity"
+            android:label="@string/ip_address"
+            android:parentActivityName=".MainActivity"/>
+        <activity
+            android:name=".api.PhoneAddressActivity"
+            android:label="@string/phone_address"
+            android:parentActivityName=".MainActivity"/>
+        <activity
+            android:name=".api.IdAddressActivity"
+            android:label="@string/id_address"
+            android:parentActivityName=".MainActivity"/>
+        <activity
+            android:name=".api.PostcodeActivity"
+            android:label="@string/postcode"
+            android:parentActivityName=".MainActivity"/>
+        <activity
+            android:name=".api.BjTimeActivity"
+            android:label="@string/bj_time"
+            android:parentActivityName=".MainActivity"/>
+        <activity
+            android:name=".api.WorkdayActivity"
+            android:label="@string/workday"
+            android:parentActivityName=".MainActivity"/>
     </application>
 
 </manifest>

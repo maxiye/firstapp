@@ -1,4 +1,4 @@
-package com.maxiye.first;
+package com.maxiye.first.part;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -21,7 +21,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.maxiye.first.part.AppLvAdapter;
+import com.maxiye.first.R;
+import com.maxiye.first.SettingActivity;
 import com.maxiye.first.util.StringUtil;
 
 import java.lang.ref.WeakReference;
@@ -109,11 +110,11 @@ public class ApplistFragment extends Fragment {
                 oldVisibleItem = firstVisibleItem;
             }
         });
-        search();
+        search(keyword);
     }
 
-    public void search() {
-        new GetAppsTask(this).execute(keyword);
+    public void search(String search) {
+        new GetAppsTask(this).execute(keyword = search);
     }
 
     static class GetAppsTask extends AsyncTask<String, Void, List<Map<String, Object>>> {
@@ -256,7 +257,7 @@ public class ApplistFragment extends Fragment {
      * {@code 第51条：仔细设计方法签名}
      * 与布尔型参数相比，优先使用两个元素枚举类型
      */
-    interface OnFrgActionListener {
+    public interface OnFrgActionListener {
         enum Slide {
             /**
              * 滑动方向枚举

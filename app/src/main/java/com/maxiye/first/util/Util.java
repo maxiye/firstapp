@@ -8,9 +8,17 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
+import android.support.v7.app.AlertDialog;
+import android.text.InputType;
+import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.Toast;
+
+import com.maxiye.first.R;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -24,6 +32,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * 常用方法助手
@@ -223,5 +232,43 @@ public class Util {
         } else {
             Toast.makeText(activity, "文件获取错误", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @SuppressWarnings("unused")
+    public static void showEditDialog(Activity context, String title, String value,@NonNull Consumer<String> consumer) {
+        showEditDialog(context, title, value, InputType.TYPE_CLASS_TEXT, null, consumer);
+    }
+
+    /**
+     * 默认的编辑修改弹框
+     * @param title 标题
+     * @param value 编辑框默认值
+     * @param inputType 输入类型，默认为{@link InputType#TYPE_CLASS_TEXT}
+     * @param hint 输入框的hint
+     * @param consumer 成功回调
+     */
+    public static void showEditDialog(Activity context, String title, String value, int inputType, @Nullable String hint, @NonNull Consumer<String> consumer) {
+        View view = LayoutInflater.from(context).inflate(R.layout.dialog_edittext, context.findViewById(R.id.setting_layout), false);
+        EditText editor = view.findViewById(R.id.dialog_input);
+        editor.setText(value);
+        if (StringUtil.notBlank(hint)) {
+            editor.setHint(hint);
+        }
+        editor.setInputType(inputType);
+        //创建对话框
+        AlertDialog dialog = new AlertDialog.Builder(context)
+                // 设置图标
+                .setIcon(R.drawable.ic_info_black_24dp)
+                // 设置标题
+                .setTitle(title)
+                // 添加布局
+                .setView(view)
+                .setPositiveButton(R.string.confirm, (dialog1, which) -> {
+                    String input = editor.getText().toString();
+                    consumer.accept(input);
+                }).setNegativeButton(R.string.cancel, (dialog1, which) -> {
+                })
+                .create();
+        dialog.show();
     }
 }
