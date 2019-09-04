@@ -8,8 +8,6 @@ import android.content.Context;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 
-import org.jetbrains.annotations.Contract;
-
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -71,7 +69,6 @@ public class CacheUtil {
         }
     }
 
-    @Contract("null -> true")
     private static boolean deleteDir(File dir) {
         if (dir != null && dir.isDirectory()) {
             String[] children = dir.list();

@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -84,11 +85,14 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     private static final int INTENT_IMG_DOT_REQCODE = 106;
     private static final int INTENT_IMG_REVERSE_REQCODE = 107;
     private static final int INTENT_IMG_DOT_TXT_REQCODE = 108;
+    private static final int INTENT_IMG_SINGLE_CHAN_REQCODE = 109;
     private long lastPressTime = 0;
+    public static Context contextOfApplication;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        contextOfApplication = getApplicationContext();
         setContentView(R.layout.activity_main);
         /* if (BuildConfig.DEBUG) {
             StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectAll().penaltyLog().build());
@@ -98,7 +102,11 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
 //        startActivity(new Intent(this, GifActivity.class));
     }
 
-    @Override
+    public static Context getContextOfApplication() {
+        return contextOfApplication;
+    }
+
+        @Override
     protected void onStop() {
         // 不再调节游戏或者音乐的音量
         setVolumeControlStream(AudioManager.USE_DEFAULT_STREAM_TYPE);
@@ -153,124 +161,98 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
 
     @Override
     protected void onActivityResult(int reqCode, int resCode, Intent data) {
+        if (resCode != RESULT_OK || data == null) {
+            alert("bad res!");
+            return;
+        }
         switch (reqCode) {
-            case INTENT_CONTACT_PICK_REQCODE:
-                if (resCode == RESULT_OK) {
-                    Uri contact = data.getData();
-                    String[] proj = {ContactsContract.CommonDataKinds.Phone.NUMBER};
-                    assert contact != null;
-                    Cursor cur = getContentResolver().query(contact, proj, null, null, null);
-                    assert cur != null;
-                    cur.moveToFirst();
-                    String num = cur.getString(cur.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                    cur.close();
-                    alert(num);
-                } else {
-                    alert("Res not ok");
-                }
-                break;
+            case INTENT_CONTACT_PICK_REQCODE: {
+                Uri contact = data.getData();
+                String[] proj = {ContactsContract.CommonDataKinds.Phone.NUMBER};
+                assert contact != null;
+                Cursor cur = getContentResolver().query(contact, proj, null, null, null);
+                assert cur != null;
+                cur.moveToFirst();
+                String num = cur.getString(cur.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                cur.close();
+                alert(num);
+            }
+            break;
             case INTENT_IMG_VIEW_REQCODE:
-                if (resCode == RESULT_OK) {
-                    Uri picview = data.getData();
-                    alert(picview != null ? picview.toString() : null);
-                }
+                Uri picview = data.getData();
+                alert(picview != null ? picview.toString() : null);
                 break;
             case INTENT_IMG_PICK_REQCODE:
-                if (resCode == RESULT_OK) {
-                    Uri pic = data.getData();
-                    try {
-                        assert pic != null;
-                        ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(pic, "r");
-                        if (pfd == null) {
-                            throw new FileNotFoundException();
-                        }
-                        Bitmap bm = BitmapFactory.decodeFileDescriptor(pfd.getFileDescriptor());
-                        Cursor cur = getContentResolver().query(pic, null, null, null, null);
-                        assert cur != null;
-                        cur.moveToFirst();
-                        String fname = cur.getString(cur.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME));
-                        long flen = cur.getLong(cur.getColumnIndexOrThrow(OpenableColumns.SIZE));
-                        cur.close();
-                        Toast toast = Toast.makeText(this, fname + "(" + flen + "bytes)===>" + data.getData().toString(), Toast.LENGTH_SHORT);
-                        toast.setGravity(Gravity.CENTER, 0, 0);
-                        ImageView iv = new ImageView(this);
-                        iv.setImageBitmap(bm);
-                        LinearLayout ll = (LinearLayout) toast.getView();
-                        ll.addView(iv, 0);
-                        toast.show();
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
+                Uri pic = data.getData();
+                try {
+                    assert pic != null;
+                    ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(pic, "r");
+                    if (pfd == null) {
+                        throw new FileNotFoundException();
                     }
+                    Bitmap bm = BitmapFactory.decodeFileDescriptor(pfd.getFileDescriptor());
+                    Cursor cur = getContentResolver().query(pic, null, null, null, null);
+                    assert cur != null;
+                    cur.moveToFirst();
+                    String fname = cur.getString(cur.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME));
+                    long flen = cur.getLong(cur.getColumnIndexOrThrow(OpenableColumns.SIZE));
+                    cur.close();
+                    Toast toast = Toast.makeText(this, fname + "(" + flen + "bytes)===>" + data.getData().toString(), Toast.LENGTH_SHORT);
+                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    ImageView iv = new ImageView(this);
+                    iv.setImageBitmap(bm);
+                    LinearLayout ll = (LinearLayout) toast.getView();
+                    ll.addView(iv, 0);
+                    toast.show();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
                     /*Intent itt = new Intent(Intent.ACTION_VIEW);
                     itt.setDataAndType(pic, getContentResolver().getType(pic));//"image/jpeg"也可
                     itt.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);//ACTION_GET_CONTENT和ES打开必须设置
                     startActivityForResult(itt.createChooser(itt, "Open img"), INTENT_IMG_VIEW_REQCODE);*/
-                }
                 break;
             case INTENT_IMG_CAPTURE_REQCODE:
-                if (resCode == RESULT_OK && data != null) {
-                    Bundle bdl = data.getExtras();
-                    assert bdl != null;
-                    Bitmap bmp = (Bitmap) bdl.get("data");
-                    Toast toast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
-                    LinearLayout ll = (LinearLayout) toast.getView();
-                    ImageView im = new ImageView(this);
-                    im.setImageBitmap(bmp);
-                    ll.addView(im);
-                    toast.show();
-                }
+                Bundle bdl = data.getExtras();
+                assert bdl != null;
+                Bitmap bmp = (Bitmap) bdl.get("data");
+                Toast toast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
+                toast.setGravity(Gravity.CENTER, 0, 0);
+                LinearLayout ll = (LinearLayout) toast.getView();
+                ImageView im = new ImageView(this);
+                im.setImageBitmap(bmp);
+                ll.addView(im);
+                toast.show();
                 break;
             case INTENT_PICK_DB_BAK_REQCODE:
-                if (resCode == RESULT_OK) {
-                    Uri bak = data.getData();
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        try {
-                            assert bak != null;
-                            assert bak.getLastPathSegment() != null;
-                            // raw:/storage/emulated/0/Download/xxx.db.bak
-                            Files.copy(Paths.get(bak.getLastPathSegment().substring(4)), getDatabasePath(DbHelper.DB_NAME).toPath(), StandardCopyOption.REPLACE_EXISTING);
-                            alert("Success");
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            alert("Error：" + e.getMessage());
-                        }
+                Uri bak = data.getData();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    try {
+                        assert bak != null;
+                        assert bak.getLastPathSegment() != null;
+                        // raw:/storage/emulated/0/Download/xxx.db.bak
+                        Files.copy(Paths.get(bak.getLastPathSegment().substring(4)), getDatabasePath(DbHelper.DB_NAME).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        alert("Success");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        alert("Error：" + e.getMessage());
                     }
                 }
                 break;
             case INTENT_IMG_GRAY_REQCODE:
-                if (resCode == RESULT_OK && data != null) {
-                    String fname = UUID.randomUUID().toString() + "_gray.png";
-                    File img = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/gray/" + fname);
-                    showBitmap(data, BitmapUtil::convertGray, img);
-                } else {
-                    alert("bad res!");
-                }
+                showBitmap(data, BitmapUtil::convertGray, "gray");
                 break;
             case INTENT_IMG_DOT_REQCODE:
-                if (resCode == RESULT_OK && data != null) {
-                    String fname = UUID.randomUUID().toString() + "_dot.png";
-                    File img = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/dot/" + fname);
-                    showBitmap(data, BitmapUtil::convertDot, img);
-                } else {
-                    alert("bad res!");
-                }
+                showBitmap(data, BitmapUtil::convertDot, "dot");
                 break;
             case INTENT_IMG_REVERSE_REQCODE:
-                if (resCode == RESULT_OK && data != null) {
-                    String fname = UUID.randomUUID().toString() + "_reverse.png";
-                    File img = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/reverse/" + fname);
-                    showBitmap(data, BitmapUtil::convertReverse, img);
-                } else {
-                    alert("bad res!");
-                }
+                showBitmap(data, BitmapUtil::convertReverse, "reverse");
                 break;
             case INTENT_IMG_DOT_TXT_REQCODE:
-                if (resCode == RESULT_OK && data != null) {
-                    saveDotTxt(data);
-                } else {
-                    alert("bad res!");
-                }
+                saveDotTxt(data);
+                break;
+            case INTENT_IMG_SINGLE_CHAN_REQCODE:
+                showBitmap(data, BitmapUtil::convertSingleChannel, "single-chan");
                 break;
             default:
                 break;
@@ -523,9 +505,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 startActivity(intent);
                 break;
             case R.id.test_pic:
-                intent = new Intent(Intent.ACTION_GET_CONTENT);
-                intent.setType("image/*");
-                startActivityForResult(intent, INTENT_IMG_PICK_REQCODE);
+                startBitmapActivity(INTENT_IMG_PICK_REQCODE);
                 /*Intent picitt = new Intent(Intent.ACTION_PICK);
                 picitt.setType("image/*");
                 startActivityForResult(picitt.createChooser(picitt,"选择图片"),INTENT_IMG_PICK_REQCODE);*/
@@ -552,6 +532,10 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         startActivity(getGifInt);
     }
 
+    /**
+     * 数据库操作menu
+     * @param view View
+     */
     public void showDbPopup(View view) {
         PopupMenu pMenu = new PopupMenu(this, view);
         pMenu.getMenuInflater().inflate(R.menu.test_activity_db_popupmenu, pMenu.getMenu());
@@ -573,6 +557,41 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 case R.id.fix_fav_file:
                     int count2 = new DbHelper(this).fixFavFile();
                     alert(getResources().getQuantityString(R.plurals.fix_fav_tips, count2));
+                    break;
+                default:
+                    break;
+            }
+            return false;
+        });
+        pMenu.show();
+    }
+
+    /**
+     * bitmap操作menu
+     * @param view View
+     */
+    public void showBitmapPopup(View view) {
+        PopupMenu pMenu = new PopupMenu(this, view);
+        pMenu.getMenuInflater().inflate(R.menu.main_activity_bitmap_popupmenu, Util.enableMenuIcon(pMenu.getMenu()));
+        pMenu.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case R.id.gradual_color:
+                    genGradualColor();
+                    break;
+                case R.id.gray_bitmap:
+                    startBitmapActivity(INTENT_IMG_GRAY_REQCODE);
+                    break;
+                case R.id.dot_bitmap:
+                    startBitmapActivity(INTENT_IMG_DOT_REQCODE);
+                    break;
+                case R.id.reverse_bitmap:
+                    startBitmapActivity(INTENT_IMG_REVERSE_REQCODE);
+                    break;
+                case R.id.single_chan_bitmap:
+                    startBitmapActivity(INTENT_IMG_SINGLE_CHAN_REQCODE);
+                    break;
+                case R.id.dot_bitmap_txt:
+                    startBitmapActivity(INTENT_IMG_DOT_TXT_REQCODE);
                     break;
                 default:
                     break;
@@ -631,9 +650,8 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
      * 从Java 7开始，就不应再使用{@link java.util.Random}了。
      * 对于大多数用途，选择的随机数生成器现在是{@link ThreadLocalRandom}。 它产生更高质量的随机数，而且速度非常快。 在我的机器上，它比Random快3.6倍。
      * 对于fork-join池和并行流的应用，请使用{@link java.util.SplittableRandom}。
-     * @param view View
      */
-    public void genGradualColor(View view) {
+    public void genGradualColor() {
         //实例化布局
         // attachToRoot true : The specified child already has a parent. You must call removeView() on the child's parent first.
         View view2 = LayoutInflater.from(this).inflate(R.layout.dialog_edittext, findViewById(R.id.main_activity_view), false);
@@ -699,28 +717,14 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         Objects.requireNonNull(dialog2.getWindow()).setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
     }
 
-    public void grayBitmap(View view) {
+    /**
+     * 图片选择intent
+     * @param reqCode int
+     */
+    private void startBitmapActivity(int reqCode) {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("image/*");
-        startActivityForResult(intent, INTENT_IMG_GRAY_REQCODE);
-    }
-
-    public void dotBitmap(View view) {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("image/*");
-        startActivityForResult(intent, INTENT_IMG_DOT_REQCODE);
-    }
-
-    public void reverseBitmap(View view) {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("image/*");
-        startActivityForResult(intent, INTENT_IMG_REVERSE_REQCODE);
-    }
-
-    public void dotBitmapTxt(View view) {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("image/*");
-        startActivityForResult(intent, INTENT_IMG_DOT_TXT_REQCODE);
+        startActivityForResult(intent, reqCode);
     }
 
     /**
@@ -731,30 +735,11 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
      * 例如，Predicate接口提供了组合判断的方法。 在我们的LinkedHashMap示例中，标准的BiPredicate<Map<K,V>, Map.Entry<K,V>>接口应优先于自定义的EldestEntryRemovalFunction接口的使用。
      * @param data Intent
      * @param handler UnaryOperator
-     * @param saveFile File
+     * @param tag 类型标签
      */
-    private void showBitmap(Intent data, UnaryOperator<Bitmap> handler, File saveFile) {
-        ImageView imgView = BitmapUtil.loadImg(this);
-        Util.getDefaultSingleThreadExecutor().execute(() -> {
-            try {
-                FileDescriptor fd = Util.getFileDescriptor(this, data);
-                Bitmap bitmap = handler != null ?
-                        handler.apply(BitmapFactory.decodeFileDescriptor(fd)) : BitmapFactory.decodeFileDescriptor(fd);
-                imgView.setOnLongClickListener(v -> {
-                    BitmapUtil.saveBitmap(this, saveFile, bitmap);
-                    return false;
-                });
-                runOnUiThread(() -> {
-                    imgView.clearAnimation();
-                    imgView.setImageDrawable(new BitmapDrawable(null, bitmap));
-                    imgView.setMinimumHeight(bitmap.getHeight() << 1);
-                    imgView.setMinimumWidth(bitmap.getWidth() << 1);
-                });
-            } catch (Exception e) {
-                runOnUiThread(() -> alert(e.getLocalizedMessage()));
-                e.printStackTrace();
-            }
-        });
+    private void showBitmap(Intent data, UnaryOperator<Bitmap> handler, String tag) {
+        FileDescriptor fd = Util.getFileDescriptor(this, data);
+        BitmapUtil.showBitmap4Save(this, BitmapFactory.decodeFileDescriptor(fd), handler, tag);
     }
 
     private void saveDotTxt(Intent data) {

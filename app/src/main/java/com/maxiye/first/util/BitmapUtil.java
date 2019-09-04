@@ -24,8 +24,6 @@ import android.widget.Toast;
 
 import com.maxiye.first.R;
 
-import org.jetbrains.annotations.Contract;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -35,6 +33,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.UUID;
+import java.util.function.IntUnaryOperator;
+import java.util.function.UnaryOperator;
 
 import pl.droidsonroids.gif.GifImageView;
 
@@ -90,7 +91,6 @@ public class BitmapUtil {
      * @param type String
      * @return int
      */
-    @Contract(pure = true)
     @SuppressWarnings({"unused"})
     public static int predictInSampleSize(long fileSize, String type) {
         if ("gif".equals(type)) {
@@ -108,6 +108,24 @@ public class BitmapUtil {
         } else {
             return 32;
         }
+    }
+
+    /**
+     * 自定义图片转换规则
+     * @param bitmap Bitmap
+     * @param colorHandler 颜色处理器
+     * @return Bitmap
+     */
+    @SuppressWarnings("unused")
+    public static Bitmap bitmapTransfer(@NonNull Bitmap bitmap, IntUnaryOperator colorHandler) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+        for (int i = 0; i < pixels.length; i++) {
+            pixels[i] = colorHandler.applyAsInt(pixels[i]);
+        }
+        return Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888);
     }
 
     /**
@@ -188,6 +206,11 @@ public class BitmapUtil {
         return Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888);
     }
 
+    /**
+     * 单通道位图，取每个通道最高值保留，其他通道抹0
+     * @param bitmap Bitmap
+     * @return Bitmap
+     */
     public static Bitmap convertSingleChannel(@NonNull Bitmap bitmap) {
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
@@ -213,7 +236,7 @@ public class BitmapUtil {
                     g = 0;
                 }
             }
-            pixels[i] = 0xFF | (r << 16) | (g << 8) | b;
+            pixels[i] = 0xFF << 24 | (r << 16) | (g << 8) | b;
         }
         return Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888);
     }
@@ -239,6 +262,58 @@ public class BitmapUtil {
             avg += pixels[i];
         }
         avg = avg / (width * height);
+        for (int i = 0; i < pixels.length; i++) {
+            pixels[i] = pixels[i] > avg ? 0xFFFFFFFF : 0xFF000000;
+        }
+        return Bitmap.createBitmap(pixels, width, height, Bitmap.Config.RGB_565);
+    }
+
+    public static Bitmap convertComic(@NonNull Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+        int avg = 0;
+        for (int i = 0; i < pixels.length; i++) {
+            int color = pixels[i];
+            int r = (color & 0xFF0000) >> 16;
+            int g = (color & 0xFF00) >> 8;
+            int b = color & 0xFF;
+            // 转灰度
+            pixels[i] = (r * 306 + g * 601 + b * 117) >> 10;
+            avg += pixels[i];
+        }
+        avg = avg / (width * height);
+        int r = (avg & 0xFF0000) >> 16;
+        int g = (avg & 0xFF00) >> 8;
+        int b = avg & 0xFF;
+        int count = 0;
+        if (r < 100) {
+            ++count;
+        }
+        if (g < 100) {
+            ++count;
+        }
+        if (b < 100) {
+            ++count;
+        }
+        if (count >= 2) {
+            avg *= 0.8;
+        } else {
+            count = 0;
+            if (r > 156) {
+                ++count;
+            }
+            if (g > 156) {
+                ++count;
+            }
+            if (b > 156) {
+                ++count;
+            }
+            if (count >= 2) {
+                avg *= 1.2;
+            }
+        }
         for (int i = 0; i < pixels.length; i++) {
             pixels[i] = pixels[i] > avg ? 0xFFFFFFFF : 0xFF000000;
         }
@@ -306,7 +381,6 @@ public class BitmapUtil {
      * @param offset int
      * @return int
      */
-    @Contract(pure = true)
     @SuppressWarnings({"unused"})
     public static int gradualColor1(int color, int offset, boolean mode) {
         int a = 0xff000000, r = (color & 0xff0000) >> 16, g = (color & 0xff00) >> 8, b = color & 0xff;
@@ -347,7 +421,6 @@ public class BitmapUtil {
      * @param offset int
      * @return int
      */
-    @Contract(pure = true)
     @SuppressWarnings({"WeakerAccess"})
     public static int gradualColor(int color, int offset) {
         int a = 0xff000000, r = (color & 0xff0000) >> 16, g = (color & 0xff00) >> 8, b = color & 0xff;
@@ -412,7 +485,6 @@ public class BitmapUtil {
      * @return float[] avg 和 方差
      */
     @NonNull
-    @Contract("_ -> new")
     @SuppressWarnings({"unused"})
     @Deprecated
     public static float[] calcImgMeta0(File file) {
@@ -809,8 +881,33 @@ public class BitmapUtil {
         return imgView;
     }
 
+    public static void showBitmap4Save(Activity context, Bitmap bitmapOri, UnaryOperator<Bitmap> handler, String tag) {
+        ImageView imgView = BitmapUtil.loadImg(context);
+        Util.getDefaultSingleThreadExecutor().execute(() -> {
+            try {
+                Bitmap bitmap = handler != null ?
+                        handler.apply(bitmapOri) : bitmapOri;
+                imgView.setOnLongClickListener(v -> {
+                    String fname = UUID.randomUUID().toString() + "_" + tag + ".png";
+                    File saveFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + tag + "/" + fname);
+                    BitmapUtil.saveBitmap(context, saveFile, bitmap);
+                    return false;
+                });
+                context.runOnUiThread(() -> {
+                    imgView.clearAnimation();
+                    imgView.setImageDrawable(new BitmapDrawable(null, bitmap));
+                    imgView.setMinimumHeight(bitmap.getHeight() << 1);
+                    imgView.setMinimumWidth(bitmap.getWidth() << 1);
+                });
+            } catch (Exception e) {
+                context.runOnUiThread(() -> Toast.makeText(context, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show());
+                e.printStackTrace();
+            }
+        });
+    }
+
     /**
-     * 保存显示的bitmap
+     * 保存bitmap
      *
      * @param context activity
      * @param file    file
@@ -844,7 +941,6 @@ public class BitmapUtil {
      * @param data byte[]
      * @return boolean
      */
-    @Contract(pure = true)
     public static boolean isGif(@NonNull byte[] data) {
         // 71=>G 73=>I 70=>F
         return data[0] == 71 && data[1] == 73 && data[2] == 70;
@@ -872,7 +968,6 @@ public class BitmapUtil {
      * @return drawable
      */
     @NonNull
-    @Contract("_, _, _ -> new")
     public static Drawable scaleDrawable(Drawable drawable, int w, int h) {
         Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
         float scale = 1f;

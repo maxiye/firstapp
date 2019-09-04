@@ -2,12 +2,15 @@ package com.maxiye.first.part;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.PixelFormat;
+import android.os.IBinder;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -19,8 +22,6 @@ import android.widget.Toast;
 import com.maxiye.first.R;
 import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.StringUtil;
-
-import org.jetbrains.annotations.Contract;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,12 +63,17 @@ public class PageListPopupWindow {
      */
     private String where;
     private int windowHeight;
+    /**
+     * 是否显示蒙层
+     */
+    private boolean showMask;
+    private View archor;
+    private View mask;
 
     private PageListPopupWindow(Context ctx) {
         context = ctx;
     }
 
-    @Contract(pure = true)
     private int calcPages() {
         return total % pageSize == 0 ? total / pageSize : total / pageSize + 1;
     }
@@ -233,6 +239,16 @@ public class PageListPopupWindow {
             return this;
         }
 
+        /**
+         * @param archor 遮罩层依附的view
+         * @return Builder
+         */
+        public Builder setMask(View archor) {
+            pagePopup.archor = archor;
+            pagePopup.showMask = true;
+            return this;
+        }
+
         public PopupWindow build() {
             return pagePopup.build();
         }
@@ -241,6 +257,10 @@ public class PageListPopupWindow {
     @SuppressLint("SetTextI18n,InflateParams")
     private PopupWindow build() {
         popupWindow = new PopupWindow(ViewGroup.LayoutParams.MATCH_PARENT, windowHeight);
+        if (showMask) {
+            addMask(archor);
+            popupWindow.setOnDismissListener(this::removeMask);
+        }
         rootView = LayoutInflater.from(context).inflate(R.layout.gif_history_popupwindow_view, null);
         popupWindow.setFocusable(true);
         popupWindow.setContentView(rootView);
@@ -311,6 +331,36 @@ public class PageListPopupWindow {
         }
         rv.setAdapter(ma);
         return popupWindow;
+    }
+
+    private void addMask(View archor) {
+        WindowManager.LayoutParams wl = new WindowManager.LayoutParams();
+        wl.width = WindowManager.LayoutParams.MATCH_PARENT;
+        wl.height = WindowManager.LayoutParams.MATCH_PARENT;
+        wl.format = PixelFormat.TRANSLUCENT;//不设置这个弹出框的透明遮罩显示为黑色
+        wl.type = WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;//该Type描述的是形成的窗口的层级关系
+        wl.token = archor.getWindowToken();//获取当前Activity中的View中的token,来依附Activity
+        mask = new View(context);
+        mask.setBackgroundColor(0x7f000000);
+        mask.setFitsSystemWindows(false);
+        /*
+         * 通过WindowManager的addView方法创建View，产生出来的View根据WindowManager.LayoutParams属性不同，效果也就不同了。
+         * 比如创建系统顶级窗口，实现悬浮窗口效果！
+         */
+        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        if (windowManager != null) {
+            windowManager.addView(mask, wl);
+        }
+    }
+
+    private void removeMask() {
+        if (showMask && mask != null) {
+            WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+            if (windowManager != null) {
+                windowManager.removeViewImmediate(mask);
+                mask = null;
+            }
+        }
     }
 
     public interface ListGetter {

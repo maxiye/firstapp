@@ -2,16 +2,24 @@ package com.maxiye.first;
 
 import android.support.annotation.NonNull;
 
+import com.maxiye.first.util.ApiUtil;
 import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.StringUtil;
 import com.maxiye.first.util.TimeCounter;
 import com.maxiye.first.util.Util;
+import static com.maxiye.first.util.Util.log;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Node;
+import org.jsoup.select.Elements;
 import org.junit.Test;
-import org.w3c.dom.Document;
+import org.junit.runner.RunWith;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.w3c.dom.NodeList;
 
 import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -20,6 +28,7 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -153,17 +162,17 @@ public class ExampleUnitTest {
                 "\t\n" +
                 "</body>\n" +
                 "</html>\n");
-        System.out.println(res);
+        log(res);
     }
 
     @Test
     public void objEqual() {
         Object a = new Object();
         Object b = new Object();
-        System.out.println(a.hashCode());
-        System.out.println(b.hashCode());
-        System.out.println(new Object().hashCode());
-        System.out.println(new Object().hashCode());
+        log(a.hashCode());
+        log(b.hashCode());
+        log(new Object().hashCode());
+        log(new Object().hashCode());
     }
 
     /**
@@ -176,7 +185,7 @@ public class ExampleUnitTest {
         set2.add(new Util());
         set2.add(Integer.MAX_VALUE);
         set2.add("aa");
-        System.out.println(set2.iterator().next());
+        log(set2.iterator().next());
         // 你无法将任意元素（null除外）放入一个Collection<?>。试图这么做的化将产生编译时错误
         // 错误: 对于add(Util), 找不到合适的方法
         // 方法 Collection.add(CAP#1)不适用
@@ -184,18 +193,18 @@ public class ExampleUnitTest {
         /*set3.add(new Util());
         set3.add(Integer.MAX_VALUE);
         set3.add("aa");*/
-        System.out.println(set3);
+        log(set3);
         Set<? extends Util> set4 = new HashSet<>();
         // 找不到合适的方法
         // set4.add(new Util());
-        System.out.println(set4);
+        log(set4);
         // 原始类型 你将会失去泛型所带来的安全性和可读性
         Set set = new HashSet();
         set.add(new Util());
         set.add(Integer.MAX_VALUE);
         set.add("aa");
         // ClassCastException
-        System.out.println((Util) set.iterator().next());
+        log((Util) set.iterator().next());
     }
 
     /**
@@ -242,11 +251,11 @@ public class ExampleUnitTest {
         HashMap<String, Number> hashMap = new HashMap<>(3);
         hashMap.put("1", 2);
         hashMap.put("2", 3f);
-        System.out.println(genericFun(hashMap, "1"));
-        System.out.println(genericExtendFun(hashMap, "2"));
+        log(genericFun(hashMap, "1"));
+        log(genericExtendFun(hashMap, "2"));
         HashMap<String, String> map = new HashMap<>(2);
         map.put("1", "2");
-        //System.out.println(genericExtendFun(map, "1"));
+        //log(genericExtendFun(map, "1"));
         hashMap.put("3", Integer.valueOf(2));
     }
 
@@ -254,7 +263,7 @@ public class ExampleUnitTest {
     @Test
     public void xPathTest() {
         try {
-            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new File("test.txt"));
+            org.w3c.dom.Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new File("test.txt"));
             XPath xPath = XPathFactory.newInstance().newXPath();
             Object res = xPath.evaluate("//div[@class='art-bd']/div/p[@class='p-image']/img", doc, XPathConstants.NODESET);
             if (res instanceof NodeList) {
@@ -314,9 +323,9 @@ public class ExampleUnitTest {
         BigDecimal sub2 = new BigDecimal(".89");
         BigDecimal total = new BigDecimal("1.00");
         total = total.subtract(sub);
-        System.out.println(total);
+        log(total);
         total = total.subtract(sub2);
-        System.out.println(total);
+        log(total);
     }
 
     /**
@@ -381,12 +390,12 @@ public class ExampleUnitTest {
 
     @Test
     public void stringToLongTest() {
-        System.out.println(Long.toHexString(10868888L));
-        System.out.println(Long.toString(-1945866206988825602L, 16));
-        System.out.println(Long.valueOf("-1b011b0170017402", 16));
+        log(Long.toHexString(10868888L));
+        log(Long.toString(-1945866206988825602L, 16));
+        log(Long.valueOf("-1b011b0170017402", 16));
         BitSet bitSet = BitSet.valueOf(new long[]{2323234L,-123432342342L,3232323L,323433234234L});
-        System.out.println(bitSet.toString());
-        System.out.println(Arrays.toString(new int[55]));
+        log(bitSet.toString());
+        log(Arrays.toString(new int[55]));
     }
 
     @Test
@@ -394,7 +403,40 @@ public class ExampleUnitTest {
         int[] t = new int[]{1, 5, 22, 999, 22};
         int[] t1 = Arrays.copyOf(t, t.length + (t.length >> 1));
         int[] t2 = Arrays.copyOf(t, t.length >> 1);
-        System.out.println(Arrays.toString(t1));
-        System.out.println(Arrays.toString(t2));
+        log(Arrays.toString(t1));
+        log(Arrays.toString(t2));
+    }
+
+    @Test
+    public void jsoupTest() {
+        try {
+            Document document = Jsoup.connect("https://sj.qq.com/myapp/detail.htm?apkName=com.tencent.mm").get();
+            log(document.title());
+            Elements elements = document.select("div.det-main-container>.det-othinfo-container");
+            elements.forEach(element -> log(element.text()));
+            log(elements.select(".det-othinfo-tit").get(0).text());
+            log(elements.select(".det-othinfo-data").get(0).text());
+            Document document2 = Jsoup.connect("http://wap.gamersky.com/news/Content-1023742.html").get();
+            Elements pNodes = document2.select("article>.gsAreaContextArt>p");
+            pNodes.forEach(e -> {
+                log(e.children());
+                log(e.child(0));
+                Node node = e.childNode(0);
+                if ("img".equals(node.nodeName())) {
+                    log(node.attr("src"));
+                }
+                node.remove();
+                log(e.html());
+            });
+            log(pNodes);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void urlParseTest() {
+        Map<String, String> params = Util.getUrlParam("https://www.nowapi.com/?app=intf.manage&intid=501");
+        log(params);
     }
 }

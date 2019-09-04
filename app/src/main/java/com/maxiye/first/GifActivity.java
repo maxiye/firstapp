@@ -11,6 +11,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -75,8 +77,6 @@ import com.maxiye.first.util.PermissionUtil;
 import com.maxiye.first.util.StringUtil;
 import com.maxiye.first.util.Util;
 
-import org.jetbrains.annotations.Contract;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -105,6 +105,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -231,7 +232,7 @@ public class GifActivity extends AppCompatActivity {
             okHttpClient = new OkHttpClient()
                     .newBuilder()
                     .connectTimeout(2, TimeUnit.SECONDS)
-                    .readTimeout(8, TimeUnit.SECONDS)
+                    .readTimeout(10, TimeUnit.SECONDS)
                     .build();
         }
         // onkey 发生拥堵 --已修复
@@ -577,7 +578,6 @@ public class GifActivity extends AppCompatActivity {
     }
 
     @NonNull
-    @Contract(value = " -> new", pure = true)
     public static String[] getTypeList() {
         return new String[]{GifActivity.TYPE_GIF, GifActivity.TYPE_BITMAP};
     }
@@ -669,6 +669,47 @@ public class GifActivity extends AppCompatActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.gif_activity_actions, Util.enableMenuIcon(menu));
         return true;
+    }
+
+
+    /**
+     * bitmap操作menu
+     * @param view View
+     */
+    public void showBitmapPopup(View view, @NonNull Bitmap bitmap) {
+        PopupMenu pMenu = new PopupMenu(this, view);
+        pMenu.setGravity(Gravity.CENTER);
+        pMenu.getMenuInflater().inflate(R.menu.main_activity_bitmap_popupmenu, Util.enableMenuIcon(pMenu.getMenu()));
+        pMenu.getMenu().removeItem(R.id.gradual_color);
+        pMenu.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case R.id.gray_bitmap:
+                    BitmapUtil.showBitmap4Save(this, bitmap, BitmapUtil::convertGray, "gray");
+                    break;
+                case R.id.dot_bitmap:
+                    BitmapUtil.showBitmap4Save(this, bitmap, BitmapUtil::convertDot, "dot");
+                    break;
+                case R.id.dot_bitmap_comic:
+                    BitmapUtil.showBitmap4Save(this, bitmap, BitmapUtil::convertComic, "comic");
+                    break;
+                case R.id.reverse_bitmap:
+                    BitmapUtil.showBitmap4Save(this, bitmap, BitmapUtil::convertReverse, "reverse");
+                    break;
+                case R.id.single_chan_bitmap:
+                    BitmapUtil.showBitmap4Save(this, bitmap, BitmapUtil::convertSingleChannel, "single-chan");
+                    break;
+                case R.id.dot_bitmap_txt:
+                    String dotTxt = BitmapUtil.convertDotTxt(bitmap);
+                    File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "bitmap_txt/" + UUID.randomUUID().toString() + "_dot.txt");
+                    Util.saveFileEx(file, dotTxt);
+                    this.alert(getString(R.string.success));
+                    break;
+                default:
+                    break;
+            }
+            return false;
+        });
+        pMenu.show();
     }
 
     public void refresh() {
@@ -1134,7 +1175,6 @@ public class GifActivity extends AppCompatActivity {
          * @param andWhere String
          * @return List
          */
-        @Contract("_, _, _ -> param2")
         private List<Map<String, Object>> getList(int page, List<Map<String, Object>> historyList, String andWhere) {
             int offset = (page - 1) * PAGE_SIZE;
             String where = "art_id <> '' and type = '" + type + "'";
@@ -1263,6 +1303,14 @@ public class GifActivity extends AppCompatActivity {
                                     break;
                                 case R.id.find_repeated_files:
                                     findRepeatedFilesDialog(pageWin::filter);
+                                    break;
+                                case R.id.transfer:
+                                    File favFile2 = new File((String) pageWin.getItemData(position).get("path"));
+                                    try (FileInputStream fis = new FileInputStream(favFile2)) {
+                                        showBitmapPopup(pageWin.getItemView(position), BitmapFactory.decodeStream(fis));
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
                                     break;
                                 default:
                                     break;
@@ -1506,7 +1554,7 @@ public class GifActivity extends AppCompatActivity {
                 Map<String, Object> item = favoriteList.get(position);
                 String id = (String) item.get("id");
                 String name = id + "_" + item.get("title");
-                String cacheKey = genCacheKey(item.get("id").toString(), "favorite");
+                String cacheKey = getFavCacheKey(item.get("id").toString());
                 // 混合图网页（3dm）
                 download(item.get("type") + "/" + name, cacheKey);
                 return false;
@@ -1606,6 +1654,11 @@ public class GifActivity extends AppCompatActivity {
 
         private void loadFavImg(@NonNull Dialog dialog, GifImageView imgView, @NonNull Map<String, Object> item) {
             String title = (String) item.get("title");
+            if (!StringUtil.notBlank(title)) {
+                // 删除item后翻页问题修复
+                alert(getString(R.string.no_data));
+                return;
+            }
             String url = (String) item.get("real_url");
             url = StringUtil.notBlank(url) ? url : (String) item.get("url");
             dialog.setTitle(Html.fromHtml("<p style='color: #F66725; text-align: center'>" + title + "</p>", Html.FROM_HTML_MODE_COMPACT));
@@ -1675,7 +1728,6 @@ public class GifActivity extends AppCompatActivity {
             }
         }
 
-        @Contract("_, _, _ -> param2")
         private List<Map<String, Object>> getList(int page, List<Map<String, Object>> favoriteList, String andWhere) {
             int offset = (page - 1) * PAGE_SIZE;
             String where = "type = '" + type + "'";
@@ -1721,7 +1773,7 @@ public class GifActivity extends AppCompatActivity {
                     } else {
                         item.put("path", "");
                         item.put("name", title);
-                        file = diskLruCache.get(genCacheKey(item.get("id").toString(), "favorite"));
+                        file = diskLruCache.get(getFavCacheKey(item.get("id").toString()));
                         if (file == null) {
                             item.put("icon", getCachedIcon("default"));
                             continue;
@@ -1876,7 +1928,7 @@ public class GifActivity extends AppCompatActivity {
         @Override
         protected Drawable doInBackground(String... strings) {
             GifActivity activity = gifActivityWR.get();
-            String imgKey = activity.genCacheKey(strings[2], "favorite");
+            String imgKey = activity.getFavCacheKey(strings[2]);
             String path = strings[3];
             File cache = StringUtil.notBlank(path) ? new File(path) : activity.diskLruCache.get(imgKey);
             if (cache != null) {
@@ -1979,12 +2031,23 @@ public class GifActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 获取Lru缓存的key
+     * @param offset imgList的index
+     * @return String
+     */
+    private String getCacheKey(int offset) {
+        return webName + "_" + ART_FILTER_PATTERN.matcher(artId).replaceAll("#") + "-" + offset;
+    }
+
+    /**
+     * 返回收藏列表的lru缓存key
+     * @param id fav表id
+     * @return key
+     */
     @NonNull
-    private String genCacheKey(String subfix, @NonNull String keyType) {
-        if ("favorite".equals(keyType)) {
-            return "favorite_" + type + "-" + subfix;
-        }
-        return webName + "_" + ART_FILTER_PATTERN.matcher(artId).replaceAll("#") + "-" + subfix;
+    private String getFavCacheKey(String id) {
+        return "favorite_" + type + "-" + id;
     }
 
     private void checkPageEnd() {
@@ -2206,16 +2269,29 @@ public class GifActivity extends AppCompatActivity {
             }
         }
 
-        @org.jetbrains.annotations.Contract(pure = true)
+        /**
+         * 获取imgList{@link GifActivity#imgList}中的index
+         * @param index fragment中的index
+         * @return int
+         */
         private int getImgOffset(int index) {
             return (page - 1) * 3 + index - 1;
+        }
+
+        /**
+         * 获取lru缓存的key
+         * @param index fragment中的index
+         * @return String
+         */
+        private String getCacheKey(int index) {
+            return activity.getCacheKey(getImgOffset(index));
         }
 
         private boolean longClickCb(int position, View view) {
             focusedPosition = position;
             ListPopupWindow listMenu = new ListPopupWindow(activity);
             listMenu.setAdapter(new ArrayAdapter<>(activity, android.R.layout.simple_list_item_1, new
-                    String[]{getString(R.string.add_bookmark), getString(R.string.share), getString(R.string.add_to_fav), getString(R.string.download)}));
+                    String[]{getString(R.string.add_bookmark), getString(R.string.share), getString(R.string.add_to_fav), getString(R.string.download), getString(R.string.transfer)}));
             DisplayMetrics dm = new DisplayMetrics();
             activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
             listMenu.setAnchorView(view);
@@ -2229,8 +2305,7 @@ public class GifActivity extends AppCompatActivity {
                         activity.mark();
                         break;
                     case 1:
-                        String cacheKey1 = activity.genCacheKey(String.valueOf(getImgOffset(focusedPosition)), "");
-                        File img = activity.diskLruCache.get(cacheKey1);
+                        File img = activity.diskLruCache.get(getCacheKey(focusedPosition));
                         Util.share(img, activity);
                         break;
                     case 2:
@@ -2240,12 +2315,20 @@ public class GifActivity extends AppCompatActivity {
                         long favId = addFav();
                         if (favId > 0) {
                             HashMap<String, String> gifInfo = activity.getImgInfo(getImgOffset(focusedPosition));
-                            String cacheKey = activity.genCacheKey(getImgOffset(focusedPosition) + "", "");
+                            String cacheKey = getCacheKey(focusedPosition);
                             assert gifInfo != null;
                             // 混合图网页（3dm）
                             String dir = ".gif".equals(gifInfo.get("ext")) ? "gif" : "bitmap";
                             String path = dir + "/" + favId + "_" + gifInfo.get("title");
                             activity.download(path, cacheKey);
+                        }
+                        break;
+                    case 4:
+                        File img2 = activity.diskLruCache.get(getCacheKey(focusedPosition));
+                        try (FileInputStream fis = new FileInputStream(img2)) {
+                            activity.showBitmapPopup(view1, BitmapFactory.decodeStream(fis));
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
                         break;
                     default:
@@ -2305,7 +2388,7 @@ public class GifActivity extends AppCompatActivity {
         }
 
         void checkLoad(int position) {
-            String imgKey = activity.genCacheKey(getImgOffset(imgPosition = position) + "", "");
+            String imgKey = getCacheKey(imgPosition = position);
             //移动网络禁止 gif
             MyLog.w("checkLoad", activity.isGprs + "  t: " + type + "  key: " + imgKey + activity.diskLruCache.isNotExists(imgKey));
             if (activity.isGprs && TYPE_GIF.equals(type) && activity.diskLruCache.isNotExists(imgKey)) {
@@ -2336,7 +2419,7 @@ public class GifActivity extends AppCompatActivity {
                 activity.runOnUiThread(() -> activity.alert(getString(R.string.no_more)));
                 return;
             }
-            String imgKey = activity.genCacheKey(startOffset + "", "");
+            String imgKey = activity.getCacheKey(startOffset);
             String gifExt = ".gif";
             File cacheImg = activity.diskLruCache.get(imgKey);
             send(MSG_TYPE_PRE, nowPosition, 0, imgInfo.get("title"));
@@ -2493,7 +2576,7 @@ public class GifActivity extends AppCompatActivity {
                     }
                     TextView tv = rootView.findViewById(fragment.getResources().getIdentifier("gtxt_" + position, "id", activity.getPackageName()));
                     tv.setText((String) msg.obj);
-                    if (activity.diskLruCache.isNotExists(activity.genCacheKey(String.valueOf(fragment.getImgOffset(position)), ""))) {
+                    if (activity.diskLruCache.isNotExists(fragment.getCacheKey(position))) {
                         imageView.setImageDrawable(activity.getCachedIcon("loading"));
                         imageView.setMinimumHeight(90);
                         imageView.setMinimumWidth(90);

@@ -67,7 +67,7 @@
 
         <TextView
             android:id="@+id/webdav_user_view"
-            android:layout_width="120dp"
+            android:layout_width="180dp"
             android:layout_height="wrap_content"
             android:lines="1"
             android:layout_centerVertical="true"
@@ -102,7 +102,7 @@
 
         <TextView
             android:id="@+id/webdav_pwd_view"
-            android:layout_width="120dp"
+            android:layout_width="180dp"
             android:layout_height="wrap_content"
             android:lines="1"
             android:inputType="textPassword"
@@ -155,6 +155,8 @@
             android:orientation="vertical"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:paddingEnd="60dp"
+            android:paddingStart="0dp"
             tools:ignore="RelativeOverlap">
             <TextView
                 android:layout_width="wrap_content"
@@ -178,5 +180,105 @@
             android:layout_centerVertical="true"
             android:textAlignment="textEnd"
             android:layout_alignParentEnd="true"/>
+    </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/api_user_cfg"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:layout_below="@id/duplicate_level_cfg"
+        tools:ignore="UselessParent">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:ignore="RelativeOverlap">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="17sp"
+                android:text="@string/api_user"
+                android:textColor="@color/actionTitle"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/api_user_tip"
+                android:textSize="13sp"
+                android:textColor="@color/colorDarkGray"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/api_user_view"
+            android:layout_width="180dp"
+            android:layout_height="wrap_content"
+            android:lines="1"
+            android:layout_centerVertical="true"
+            android:textAlignment="textEnd"
+            android:layout_alignParentEnd="true"/>
+    </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/api_pwd_cfg"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:layout_below="@id/api_user_cfg"
+        tools:ignore="UselessParent">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:ignore="RelativeOverlap">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="17sp"
+                android:text="@string/api_password"
+                android:textColor="@color/actionTitle"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/api_password_tip"
+                android:textSize="13sp"
+                android:textColor="@color/colorDarkGray"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/api_pwd_view"
+            android:layout_width="180dp"
+            android:layout_height="wrap_content"
+            android:lines="1"
+            android:inputType="textPassword"
+            android:layout_centerVertical="true"
+            android:textAlignment="textEnd"
+            android:layout_alignParentEnd="true"
+            tools:ignore="TextViewEdits"/>
+    </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/api_list_cfg"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:layout_below="@id/api_pwd_cfg"
+        tools:ignore="UselessParent">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingEnd="60dp"
+            android:paddingStart="0dp"
+            tools:ignore="RelativeOverlap">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="17sp"
+                android:text="@string/api_list"
+                android:textColor="@color/actionTitle"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/api_list_cfg_tips"
+                android:textSize="13sp"
+                android:textColor="@color/colorDarkGray"/>
+        </LinearLayout>
     </RelativeLayout>
 </RelativeLayout>

@@ -1,14 +1,20 @@
 package com.maxiye.first.util;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.view.View;
 import android.widget.PopupMenu;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
+import com.maxiye.first.MainActivity;
 import com.maxiye.first.R;
+import com.maxiye.first.SettingActivity;
 import com.maxiye.first.api.BjTimeActivity;
 import com.maxiye.first.api.ExchangeRateActivity;
 import com.maxiye.first.api.IdAddressActivity;
@@ -18,10 +24,22 @@ import com.maxiye.first.api.PostcodeActivity;
 import com.maxiye.first.api.WeatherActivity;
 import com.maxiye.first.api.WorkdayActivity;
 
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import javax.xml.transform.URIResolver;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -58,6 +76,146 @@ public class ApiUtil {
             }
         }
         return instance;
+    }
+
+    /**
+     * 模拟登录，获取cookie
+     */
+    private Map<String, String> mockLogin() {
+        try {
+            Connection con = Jsoup.connect("https://www.nowapi.com/?app=account.login");
+            con.header("User-Agent",
+                    "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:29.0) Gecko/20100101 Firefox/29.0");// 配置模拟浏览器
+            Connection.Response res = con.execute();// 获取响应
+            Document dom = Jsoup.parse(res.body());// 转换为Dom树
+            List<Element> et = dom.select("form input");
+            Map<String, String> postData = new HashMap<>(5);
+            for(Element e : et) {
+                postData.put(e.attr("name"), e.attr("value"));
+            }
+            SharedPreferences sharedPreferences = MainActivity.getContextOfApplication().getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
+            String user = sharedPreferences.getString(SettingActivity.API_USER, "null");
+            String pwd = sharedPreferences.getString(SettingActivity.API_PWD, "null");
+            postData.put("usernm", user);
+            postData.put("passwd", pwd);
+            Thread.sleep(100);
+            Map<String, String> cookie = res.cookies();
+            Connection con2 = Jsoup.connect("https://www.nowapi.com/index.php?ajax=1");
+            con2.header("User-Agent",
+                    "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:29.0) Gecko/20100101 Firefox/29.0");// 配置模拟浏览器
+            Connection.Response res2 = con2.ignoreContentType(true)
+                    .method(Connection.Method.POST)
+                    .data(postData)
+                    .cookies(cookie)
+                    .execute();
+            String resBody = res2.body();
+            MyLog.w("apiUtil-login", resBody);
+            MyLog.w("apiUtil-cookie", res2.cookies().toString());
+            HashMap resObj = new Gson().fromJson(resBody, HashMap.class);
+            // 登录失败
+            if ("-1".equals(resObj.get("success").toString())) {
+                throw new Exception("登录失败");
+            }
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            Map<String, String> cookie2 = res2.cookies();
+            for (String s : cookie2.keySet()) {
+                cookie.put(s, cookie2.get(s));
+            }
+            String jsonCookie = new Gson().toJson(cookie, Map.class);
+            editor.putLong(SettingActivity.API_COOKIE_MTIME, System.currentTimeMillis())
+                    .putString(SettingActivity.API_COOKIE, jsonCookie)
+                    .apply();
+            return cookie;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new HashMap<>();
+    }
+
+    private Map<String, String> checkCookie() {
+        SharedPreferences sharedPreferences = MainActivity.getContextOfApplication().getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
+        long lastCookieTime = sharedPreferences.getLong(SettingActivity.API_COOKIE_MTIME, 0L);
+        // 超过2个小时更新cookie
+        if (System.currentTimeMillis() - lastCookieTime > 3600000) {
+            return mockLogin();
+        } else {
+            String cookieStr = sharedPreferences.getString(SettingActivity.API_COOKIE, "");
+            Type typeToken = new TypeToken<HashMap<String,String>>(){}.getType();
+            return new Gson().fromJson(cookieStr, typeToken);
+        }
+    }
+
+    /**
+     * 获取api列表信息
+     * @return String
+     */
+    public List<Map<String, Object>> apiList() {
+        try {
+            Map<String, String> cookie = checkCookie();
+            Connection con = Jsoup.connect("https://www.nowapi.com/?app=intf.myintf");
+            con.header("User-Agent",
+                    "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:29.0) Gecko/20100101 Firefox/29.0")
+                    .cookies(cookie);// 配置模拟浏览器
+            Connection.Response res = con.execute();// 获取响应
+            String body = res.body();
+            MyLog.w("Api-apiBody", body);
+            Document dom = Jsoup.parse(body);// 转换为Dom树
+            Elements elements = dom.select("tbody tr");
+            List<Map<String, Object>> list = new ArrayList<>(15);
+            for (Element e : elements) {
+                Elements tds = e.children();
+                HashMap<String, Object> item = new HashMap<>(12);
+                item.put("title", tds.eq(2).text());
+                item.put("icon", tds.eq(2).text());
+                item.put("status", tds.eq(3).text());
+                item.put("type", tds.eq(4).text());
+                item.put("limit", tds.eq(5).text());
+                item.put("start", tds.eq(6).text());
+                item.put("end", tds.eq(7).text());
+                String url = e.select("a").attr("href");
+                item.put("url", url);
+                Map<String, String> params = Util.getUrlParam(url);
+                item.put("id", params.get("intid"));
+                list.add(item);
+            }
+            MyLog.w("Api-apilist", list.toString());
+            return list;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * 续费api接口，按照3个月续
+     * @param itemData HashMap item
+     * @return result
+     */
+    public String apiRenewal(Map<String, Object> itemData) {
+        try {
+            Map<String, String> cookie = checkCookie();
+            Connection con2 = Jsoup.connect("https://www.nowapi.com/index.php?ajax=1");
+            con2.header("User-Agent",
+                    "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:29.0) Gecko/20100101 Firefox/29.0");// 配置模拟浏览器
+            Map<String, String> postData = new HashMap<>(5);
+            postData.put("app", "buyr.ajaPackageHad");
+            postData.put("intId", itemData.get("id").toString());
+            postData.put("pkFrom", "pr");
+            postData.put("pkType", "fc");
+            postData.put("monthId", "3");
+            MyLog.w("ApiUtil-apiRenewal-post", postData.toString());
+            Connection.Response res2 = con2.ignoreContentType(true)
+                    .method(Connection.Method.POST)
+                    .data(postData)
+                    .cookies(cookie)
+                    .execute();
+            String body = res2.body();
+            MyLog.w("ApiUtil-apiRenewal-res", body);
+            return body;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "error: " + e.getLocalizedMessage();
+        }
     }
 
     public static boolean showPopupmenu(Activity context, View view) {

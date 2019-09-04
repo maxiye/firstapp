@@ -1,63 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:id="@+id/page_list_popup_window"
-              android:background="@color/white"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/page_list_popup_window"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:orientation="vertical">
+
     <LinearLayout
         android:id="@+id/page_popup_control"
-        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:focusable="true"
         android:focusableInTouchMode="true"
-        android:visibility="gone"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:orientation="horizontal"
+        android:visibility="gone">
+
         <Button
             android:id="@+id/popup_prev_page"
             style="@style/MyButtonStyle"
-            android:text="@string/prev_page"
-            android:layout_weight="4"
-            android:visibility="gone"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:layout_weight="4"
+            android:text="@string/prev_page"
+            android:visibility="gone" />
         <EditText
             android:id="@+id/popup_page"
-            android:textColor="@color/myPrimaryColor"
-            android:hint="@string/page"
-            android:layout_weight="1"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:maxLines="1"
+            android:layout_weight="1"
             android:gravity="center"
+            android:hint="@string/page"
             android:imeOptions="actionGo"
             android:inputType="number"
-            tools:ignore="Autofill"/>
+            android:maxLines="1"
+            android:textColor="@color/myPrimaryColor"
+            tools:ignore="Autofill" />
         <TextView
             android:id="@+id/popup_total_page_div"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="center"
             android:text="/"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            tools:ignore="HardcodedText"/>
+            tools:ignore="HardcodedText" />
         <TextView
             android:id="@+id/popup_total_page"
-            android:layout_weight="1"
-            android:gravity="center"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"/>
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center" />
         <Button
             android:id="@+id/popup_next_page"
             style="@style/MyButtonStyle"
-            android:text="@string/next_page"
-            android:layout_weight="4"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:layout_weight="4"
+            android:text="@string/next_page" />
+
     </LinearLayout>
+
     <android.support.v7.widget.RecyclerView
         android:id="@+id/popupwindow_rv"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent" />
 </LinearLayout>

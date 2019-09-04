@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:id="@+id/gradual_color" android:icon="@drawable/ic_gradient_black_24dp" android:title="@string/gradual_color"/>
+    <item android:id="@+id/gray_bitmap" android:icon="@drawable/ic_filter_b_and_w_black_24dp" android:title="@string/gray_bitmap"/>
+    <item android:id="@+id/dot_bitmap" android:icon="@drawable/ic_blur_on_black_24dp" android:title="@string/dot_bitmap"/>
+    <item android:id="@+id/reverse_bitmap" android:icon="@drawable/ic_local_movies_black_24dp" android:title="@string/reverse_bitmap"/>
+    <item android:id="@+id/single_chan_bitmap" android:icon="@drawable/ic_texture_black_24dp" android:title="@string/single_chan_bitmap"/>
+    <item android:id="@+id/dot_bitmap_txt" android:icon="@drawable/ic_blur_circular_black_24dp" android:title="@string/dot_bitmap_txt"/>
+    <item android:id="@+id/dot_bitmap_comic" android:icon="@drawable/ic_blur_on_black_24dp" android:title="@string/dot_bitmap_ex"/>
+</menu>

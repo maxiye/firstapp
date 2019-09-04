@@ -117,6 +117,7 @@
     <string name="dot_bitmap">Dot Bitmap</string>
     <string name="reverse_bitmap">Reverse Bitmap</string>
     <string name="dot_bitmap_txt">Dot Bitmap Text</string>
+    <string name="single_chan_bitmap">Single Channel Bitmap</string>
     <string name="filter_where">Filter Conditions</string>
     <string name="webdav_user">WebDav Username</string>
     <string name="webdav_user_tip">Setup the username for WebDav</string>
@@ -131,7 +132,7 @@
     <string name="use_webdav">Webdav Backup</string>
     <string name="use_webdav_tip">Backup your data by Web-Dav</string>
     <string name="duplicate_level">Duplicate Level</string>
-    <string name="duplicate_level_tip">The control level when find duplicate images in the favorites,smaller is strictly,default is 5.</string>
+    <string name="duplicate_level_tip">The control level when find duplicate images in the favorites,smaller is strictly,default is 32(5 in 64bit-mode).</string>
     <string name="image_meta">Image Meta</string>
     <string name="copy">Copy</string>
     <string name="cmp_256_bit">256-Bit Compare</string>
@@ -140,4 +141,15 @@
     <string name="host">Host</string>
     <string name="port">Port</string>
     <string name="proxy_shortcut">Proxy Shortcut</string>
+    <string name="bitmap">Bitmap</string>
+    <string name="transfer">Transfer</string>
+    <string name="dot_bitmap_ex">Dot Bitmap Ex</string>
+    <string name="api_list">Api List</string>
+    <string name="api_list_cfg_tips">Api List Manage</string>
+    <string name="renewal">Renewal</string>
+    <string name="no_data">No Data</string>
+    <string name="api_user">Api Username</string>
+    <string name="api_user_tip">Setting Api Username</string>
+    <string name="api_password">Api Password</string>
+    <string name="api_password_tip">Setting Api Password</string>
 </resources>

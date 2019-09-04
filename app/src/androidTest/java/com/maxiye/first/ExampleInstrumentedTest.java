@@ -10,7 +10,9 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
+import com.maxiye.first.util.ApiUtil;
 import com.maxiye.first.util.TimeCounter;
+import com.maxiye.first.util.Util;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,6 +21,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import static com.maxiye.first.util.Util.log;
 import static org.junit.Assert.*;
 
 /**
@@ -108,5 +111,10 @@ public class ExampleInstrumentedTest {
         });
         Log.w("ttt1", t1 + "");
         Log.w("ttt2", t2 + "");
+    }
+
+    @Test
+    public void apiListTest() {
+        log(ApiUtil.getInstance().apiList());
     }
 }

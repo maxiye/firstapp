@@ -2,8 +2,10 @@ package com.maxiye.first.util;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
@@ -15,6 +17,9 @@ import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
+import android.view.Window;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -27,12 +32,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import pl.droidsonroids.gif.GifImageView;
 
 /**
  * 常用方法助手
@@ -270,5 +280,60 @@ public class Util {
                 })
                 .create();
         dialog.show();
+    }
+
+    /**
+     * 静态导入方法，打印
+     * @param obj Object
+     */
+    public static void log(Object obj) {
+        System.out.println(obj);
+    }
+
+    private static Dialog loading;
+
+    /**
+     * 公用加载浮窗
+     * @param context 上下文
+     */
+    public static void loading(Context context) {
+        loading = new Dialog(context, android.R.style.Theme_Material_Dialog_Alert);
+        GifImageView imgView = new GifImageView(context);
+        imgView.setImageDrawable(context.getDrawable(R.drawable.ic_autorenew_black_24dp));
+        imgView.setMinimumHeight(180);
+        imgView.setMinimumWidth(180);
+        Animation anim = AnimationUtils.loadAnimation(context, R.anim.load_rotate);
+        Objects.requireNonNull(loading.getWindow()).setBackgroundDrawable(new ColorDrawable(0));
+        loading.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        loading.setContentView(imgView);
+        // back不消失
+        loading.setCancelable(false);
+        loading.setOnShowListener(dialog -> imgView.startAnimation(anim));
+        loading.show();
+    }
+
+    public static void loaded() {
+        loading.dismiss();
+    }
+
+    /**
+     * 解析url参数
+     * @param url Url
+     * @return map
+     */
+    public static Map<String, String> getUrlParam(String url) {
+        if (StringUtil.notBlank(url)) {
+            int index = url.indexOf("?");
+            String param = url.substring(index + 1);
+            String[] params = param.split("&");
+            Map<String, String> map = new HashMap<>();
+            for (String item : params) {
+                String[] kv = item.split("=");
+                map.put(kv[0], kv[1]);
+            }
+            return map;
+        } else {
+            return new HashMap<>();
+        }
     }
 }

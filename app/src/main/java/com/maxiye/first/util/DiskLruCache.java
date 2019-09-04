@@ -6,8 +6,6 @@ import android.support.annotation.NonNull;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import org.jetbrains.annotations.Contract;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -62,7 +60,6 @@ public class DiskLruCache implements Serializable {
      * @param keyword String
      * @return int
      */
-    @Contract(pure = true)
     private static int capacity(@NonNull String keyword) {
         int capacity;
         switch (keyword) {

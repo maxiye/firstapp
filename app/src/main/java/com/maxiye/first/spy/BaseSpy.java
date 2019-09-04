@@ -7,8 +7,6 @@ import com.google.gson.JsonObject;
 import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.StringUtil;
 
-import org.jetbrains.annotations.Contract;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.UUID;
@@ -212,7 +210,6 @@ public class BaseSpy {
      * @param content 文字内容
      */
     @Nullable
-    @SuppressWarnings("WeakerAccess")
     public final String getNewTitle(String content) {
         JsonObject regObj = webCfg.getAsJsonObject("title_reg");
         int titleIdx = regObj.get("title_idx").getAsInt();
@@ -232,7 +229,6 @@ public class BaseSpy {
      * @return String[]
      */
     @NonNull
-    @Contract(" -> new")
     public final String[] getNewArticle() {
         String url = webCfg.get("spy_root").getAsString();
         JsonObject regObj = webCfg.getAsJsonObject("img_web_reg");

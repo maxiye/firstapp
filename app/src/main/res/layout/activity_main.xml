@@ -101,55 +101,15 @@
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/main_ll2"
         android:padding="3dp">
+        <Button
+            style="@style/MyButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="showBitmapPopup"
+            android:drawableTop="@drawable/ic_spa_black_24dp"
+            android:text="@string/bitmap"/>
 
-        <Button
-            style="@style/MyButtonStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:onClick="genGradualColor"
-            android:drawableTop="@drawable/ic_gradient_black_24dp"
-            android:text="@string/gradual_color"/>
-        <Button
-            style="@style/MyButtonStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:onClick="grayBitmap"
-            android:drawableTop="@drawable/ic_filter_b_and_w_black_24dp"
-            android:text="@string/gray_bitmap"/>
-        <Button
-            style="@style/MyButtonStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:onClick="dotBitmap"
-            android:drawableTop="@drawable/ic_blur_on_black_24dp"
-            android:text="@string/dot_bitmap"/>
-        <Button
-            style="@style/MyButtonStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:onClick="reverseBitmap"
-            android:drawableTop="@drawable/ic_local_movies_black_24dp"
-            android:text="@string/reverse_bitmap"/>
-
-    </LinearLayout>
-    <LinearLayout
-        android:id="@+id/main_ll4"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/main_ll3"
-        android:padding="3dp">
-        <Button
-            style="@style/MyButtonStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:onClick="dotBitmapTxt"
-            android:drawableTop="@drawable/ic_blur_circular_black_24dp"
-            android:text="@string/dot_bitmap_txt"/>
         <Button
             style="@style/MyButtonStyle"
             android:layout_width="0dp"
@@ -159,4 +119,11 @@
             android:drawableTop="@drawable/ic_near_me_black_24dp"
             android:text="@string/proxy"/>
     </LinearLayout>
+    <!--<LinearLayout
+        android:id="@+id/main_ll4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/main_ll3"
+        android:padding="3dp">
+    </LinearLayout>-->
 </android.support.constraint.ConstraintLayout>

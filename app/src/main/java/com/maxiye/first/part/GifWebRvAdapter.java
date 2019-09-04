@@ -37,7 +37,6 @@ public class GifWebRvAdapter extends RecyclerView.Adapter<GifWebRvAdapter.ViewHo
     private IntConsumer clickListener;
     private OnItemLongClickListener longClickListener;
 
-    @SuppressWarnings({"WeakerAccess"})
     public void setData(List<Map<String, Object>> data) {
         mData = data;
     }

@@ -5,9 +5,6 @@ import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.widget.Toast;
 
-import org.jetbrains.annotations.Contract;
-
-import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
 /**
@@ -45,7 +42,6 @@ public class PermissionUtil {
             this.code = code;
         }
 
-        @Contract(pure = true)
         public int getCode() {
             return code;
         }

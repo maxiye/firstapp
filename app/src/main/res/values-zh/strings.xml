@@ -116,6 +116,7 @@
     <string name="dot_bitmap">点阵</string>
     <string name="reverse_bitmap">反转</string>
     <string name="dot_bitmap_txt">点阵文字图</string>
+    <string name="single_chan_bitmap">单通道图</string>
     <string name="filter_where">筛选条件</string>
     <string name="webdav_user">WebDav 用户名</string>
     <string name="webdav_user_tip">设置WebDav的用户名</string>
@@ -130,7 +131,7 @@
     <string name="use_webdav">Webdav备份</string>
     <string name="use_webdav_tip">使用Web-Dav备份资料</string>
     <string name="duplicate_level">查重等级</string>
-    <string name="duplicate_level_tip">查重收藏图片时的严格程度控制，越小越严苛，默认为5。</string>
+    <string name="duplicate_level_tip">查重收藏图片时的严格程度控制，越小越严苛，默认为32（64bit模式下为5）</string>
     <string name="image_meta">图片指纹</string>
     <string name="copy">复制</string>
     <string name="cmp_256_bit">256位比较</string>
@@ -139,4 +140,15 @@
     <string name="host">主机</string>
     <string name="port">端口</string>
     <string name="proxy_shortcut">代理Shortcut</string>
+    <string name="bitmap">位图</string>
+    <string name="transfer">变幻</string>
+    <string name="dot_bitmap_ex">点阵Ex</string>
+    <string name="api_list">Api列表</string>
+    <string name="api_list_cfg_tips">管理api列表，查看、续期等</string>
+    <string name="renewal">续费</string>
+    <string name="no_data">无数据</string>
+    <string name="api_user">Api 用户名</string>
+    <string name="api_user_tip">设置 Api 用户名</string>
+    <string name="api_password">Api 密码</string>
+    <string name="api_password_tip">设置 Api 密码</string>
 </resources>

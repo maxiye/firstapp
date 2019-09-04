@@ -7,9 +7,20 @@ import android.support.annotation.Nullable;
 
 import com.maxiye.first.SettingActivity;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import okhttp3.Authenticator;
 import okhttp3.Credentials;
@@ -24,17 +35,21 @@ import okhttp3.ResponseBody;
 import okhttp3.Route;
 
 /**
- * 数据库助手
+ * WebDav工具
  * Created by 91287 on 2019/5/26.
  */
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class WebdavUtil {
     public static final String BASE_URL = "https://dav.jianguoyun.com/dav/maxiye/";
 
     private OkHttpClient client;
+    private String rawRes;
 
     public WebdavUtil(String user, String password) {
         client = new OkHttpClient.Builder()
                 .authenticator(new WebdavUtil.BasicAuthenticator(user, password))
+                .readTimeout(1200, TimeUnit.SECONDS)
+                .writeTimeout(1200, TimeUnit.SECONDS)
                 .build();
     }
 
@@ -46,6 +61,10 @@ public class WebdavUtil {
         client = new OkHttpClient.Builder()
                 .authenticator(new WebdavUtil.BasicAuthenticator(user, pwd))
                 .build();
+    }
+
+    public String getRawRes() {
+        return rawRes;
     }
 
     public boolean put(String url, File file) {
@@ -80,7 +99,7 @@ public class WebdavUtil {
         Request request = new Request.Builder()
                 .url(url)
                 .put(requestBody)
-                .headers(new Headers.Builder().add("Expect", "100-Continue").build())
+                .headers(new Headers.Builder()/*.add("Expect", "100-Continue")*/.build())
                 .build();
         return executeForBoolean(request);
     }
@@ -93,6 +112,7 @@ public class WebdavUtil {
     private boolean executeForBoolean(Request request) {
         try {
             Response response = client.newCall(request).execute();
+            rawRes = Objects.requireNonNull(response.body()).string();
             return response.isSuccessful();
         } catch (Exception e) {
             e.printStackTrace();
@@ -117,6 +137,72 @@ public class WebdavUtil {
         throw new FileNotFoundException("File does not exist");
     }
 
+    /**
+     * 获取文件列表
+     * @param url Url
+     * @param depth 目录深度
+     * @return ResponseBody xml
+     * <d:response>
+     *    <d:href>/dav/</d:href>
+     *    <d:propstat>
+     *       <d:prop>
+     *          <d:getlastmodified>Tue, 27 Aug 2019 03:25:42 GMT</d:getlastmodified>
+     *          <d:getcontentlength>0</d:getcontentlength>
+     *          <d:owner>912877398@qq.com</d:owner>
+     *          <d:current-user-privilege-set>
+     *             <d:privilege>
+     *                <d:read/>
+     *             </d:privilege>
+     *          </d:current-user-privilege-set>
+     *          <d:getcontenttype>httpd/unix-directory</d:getcontenttype>
+     *          <d:displayname>dav</d:displayname>
+     *          <d:resourcetype>
+     *             <d:collection/>
+     *          </d:resourcetype>
+     *       </d:prop>
+     *       <d:status>HTTP/1.1 200 OK</d:status>
+     *    </d:propstat>
+     * </d:response>
+     */
+    public String[] list(String url, int depth) {
+        String xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+                "<D:propfind xmlns:D=\"DAV:\">\n" +
+                "   <D:allprop/>\n" +
+                "</D:propfind>";
+        RequestBody requestBody = RequestBody.create(MediaType.parse("text/xml"), xml);
+        Request request = new Request.Builder()
+                .url(url)
+                .header("Depth", depth < 0 ? "infinity" : Integer.toString(depth))
+                .method("PROPFIND", requestBody)
+                .build();
+        try {
+            Response response = client.newCall(request).execute();
+            if (response.isSuccessful() && response.body() != null) {
+                DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+                byte[] bytes = response.body().bytes();
+                ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+                Document document = documentBuilder.parse(bais);
+                rawRes = new String(bytes, StandardCharsets.UTF_8);
+                NodeList nodeList = document.getElementsByTagName("d:href");
+                int length = nodeList.getLength();
+                String[] result = new String[length];
+                for (int i = 0; i < length; i++) {
+                    result[i] = URLDecoder.decode(nodeList.item(i).getTextContent(), "utf-8");
+                }
+                return result;
+            }
+            rawRes = Objects.requireNonNull(response.body()).string();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new String[0];
+    }
+
+    /**
+     * 删除文件
+     * @param url Url
+     * @return boolean
+     */
     public boolean delete(String url) {
         Request request = new Request.Builder()
                 .url(url)
