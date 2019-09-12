@@ -152,4 +152,6 @@
     <string name="api_user_tip">Setting Api Username</string>
     <string name="api_password">Api Password</string>
     <string name="api_password_tip">Setting Api Password</string>
+    <string name="fetch_api_key">Fetch Api Key</string>
+    <string name="refresh_api_key">Refresh Api Key</string>
 </resources>

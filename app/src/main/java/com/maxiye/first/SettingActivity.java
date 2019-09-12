@@ -98,6 +98,14 @@ public class SettingActivity extends AppCompatActivity {
      * api780的cookie
      */
     public static final String API_COOKIE = "api_cookie";
+    /**
+     * api780的appKey
+     */
+    public static final String API_APP_KEY = "api_app_key";
+    /**
+     * api780的sign
+     */
+    public static final String API_SIGN = "api_sign";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -181,11 +189,8 @@ public class SettingActivity extends AppCompatActivity {
                     PopupWindow pageWindow = new PageListPopupWindow.Builder(SettingActivity.this)
                             .setListCountGetter(where -> count)
                             .setListGetter((page, list1, where) -> list)
-                            .setItemClickListener((pageWin, position) -> {
-
-
-                            })
-                            .setItemLongClickListener(this::longClick)
+                            .setItemClickListener(this::showActions)
+                            .setItemLongClickListener((pageListPopupWindow, position) -> false)
                             .setPageSize(20)
                             .setWindowHeight(ViewGroup.LayoutParams.WRAP_CONTENT)
                             .setMask(findViewById(R.id.setting_layout))
@@ -195,18 +200,31 @@ public class SettingActivity extends AppCompatActivity {
             });
         }
 
-        private boolean longClick(PageListPopupWindow popupWindow, int position) {
+        private void showActions(PageListPopupWindow popupWindow, int position) {
             SettingActivity activity = SettingActivity.this;
             ListPopupWindow listMenu = new ListPopupWindow(activity);
             listMenu.setAdapter(new ArrayAdapter<>(activity, android.R.layout.simple_list_item_1, new
-                    String[]{getString(R.string.renewal)}));
+                    String[]{getString(R.string.renewal), getString(R.string.fetch_api_key), getString(R.string.refresh_api_key)}));
             listMenu.setAnchorView(popupWindow.getItemView(position));
             listMenu.setWidth(450);
             listMenu.setOnItemClickListener((parent, view1, position1, id) -> {
+                Map<String, Object> item = popupWindow.getItemData(position);
                 switch (position1) {
                     case 0:
                         Util.getDefaultSingleThreadExecutor().execute(() -> {
-                            String res = ApiUtil.getInstance().apiRenewal(popupWindow.getItemData(position));
+                            String res = ApiUtil.getInstance().apiRenewal(item.get("id").toString());
+                            runOnUiThread(() -> Toast.makeText(activity, res, Toast.LENGTH_LONG).show());
+                        });
+                        break;
+                    case 1:
+                        Util.getDefaultSingleThreadExecutor().execute(() -> {
+                            String res = ApiUtil.getInstance().fetchKey();
+                            runOnUiThread(() -> Toast.makeText(activity, res, Toast.LENGTH_LONG).show());
+                        });
+                        break;
+                    case 2:
+                        Util.getDefaultSingleThreadExecutor().execute(() -> {
+                            String res = ApiUtil.getInstance().refreshKey();
                             runOnUiThread(() -> Toast.makeText(activity, res, Toast.LENGTH_LONG).show());
                         });
                         break;
@@ -216,7 +234,6 @@ public class SettingActivity extends AppCompatActivity {
                 listMenu.dismiss();
             });
             listMenu.show();
-            return true;
         }
     }
 

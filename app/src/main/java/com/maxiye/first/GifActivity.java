@@ -232,7 +232,7 @@ public class GifActivity extends AppCompatActivity {
             okHttpClient = new OkHttpClient()
                     .newBuilder()
                     .connectTimeout(2, TimeUnit.SECONDS)
-                    .readTimeout(10, TimeUnit.SECONDS)
+                    .readTimeout(16, TimeUnit.SECONDS)
                     .build();
         }
         // onkey 发生拥堵 --已修复

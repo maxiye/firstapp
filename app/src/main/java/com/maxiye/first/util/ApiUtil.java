@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.view.View;
 import android.widget.PopupMenu;
-import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -33,13 +32,10 @@ import org.jsoup.select.Elements;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.xml.transform.URIResolver;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -54,8 +50,8 @@ import okhttp3.ResponseBody;
 public class ApiUtil {
     private static ApiUtil instance;
     private final OkHttpClient okHttpClient = new OkHttpClient();
-    private final String appKey = "37185";
-    private final String sign = "0c74aa000b3b57398e386b872ab67412";
+    private String appKey;
+    private String sign;
     private final String successMsg = "success";
     private final String successStatus = "1";
 
@@ -64,6 +60,9 @@ public class ApiUtil {
      * {@code 第4条：通过私有化构造器强化不可实例化的能力}
      */
     private ApiUtil() {
+        SharedPreferences sharedPreferences = MainActivity.getContextOfApplication().getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
+        appKey = sharedPreferences.getString(SettingActivity.API_APP_KEY, "");
+        sign = sharedPreferences.getString(SettingActivity.API_SIGN, "");
     }
 
     public static ApiUtil getInstance() {
@@ -84,8 +83,8 @@ public class ApiUtil {
     private Map<String, String> mockLogin() {
         try {
             Connection con = Jsoup.connect("https://www.nowapi.com/?app=account.login");
-            con.header("User-Agent",
-                    "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:29.0) Gecko/20100101 Firefox/29.0");// 配置模拟浏览器
+            con.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36")
+                    .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3");// 配置模拟浏览器
             Connection.Response res = con.execute();// 获取响应
             Document dom = Jsoup.parse(res.body());// 转换为Dom树
             List<Element> et = dom.select("form input");
@@ -101,8 +100,8 @@ public class ApiUtil {
             Thread.sleep(100);
             Map<String, String> cookie = res.cookies();
             Connection con2 = Jsoup.connect("https://www.nowapi.com/index.php?ajax=1");
-            con2.header("User-Agent",
-                    "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:29.0) Gecko/20100101 Firefox/29.0");// 配置模拟浏览器
+            con2.header("Accept", "*/*")
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36");// 配置模拟浏览器
             Connection.Response res2 = con2.ignoreContentType(true)
                     .method(Connection.Method.POST)
                     .data(postData)
@@ -154,7 +153,8 @@ public class ApiUtil {
             Map<String, String> cookie = checkCookie();
             Connection con = Jsoup.connect("https://www.nowapi.com/?app=intf.myintf");
             con.header("User-Agent",
-                    "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:29.0) Gecko/20100101 Firefox/29.0")
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36")
+                    .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3")
                     .cookies(cookie);// 配置模拟浏览器
             Connection.Response res = con.execute();// 获取响应
             String body = res.body();
@@ -164,7 +164,7 @@ public class ApiUtil {
             List<Map<String, Object>> list = new ArrayList<>(15);
             for (Element e : elements) {
                 Elements tds = e.children();
-                HashMap<String, Object> item = new HashMap<>(12);
+                HashMap<String, Object> item = new HashMap<>(10);
                 item.put("title", tds.eq(2).text());
                 item.put("icon", tds.eq(2).text());
                 item.put("status", tds.eq(3).text());
@@ -187,19 +187,79 @@ public class ApiUtil {
     }
 
     /**
-     * 续费api接口，按照3个月续
-     * @param itemData HashMap item
-     * @return result
+     * 获取接口调用的appKey和sign
+     * @return String
      */
-    public String apiRenewal(Map<String, Object> itemData) {
+    public String fetchKey() {
+        try {
+            Map<String, String> cookie = checkCookie();
+            Connection con = Jsoup.connect("https://www.nowapi.com/?app=intf.appkey");
+            con.header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3")
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36")
+                    .cookies(cookie);// 配置模拟浏览器
+            Connection.Response res = con.execute();// 获取响应
+            String body = res.body();
+            MyLog.w("Api-fetchKey", body);
+            Document dom = Jsoup.parse(body);// 转换为Dom树
+            Elements elements = dom.select("form p");
+            String appKeyNew = elements.eq(1).text().trim();
+            String signNew = elements.eq(2).text().trim();
+            SharedPreferences sharedPreferences = MainActivity.getContextOfApplication().getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString(SettingActivity.API_APP_KEY, appKeyNew)
+                    .putString(SettingActivity.API_SIGN, signNew)
+                    .apply();
+            appKey = appKeyNew;
+            sign = signNew;
+            return String.format("{appKey: %s, sign: %s}", appKeyNew, signNew);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return e.getLocalizedMessage();
+        }
+    }
+
+    /**
+     * 刷新sign
+     * @return string
+     */
+    public String refreshKey() {
         try {
             Map<String, String> cookie = checkCookie();
             Connection con2 = Jsoup.connect("https://www.nowapi.com/index.php?ajax=1");
-            con2.header("User-Agent",
-                    "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:29.0) Gecko/20100101 Firefox/29.0");// 配置模拟浏览器
+            con2.header("Accept", "*/*")
+                    .header("User-Agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36");// 配置模拟浏览器
+            Map<String, String> postData = new HashMap<>(1);
+            postData.put("app", "accountr.aja_modify_sign");
+            MyLog.w("ApiUtil-refreshKey-post", postData.toString());
+            Connection.Response res2 = con2.ignoreContentType(true)
+                    .method(Connection.Method.POST)
+                    .data(postData)
+                    .cookies(cookie)
+                    .execute();
+            String body = res2.body();
+            MyLog.w("ApiUtil-refreshKey-res", body);
+            return body;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return e.getLocalizedMessage();
+        }
+    }
+
+    /**
+     * 续费api接口，按照3个月续
+     * @param apiId String 接口id
+     * @return result
+     */
+    public String apiRenewal(String apiId) {
+        try {
+            Map<String, String> cookie = checkCookie();
+            Connection con2 = Jsoup.connect("https://www.nowapi.com/index.php?ajax=1");
+            con2.header("Accept", "*/*")
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36");// 配置模拟浏览器
             Map<String, String> postData = new HashMap<>(5);
             postData.put("app", "buyr.ajaPackageHad");
-            postData.put("intId", itemData.get("id").toString());
+            postData.put("intId", apiId);
             postData.put("pkFrom", "pr");
             postData.put("pkType", "fc");
             postData.put("monthId", "3");

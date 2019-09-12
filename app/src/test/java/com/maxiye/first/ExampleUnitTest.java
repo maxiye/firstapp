@@ -32,11 +32,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
+
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
 
 import static org.junit.Assert.assertEquals;
 
@@ -438,5 +445,49 @@ public class ExampleUnitTest {
     public void urlParseTest() {
         Map<String, String> params = Util.getUrlParam("https://www.nowapi.com/?app=intf.manage&intid=501");
         log(params);
+    }
+
+    @Test
+    public void timeoutTest() throws IOException {
+        OkHttpClient okHttpClient = new OkHttpClient()
+                .newBuilder()
+                .connectTimeout(2, TimeUnit.SECONDS)
+                .readTimeout(10, TimeUnit.SECONDS)
+                .build();
+        Request request = new Request.Builder()
+                .url("http://m.yxdown.com/news/1220784.html")
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36")
+                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3")
+                .build();
+        ResponseBody responseBody = okHttpClient.newCall(request)
+                .execute()
+                .body();
+        assert responseBody != null;
+        String content = responseBody.string();
+        log(content);
+    }
+
+    @Test
+    public void jsoupOkhttpTest() throws IOException {
+        OkHttpClient okHttpClient = new OkHttpClient()
+                .newBuilder()
+                .connectTimeout(2, TimeUnit.SECONDS)
+                .readTimeout(10, TimeUnit.SECONDS)
+                .build();
+        RequestBody requestBody = new FormBody.Builder()
+                .add("tag_id", "10000")
+                .add("sub_tag_id", "1")
+                .add("task_name", "hahah")
+                .add("type_id", "1")
+                .add("task_value", "1")
+                .add("times_limit", "")
+                .build();
+        Request request = new Request.Builder()
+                .url("http://xq.2345.com/htgl/task_active/task_edit?id=")
+                .header("Cookie", "UM_distinctid=16c936b5f7920f-02f08e9828a0aa-6353160-1fa400-16c936b5f7aa12; CNZZDATA1274293111=1084965283-1565837562-%7C1567762757; admin_my2345_name=%D5%C5%D1%C7%C1%C1; admin_my2345_check=6dee476f26cf0ef164b7543b35823db6%7C1568253035; admin_my2345_auth=kefu; oa_mk=88201c232e2b7e462368896220624c7a; global_uid=7755; activeSetPwd=1568255701")
+                .post(requestBody)
+                .build();
+        ResponseBody responseBody = okHttpClient.newCall(request).execute().body();
+        log(responseBody.string());
     }
 }
