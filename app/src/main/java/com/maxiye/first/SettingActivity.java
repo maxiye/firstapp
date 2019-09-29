@@ -191,7 +191,7 @@ public class SettingActivity extends AppCompatActivity {
                             .setListGetter((page, list1, where) -> list)
                             .setItemClickListener(this::showActions)
                             .setItemLongClickListener((pageListPopupWindow, position) -> false)
-                            .setPageSize(20)
+                            .setPageSize(count)
                             .setWindowHeight(ViewGroup.LayoutParams.WRAP_CONTENT)
                             .setMask(findViewById(R.id.setting_layout))
                             .build();

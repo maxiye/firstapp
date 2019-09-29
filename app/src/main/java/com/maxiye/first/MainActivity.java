@@ -16,6 +16,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
 import android.media.AudioManager;
 import android.net.Uri;
@@ -33,6 +34,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.ListPopupWindow;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -40,19 +42,25 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
+import android.widget.PopupWindow;
 import android.widget.Toast;
 
+import com.maxiye.first.part.PageListPopupWindow;
 import com.maxiye.first.util.ApiUtil;
 import com.maxiye.first.util.BitmapUtil;
 import com.maxiye.first.util.DbHelper;
+import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.PermissionUtil;
 import com.maxiye.first.util.StringUtil;
 import com.maxiye.first.util.Util;
+import com.maxiye.first.util.WebdavUtil;
 
 
 import java.io.File;
@@ -60,15 +68,21 @@ import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
+
+import okhttp3.ResponseBody;
 
 /**
  * @author due
@@ -550,6 +564,9 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 case R.id.restore_db:
                     DbHelper.restore(this);
                     break;
+                case R.id.restore_db_from_net:
+                    restoreDbFromWebDav();
+                    break;
                 case R.id.scan_into_fav_db:
                     int count = new DbHelper(this).scanIntoFav();
                     alert(getResources().getQuantityString(R.plurals.scan_fav_tips, count));
@@ -564,6 +581,113 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
             return false;
         });
         pMenu.show();
+    }
+
+    /**
+     * 从webdav恢复db
+     */
+    private void restoreDbFromWebDav() {
+        Util.loading(this);
+        Util.getDefaultSingleThreadExecutor().execute(() -> {
+            WebdavUtil webdav = new WebdavUtil(this);
+            List<Map<String, Object>> lists = webdav.list(WebdavUtil.BASE_URL);
+            if (lists == null || lists.isEmpty()) {
+                runOnUiThread(() -> {
+                    Util.loaded();
+                    alert(getString(R.string.fail) + ": " + webdav.getError());
+                });
+                return;
+            }
+            Drawable icon = getDrawable(R.drawable.ic_insert_drive_file_black_24dp);
+            final List<Map<String, Object>>  files = lists.stream()
+                    .filter(item -> "file".equals(item.get("type").toString()))
+                    .sorted((f1, f2) -> -f1.get("last_modified").toString().compareTo(f2.get("last_modified").toString()))
+                    .peek(item -> {
+                        String name = item.get("name").toString();
+                        String lastModified = item.get("last_modified_format").toString();
+                        String size = item.get("length").toString();
+                        item.put("fname", name);
+                        item.put("name", "<span style='color: #00796b;'>" + name + "</span><br/><span style='color: #969696;'>" + size + "  " + lastModified + "</span>");
+                        item.put("icon", icon);
+                    })
+                    .collect(Collectors.toList());
+            MyLog.w("Webdav list", files.toString());
+            runOnUiThread(() -> {
+                Util.loaded();
+                PopupWindow pageWindow = new PageListPopupWindow.Builder(this)
+                        .setListCountGetter(where -> files.size())
+                        .setListGetter((page, list1, where) -> files)
+                        .setItemClickListener(this::dbRestoreActions)
+                        .setItemLongClickListener((pageListPopupWindow, position) -> false)
+                        .setPageSize(files.size())
+                        .setWindowHeight(ViewGroup.LayoutParams.WRAP_CONTENT)
+                        .setMask(findViewById(R.id.main_activity_view))
+                        .build();
+                pageWindow.showAtLocation(findViewById(R.id.main_activity_view), Gravity.BOTTOM, 0, 0);
+            });
+        });
+    }
+
+    /**
+     * webdab操作
+     * @param popupWindow 窗口
+     * @param position 位置
+     */
+    private void dbRestoreActions(PageListPopupWindow popupWindow, int position) {
+        ListPopupWindow listMenu = new ListPopupWindow(this);
+        listMenu.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new
+                String[]{getString(R.string.restore_db), getString(R.string.delete)}));
+        listMenu.setAnchorView(popupWindow.getItemView(position));
+        listMenu.setWidth(450);
+        listMenu.setOnItemClickListener((parent, view1, position1, id) -> {
+            final Map<String, Object> item = popupWindow.getItemData(position);
+            switch (position1) {
+                case 0:
+                    Util.confirmDo(this, () -> {
+                        Util.loading(this);
+                        Util.getDefaultSingleThreadExecutor().execute(() -> {
+                            String path = item.get("path").toString();
+                            String res;
+                            try {
+                                Path backFile = Paths.get(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/maxiye/", item.get("fname").toString());
+                                if (Files.notExists(backFile.getParent())) {
+                                    Files.createDirectories(backFile.getParent());
+                                }
+                                if (Files.notExists(backFile)) {
+                                    Files.createFile(backFile);
+                                }
+                                ResponseBody responseBody = new WebdavUtil(this).get(WebdavUtil.HOST + path);
+                                Files.write(backFile, responseBody.bytes());
+                                Files.copy(backFile, getDatabasePath(DbHelper.DB_NAME).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                                res = getString(R.string.success) + ": " + backFile.toString();
+                            } catch (Exception e) {
+                                res = e.getLocalizedMessage();
+                                e.printStackTrace();
+                            }
+                            String finalRes = res;
+                            runOnUiThread(() -> {
+                                Util.loaded();
+                                alert(finalRes);
+                            });
+                        });
+                    });
+                    break;
+                case 1:
+                    Util.confirmDo(this, () -> Util.getDefaultSingleThreadExecutor().execute(() -> {
+                        String path = item.get("path").toString();
+                        final boolean res = new WebdavUtil(this).delete(WebdavUtil.HOST + path);
+                        runOnUiThread(() -> {
+                            popupWindow.remove(position);
+                            alert(getString(res ? R.string.success : R.string.error_tip));
+                        });
+                    }));
+                    break;
+                default:
+                    break;
+            }
+            listMenu.dismiss();
+        });
+        listMenu.show();
     }
 
     /**

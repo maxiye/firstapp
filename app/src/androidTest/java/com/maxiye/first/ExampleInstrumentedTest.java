@@ -18,6 +18,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -116,5 +118,22 @@ public class ExampleInstrumentedTest {
     @Test
     public void apiListTest() {
         log(ApiUtil.getInstance().apiList());
+    }
+
+    @Test
+    public void dateTimeFormatterTest() {
+        log(LocalDateTime.now().format(DateTimeFormatter.BASIC_ISO_DATE));
+        log(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE));
+        log(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
+//        log(LocalDateTime.now().format(DateTimeFormatter.ISO_INSTANT));
+        log(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
+        log(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+//        log(LocalDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE));
+//        log(LocalDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        log(LocalDateTime.now().format(DateTimeFormatter.ISO_TIME));
+        log(LocalDateTime.now().format(DateTimeFormatter.ISO_ORDINAL_DATE));
+        log(LocalDateTime.now().format(DateTimeFormatter.ISO_WEEK_DATE));
+//        log(LocalDateTime.now().format(DateTimeFormatter.ISO_ZONED_DATE_TIME));
+//        log(LocalDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME));
     }
 }

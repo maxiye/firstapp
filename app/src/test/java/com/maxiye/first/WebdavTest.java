@@ -10,7 +10,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.maxiye.first.util.Util.log;
@@ -58,9 +57,9 @@ public class WebdavTest {
     }
 
     @Test
-    public void listTest() throws IOException {
+    public void listTest() {
         WebdavUtil webdavUtil = new WebdavUtil("912877398@qq.com", "");
-        log(Arrays.toString(webdavUtil.list("https://dav.jianguoyun.com/dav/maxiye/", 1)));
+        log(webdavUtil.list("https://dav.jianguoyun.com/dav/maxiye/", 1));
         log(webdavUtil.getRawRes());
     }
 }

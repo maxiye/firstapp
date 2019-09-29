@@ -23,6 +23,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.maxiye.first.GifActivity;
 import com.maxiye.first.R;
 
 import java.io.File;
@@ -280,6 +281,25 @@ public class Util {
                 })
                 .create();
         dialog.show();
+    }
+
+    /**
+     * 操作确认弹窗
+     * @param context Context
+     * @param runnable Runnable
+     */
+    public static void confirmDo(Activity context, Runnable runnable) {
+        //创建对话框
+        AlertDialog dialog2 = new AlertDialog.Builder(context)
+                // 设置图标
+                .setIcon(R.drawable.ic_info_black_24dp)
+                // 设置标题
+                .setTitle(R.string.confirm_tip)
+                .setPositiveButton(R.string.confirm, (dialog1, which) -> runnable.run())
+                .setNegativeButton(R.string.cancel, (dialog1, which) -> {
+                })
+                .create();
+        dialog2.show();
     }
 
     /**

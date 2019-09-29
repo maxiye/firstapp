@@ -64,6 +64,7 @@
     <string name="idcard">ID Card</string>
     <string name="scan_into_fav_db">Scan Files Into Favorite</string>
     <plurals name="scan_fav_tips">
+        <item quantity="zero">Scanned %1$d Item</item>
         <item quantity="one">Scanned %1$d Item</item>
         <item quantity="other">Scanned %1$d Items</item>
     </plurals>
@@ -75,6 +76,7 @@
     <string name="go_to">Go To</string>
     <string name="fix_fav_file">Fix Favorite Files</string>
     <plurals name="fix_fav_tips">
+        <item quantity="zero">Fixed %1$d File</item>
         <item quantity="one">Fixed %1$d File</item>
         <item quantity="other">Fixed %1$d Files</item>
     </plurals>
@@ -110,6 +112,7 @@
     <string name="go_to_last_mark">Reset Location</string>
     <string name="bookmark_opration">Go to Bookmark</string>
     <string name="success">Success</string>
+    <string name="fail">Fail</string>
     <string name="gradual_color">Gradual Color</string>
     <string name="input">Input</string>
     <string name="gray_bitmap">Gray Bitmap</string>
@@ -154,4 +157,6 @@
     <string name="api_password_tip">Setting Api Password</string>
     <string name="fetch_api_key">Fetch Api Key</string>
     <string name="refresh_api_key">Refresh Api Key</string>
+    <string name="restore_db_from_net">Restore From Net</string>
+    <string name="confirm_tip">Confirm ?</string>
 </resources>

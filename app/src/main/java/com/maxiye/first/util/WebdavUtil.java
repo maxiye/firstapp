@@ -1,5 +1,6 @@
 package com.maxiye.first.util;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
@@ -8,14 +9,22 @@ import android.support.annotation.Nullable;
 import com.maxiye.first.SettingActivity;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -38,16 +47,19 @@ import okhttp3.Route;
  * WebDav工具
  * Created by 91287 on 2019/5/26.
  */
-@SuppressWarnings({"WeakerAccess", "unused"})
+@SuppressWarnings({"unused"})
 public class WebdavUtil {
     public static final String BASE_URL = "https://dav.jianguoyun.com/dav/maxiye/";
+    public static final String HOST = "https://dav.jianguoyun.com";
 
     private OkHttpClient client;
     private String rawRes;
+    private String error;
 
     public WebdavUtil(String user, String password) {
+        MyLog.w("WebdavUtil-account", user + " -> " + password);
         client = new OkHttpClient.Builder()
-                .authenticator(new WebdavUtil.BasicAuthenticator(user, password))
+                .authenticator(new BasicAuthenticator(user, password))
                 .readTimeout(1200, TimeUnit.SECONDS)
                 .writeTimeout(1200, TimeUnit.SECONDS)
                 .build();
@@ -57,14 +69,20 @@ public class WebdavUtil {
         SharedPreferences sharedPreferences = context.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
         String user = sharedPreferences.getString(SettingActivity.WEBDAV_USER, "null");
         String pwd = sharedPreferences.getString(SettingActivity.WEBDAV_PWD, "null");
-        MyLog.w("WebdavUtil", user + "   " + pwd);
+        MyLog.w("WebdavUtil-account", user + " -> " + pwd);
         client = new OkHttpClient.Builder()
-                .authenticator(new WebdavUtil.BasicAuthenticator(user, pwd))
+                .authenticator(new BasicAuthenticator(user, pwd))
+                .readTimeout(1200, TimeUnit.SECONDS)
+                .writeTimeout(1200, TimeUnit.SECONDS)
                 .build();
     }
 
     public String getRawRes() {
         return rawRes;
+    }
+
+    public String getError() {
+        return error;
     }
 
     public boolean put(String url, File file) {
@@ -113,8 +131,10 @@ public class WebdavUtil {
         try {
             Response response = client.newCall(request).execute();
             rawRes = Objects.requireNonNull(response.body()).string();
+            error = "";
             return response.isSuccessful();
         } catch (Exception e) {
+            error = e.getLocalizedMessage();
             e.printStackTrace();
         }
         return false;
@@ -140,8 +160,17 @@ public class WebdavUtil {
     /**
      * 获取文件列表
      * @param url Url
+     * @return List<Map<String, String>>
+     */
+    public List<Map<String, Object>> list(String url) {
+        return list(url, 1);
+    }
+
+    /**
+     * 获取文件列表
+     * @param url Url
      * @param depth 目录深度
-     * @return ResponseBody xml
+     * @return List<Map<String, String>>
      * <d:response>
      *    <d:href>/dav/</d:href>
      *    <d:propstat>
@@ -164,7 +193,8 @@ public class WebdavUtil {
      *    </d:propstat>
      * </d:response>
      */
-    public String[] list(String url, int depth) {
+    @SuppressLint("DefaultLocale")
+    public List<Map<String, Object>> list(String url, int depth) {
         String xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
                 "<D:propfind xmlns:D=\"DAV:\">\n" +
                 "   <D:allprop/>\n" +
@@ -175,6 +205,7 @@ public class WebdavUtil {
                 .header("Depth", depth < 0 ? "infinity" : Integer.toString(depth))
                 .method("PROPFIND", requestBody)
                 .build();
+        List<Map<String, Object>> result = new ArrayList<>(20);
         try {
             Response response = client.newCall(request).execute();
             if (response.isSuccessful() && response.body() != null) {
@@ -183,19 +214,47 @@ public class WebdavUtil {
                 ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
                 Document document = documentBuilder.parse(bais);
                 rawRes = new String(bytes, StandardCharsets.UTF_8);
-                NodeList nodeList = document.getElementsByTagName("d:href");
+                NodeList nodeList = document.getElementsByTagName("d:response");
                 int length = nodeList.getLength();
-                String[] result = new String[length];
                 for (int i = 0; i < length; i++) {
-                    result[i] = URLDecoder.decode(nodeList.item(i).getTextContent(), "utf-8");
+                    Node res = nodeList.item(i);
+                    Map<String, Object> item = new HashMap<>(4);
+                    item.put("path", res.getFirstChild().getTextContent());
+                    NodeList props = res.getLastChild().getFirstChild().getChildNodes();
+                    for(int j = 0; j < props.getLength(); j++) {
+                        Node prop = props.item(j);
+                        if ("d:getlastmodified".equals(prop.getNodeName())) {
+                            // 必须加参数 local，不然中文环境下解析不了 {Sun, 29 Sep 2019 03:25:11 GMT} 这种
+                            LocalDateTime localDateTime = LocalDateTime.parse(prop.getTextContent(), DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.ENGLISH));
+                            long lastModifiedTimestamp = localDateTime.toEpochSecond(ZoneOffset.of("+8"));
+                            String lastModified = localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                            item.put("last_modified", String.valueOf(lastModifiedTimestamp));
+                            item.put("last_modified_format", lastModified);
+                        }
+                        if ("d:getcontentlength".equals(prop.getNodeName())) {
+                            item.put("length", String.format("%.2fMB", Float.valueOf(prop.getTextContent()) / 1024 / 1024));
+                        }
+                        if ("d:displayname".equals(prop.getNodeName())) {
+                            item.put("name", prop.getTextContent());
+                        }
+                        if ("d:getcontenttype".equals(prop.getNodeName())) {
+                            String contentType = prop.getTextContent();
+                            item.put("content_type", contentType);
+                            item.put("type", "httpd/unix-directory".equals(contentType) ? "dir" : "file");
+                        }
+                    }
+                    result.add(item);
                 }
+                Util.log(result);
                 return result;
             }
             rawRes = Objects.requireNonNull(response.body()).string();
+            error = "";
         } catch (Exception e) {
+            error = e.getLocalizedMessage();
             e.printStackTrace();
         }
-        return new String[0];
+        return result;
     }
 
     /**

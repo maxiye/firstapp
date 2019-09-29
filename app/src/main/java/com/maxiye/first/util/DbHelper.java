@@ -206,9 +206,12 @@ public class DbHelper extends SQLiteOpenHelper {
                 .build();
         notificationManager.notify(1, notification);
         File db = context.getDatabasePath(DB_NAME);
-        File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/maxiye/");
         File bak = new File(downloadDir, DB_NAME + ".bak." + DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now()));
         try {
+            if (!downloadDir.exists()) {
+                downloadDir.mkdirs();
+            }
             Files.copy(db.toPath(), bak.toPath());
             SharedPreferences sp = context.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
             sp.edit().putLong(SettingActivity.BACKUP_TIME, System.currentTimeMillis()).apply();
@@ -249,6 +252,10 @@ public class DbHelper extends SQLiteOpenHelper {
         }
     }
 
+    /**
+     * 恢复db
+     * @param activity context
+     */
     public static void restore(MainActivity activity) {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*");

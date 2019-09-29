@@ -109,6 +109,7 @@
     <string name="go_to_last_mark">回溯</string>
     <string name="bookmark_opration">朝花夕拾</string>
     <string name="success">操作成功</string>
+    <string name="fail">操作失败</string>
     <string name="gradual_color">渐变色</string>
     <string name="input">输入</string>
     <string name="gray_bitmap">怀旧</string>
@@ -153,4 +154,6 @@
     <string name="api_password_tip">设置 Api 密码</string>
     <string name="fetch_api_key">获取 Api Key</string>
     <string name="refresh_api_key">刷新 Api Key</string>
+    <string name="restore_db_from_net">从WebDav恢复</string>
+    <string name="confirm_tip">确认要执行此操作吗？</string>
 </resources>

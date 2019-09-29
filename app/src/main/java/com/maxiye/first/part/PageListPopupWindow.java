@@ -3,7 +3,6 @@ package com.maxiye.first.part;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.PixelFormat;
-import android.os.IBinder;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -93,8 +92,23 @@ public class PageListPopupWindow {
         prev.setVisibility(View.GONE);
         next.setVisibility(pages > 1 ? View.VISIBLE : View.GONE);
         totalPage.setText(String.valueOf(pages));
-        ma.setData(listGetter.getList(page, list, where));
+        ma.setData(updateList(page, where));
         ma.notifyDataSetChanged();
+    }
+
+    /**
+     * 更新列表数据
+     * @param page 页面
+     * @param where where条件
+     * @return list
+     */
+    private List<Map<String, Object>> updateList(int page, String where) {
+        List<Map<String, Object>> data = listGetter.getList(page, list, where);
+        // 容错，未设置list，list数据更新
+        if (list == null || list.size() == 0 || list.size() != data.size()) {
+            list = data;
+        }
+        return data;
     }
 
     /**
@@ -170,7 +184,7 @@ public class PageListPopupWindow {
     public void prePage() {
         if (page > 1) {
             --page;
-            ma.setData(listGetter.getList(page, list, where));
+            ma.setData(updateList(page, where));
             ma.notifyDataSetChanged();
             EditText pageEdit = rootView.findViewById(R.id.popup_page);
             Button prev = rootView.findViewById(R.id.popup_prev_page);
@@ -192,7 +206,7 @@ public class PageListPopupWindow {
 
     public void nextPage() {
         ++page;
-        ma.setData(listGetter.getList(page, list, where));
+        ma.setData(updateList(page, where));
         ma.notifyDataSetChanged();
         EditText pageEdit = rootView.findViewById(R.id.popup_page);
         Button prev = rootView.findViewById(R.id.popup_prev_page);
@@ -286,7 +300,7 @@ public class PageListPopupWindow {
             prev.setOnClickListener(v -> {
                 if (page > 1) {
                     --page;
-                    ma.setData(listGetter.getList(page, list, where));
+                    ma.setData(updateList(page, where));
                     ma.notifyDataSetChanged();
                     pageEdit.setText(page + "");
                     next.setVisibility(View.VISIBLE);
@@ -295,7 +309,7 @@ public class PageListPopupWindow {
             });
             next.setOnClickListener(v -> {
                 ++page;
-                ma.setData(listGetter.getList(page, list, where));
+                ma.setData(updateList(page, where));
                 ma.notifyDataSetChanged();
                 pageEdit.setText(page + "");
                 prev.setVisibility(View.VISIBLE);
@@ -307,7 +321,7 @@ public class PageListPopupWindow {
                 page = nowPage > pages ? pages : nowPage;
                 MyLog.w("FavoriteGoPage", "pagePopup:" + page);
                 pageEdit.setText(page + "");
-                ma.setData(listGetter.getList(page, list, where));
+                ma.setData(updateList(page, where));
                 ma.notifyDataSetChanged();
                 prev.setVisibility(page > 1 ? View.VISIBLE : View.GONE);
                 next.setVisibility(page < pages ? View.VISIBLE : View.GONE);
@@ -322,7 +336,7 @@ public class PageListPopupWindow {
             totalPage.setText(String.valueOf(pages));
         }
         list = new ArrayList<>(pageSize);
-        ma.setData(listGetter.getList(1, list, where));
+        ma.setData(updateList(1, where));
         if (itemClickListener != null) {
             ma.setOnItemClickListener(position -> itemClickListener.onClick(this, position));
         }

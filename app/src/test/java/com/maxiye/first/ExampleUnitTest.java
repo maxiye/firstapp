@@ -22,12 +22,15 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -489,5 +492,11 @@ public class ExampleUnitTest {
                 .build();
         ResponseBody responseBody = okHttpClient.newCall(request).execute().body();
         log(responseBody.string());
+    }
+
+    @Test
+    public void dateTimeTest() {
+        LocalDateTime localDateTime = LocalDateTime.parse("Sun, 29 Sep 2019 03:25:11 GMT", DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.ENGLISH));
+        log(localDateTime);
     }
 }
