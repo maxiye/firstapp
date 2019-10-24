@@ -499,4 +499,27 @@ public class ExampleUnitTest {
         LocalDateTime localDateTime = LocalDateTime.parse("Sun, 29 Sep 2019 03:25:11 GMT", DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.ENGLISH));
         log(localDateTime);
     }
+
+    @Test
+    public void reqTimeTest() {
+        OkHttpClient okHttpClient = new OkHttpClient()
+                .newBuilder()
+                .connectTimeout(2, TimeUnit.SECONDS)
+                .readTimeout(10, TimeUnit.SECONDS)
+                .build();
+        Request req = new Request.Builder()
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36")
+                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3")
+//                .header("Connection", "keep-alive")
+                .header("Upgrade-Insecure-Requests", "1")
+                .url("http://www.yxdown.com/newstag/dongtu/")
+                .build();
+        TimeCounter.run(() -> {
+            try {
+                ResponseBody res = okHttpClient.newCall(req).execute().body();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
 }

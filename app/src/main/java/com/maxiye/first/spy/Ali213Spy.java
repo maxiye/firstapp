@@ -37,6 +37,7 @@ final class Ali213Spy extends BaseSpy {
         for (String key : headers.keySet()) {
             builder.header(key, headers.get(key).getAsString());
         }
+        builder.header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3");
         return builder.build();
     }
 

@@ -383,17 +383,23 @@ public class GifActivity extends AppCompatActivity {
         return imgList.size() > offset;
     }
 
-    private void fetchNewArt() {
+    /**
+     * 获取最新文章
+     * @return bool
+     */
+    private boolean fetchNewArt() {
         String[] article = getSpy().getNewArticle();
+        getNewFlg = false;
+        MyLog.w("getNewArticle", Arrays.toString(article));
         if (article.length > 0) {
             artId = article[0] != null ? article[0] : "xx";
             if (article[1] != null) {
                 title = article[1];
             }
             endFlg = false;
+            return true;
         }
-        getNewFlg = false;
-        MyLog.w("getNewArticle", Arrays.toString(article));
+        return false;
     }
 
     private void fetchItemList() {
@@ -427,16 +433,19 @@ public class GifActivity extends AppCompatActivity {
         for (String name : webList) {
             int i = 0;
             setWebName(name);
-            while (i < 3) {
+            long begin = System.currentTimeMillis();
+            while (i < 2) {
                 i++;
                 getNewFlg = true;
-                fetchItemList();
                 MyLog.w("OneKey_Start", name + "；size=" + imgList.size() + "；try=" + i);
+                fetchItemList();
+                long end = System.currentTimeMillis();
+                MyLog.w("OneKey_End", end - begin + "ms");
                 if (!imgList.isEmpty()) {
-                    MyLog.w("OneKey_End", name + "；title=" + title + "；size=" + imgList.size() + "；try=" + i);
+                    MyLog.w("OneKey_Over", name + "；title=" + title + "；size=" + imgList.size() + "；try=" + i + "；ms=" + (end - begin));
                     break;
-                } else if (i == 3) {
-                    err.append(name).append("-").append(type).append("；");
+                } else if (i == 2) {
+                    err.append(name).append("-").append(type).append("(").append(end - begin).append("ms)；");
                 }
             }
         }
@@ -588,11 +597,12 @@ public class GifActivity extends AppCompatActivity {
             endFlg = true;
             return;
         }
-        //数据库获取
         if (webPage == 1) {
-            if (getNewFlg) {
-                fetchNewArt();
+            if (getNewFlg && !fetchNewArt()) {
+                runOnUiThread(() -> alert(getString(R.string.new_art_not_found)));
+                return;
             }
+            //数据库获取
             if (loadDbImgList()) {
                 return;
             }
@@ -918,9 +928,12 @@ public class GifActivity extends AppCompatActivity {
                             err.append(fetchAllWeb());
                         }
                         final String errString = err.toString();
+                        MyLog.w("OneKey-err", errString);
                         runOnUiThread(() -> {
                             seek(0, true);
-                            loaded(errString.isEmpty() ? getString(R.string.success) : getString(R.string.error_tip, errString));
+                            loaded(null);
+                            Toast.makeText(this, errString.isEmpty() ? getString(R.string.success) : getString(R.string.error_tip, errString), Toast.LENGTH_LONG)
+                                    .show();
                         });
                     });
                 })
@@ -930,9 +943,12 @@ public class GifActivity extends AppCompatActivity {
                     loading();
                     threadPoolExecutor.execute(() -> {
                         String err = fetchAllWeb();
+                        MyLog.w("OneKey-err", err);
                         runOnUiThread(() -> {
                             seek(0, true);
-                            loaded(err.isEmpty() ? getString(R.string.success) : getString(R.string.error_tip, err));
+                            loaded(null);
+                            Toast.makeText(this, err.isEmpty() ? getString(R.string.success) : getString(R.string.error_tip, err), Toast.LENGTH_LONG)
+                                    .show();
                         });
                     });
                 })

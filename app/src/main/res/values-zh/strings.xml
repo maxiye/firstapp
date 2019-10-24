@@ -156,4 +156,5 @@
     <string name="refresh_api_key">刷新 Api Key</string>
     <string name="restore_db_from_net">从WebDav恢复</string>
     <string name="confirm_tip">确认要执行此操作吗？</string>
+    <string name="new_art_not_found">未发现最新文章</string>
 </resources>

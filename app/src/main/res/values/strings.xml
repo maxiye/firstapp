@@ -159,4 +159,5 @@
     <string name="refresh_api_key">Refresh Api Key</string>
     <string name="restore_db_from_net">Restore From Net</string>
     <string name="confirm_tip">Confirm ?</string>
+    <string name="new_art_not_found">New Art Not Found</string>
 </resources>

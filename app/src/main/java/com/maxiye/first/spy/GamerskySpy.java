@@ -40,6 +40,7 @@ final class GamerskySpy extends BaseSpy {
         for (String key : headers.keySet()) {
             builder.header(key, headers.get(key).getAsString());
         }
+        builder.header("Accept", "application/json, text/javascript, */*; q=0.01");
         return builder.build();
     }
 
