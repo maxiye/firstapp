@@ -10,46 +10,46 @@ import com.maxiye.first.util.MyLog;
  * @date 2018/11/22
  */
 public class SpyGetter {
-    /**
-     * 饿汉模式
-     */
-    public static final SpyGetter INSTANCE = new SpyGetter();
 
-    private BaseSpy cacheSpy;
+    private static BaseSpy cacheSpy;
 
-    private String cacheKey;
+    private static String cacheKey;
 
     /**
      * 获取相应爬取器
      * {@code 第5条：优先使用依赖注入而不是硬连接资源}
      * {@code 第17条：使可变性最小化}
-     * @param web String
-     * @param webCfg JsonObject
+     * @param web String web
+     * @param type String 图片类型
+     * @param webCfg JsonObject spy配置json
      * @return BaseSpy
      */
-    public BaseSpy getSpy(String uniqKey, String web, JsonObject webCfg) {
-        if (cacheSpy == null || !uniqKey.equals(cacheKey)) {
-            MyLog.w("Spygetter-getSpy", uniqKey);
-            switch (web) {
-                case "gamersky":
-                    cacheSpy = new GamerskySpy(webCfg, web);
-                    break;
-                case "duowan":
-                    cacheSpy = new DuowanSpy(webCfg, web);
-                    break;
-                case "yxdown":
-                    cacheSpy = new YxdownSpy(webCfg, web);
-                    break;
-                case "17173":
-                    cacheSpy = new W17173Spy(webCfg, web);
-                    break;
-                case "ali213":
-                    cacheSpy = new Ali213Spy(webCfg, web);
-                    break;
-                default:
-                    cacheSpy = new BaseSpy(webCfg, web);
-                    break;
-            }
+    public static BaseSpy getSpy(String web, String type, JsonObject webCfg) {
+        // 增加一层缓存
+        String uniqKey = web + type;
+        if (uniqKey.equals(cacheKey)) {
+            return cacheSpy;
+        }
+        MyLog.w("Spygetter-getSpy", uniqKey);
+        switch (web) {
+            case "gamersky":
+                cacheSpy = new GamerskySpy(webCfg, web);
+                break;
+            case "duowan":
+                cacheSpy = new DuowanSpy(webCfg, web);
+                break;
+            case "yxdown":
+                cacheSpy = new YxdownSpy(webCfg, web);
+                break;
+            case "17173":
+                cacheSpy = new W17173Spy(webCfg, web);
+                break;
+            case "ali213":
+                cacheSpy = new Ali213Spy(webCfg, web);
+                break;
+            default:
+                cacheSpy = new BaseSpy(webCfg, web);
+                break;
         }
         cacheKey = uniqKey;
         return cacheSpy;

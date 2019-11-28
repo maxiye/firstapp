@@ -11,8 +11,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
 import com.maxiye.first.util.ApiUtil;
-import com.maxiye.first.util.TimeCounter;
-import com.maxiye.first.util.Util;
+import com.maxiye.first.util.Util.TimeCounter;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

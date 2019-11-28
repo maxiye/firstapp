@@ -1,10 +1,10 @@
 package com.maxiye.first.util;
 
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -17,12 +17,13 @@ import android.widget.Toast;
 import com.maxiye.first.GifActivity;
 import com.maxiye.first.R;
 import com.maxiye.first.SettingActivity;
-import com.maxiye.first.MainActivity;
 import com.maxiye.first.part.NotificationTool;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -36,7 +37,7 @@ import java.util.Arrays;
  * @date 2017-05-25
  */
 public class DbHelper extends SQLiteOpenHelper {
-    public static final String DB_NAME = "first.db";
+    private static final String DB_NAME = "first.db";
     private static final int DB_VERSION = 5;
     public static final String TB_BOOK = "book";
     public static final String TB_IMG_WEB = "img_web";
@@ -207,12 +208,14 @@ public class DbHelper extends SQLiteOpenHelper {
         notificationManager.notify(1, notification);
         File db = context.getDatabasePath(DB_NAME);
         File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/maxiye/");
-        File bak = new File(downloadDir, DB_NAME + ".bak." + DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now()));
+        File bak = new File(downloadDir, DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now()) + ".db.bak.zip");
         try {
             if (!downloadDir.exists()) {
                 downloadDir.mkdirs();
             }
-            Files.copy(db.toPath(), bak.toPath());
+            if (Util.zipFile(db, bak) == null) {
+                throw new IOException("Zip file error");
+            }
             SharedPreferences sp = context.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
             sp.edit().putLong(SettingActivity.BACKUP_TIME, System.currentTimeMillis()).apply();
             MyLog.w("Dbhelper:backup db", WebdavUtil.BASE_URL + bak.getName());
@@ -241,7 +244,7 @@ public class DbHelper extends SQLiteOpenHelper {
                     .build();
             notificationManager.notify(1, notification2);
         }
-        File[] baks = downloadDir.listFiles((file, name) -> name.contains(DB_NAME + ".bak"));
+        File[] baks = downloadDir.listFiles((file, name) -> name.contains(".db.bak.zip"));
         int maxLength = 5;
         if (baks != null && baks.length > maxLength) {
             Arrays.sort(baks, (o1, o2) -> (int) (o1.lastModified() - o2.lastModified()));
@@ -254,12 +257,18 @@ public class DbHelper extends SQLiteOpenHelper {
 
     /**
      * 恢复db
-     * @param activity context
+     * @param activity 上下文
+     * @param path 备份文件path
      */
-    public static void restore(MainActivity activity) {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("*/*");
-        activity.startActivityForResult(Intent.createChooser(intent, activity.getString(R.string.choose_a_backup)), MainActivity.INTENT_PICK_DB_BAK_REQCODE);
+    public static void restore(Activity activity, Path path) throws IOException {
+        File backup = Util.unzipSingleFile(path.toFile(), null);
+        if (backup == null || !backup.exists()) {
+            throw new IOException("Backup file is not a zip");
+        }
+        Files.copy(backup.toPath(), activity.getDatabasePath(DB_NAME).toPath(), StandardCopyOption.REPLACE_EXISTING);
+        if (!backup.delete()) {
+            throw new IOException("unzip file delete error");
+        }
     }
 
     /**

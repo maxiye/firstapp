@@ -23,11 +23,13 @@ import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.maxiye.first.GifActivity;
 import com.maxiye.first.R;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileDescriptor;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -42,6 +44,9 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import pl.droidsonroids.gif.GifImageView;
 
@@ -83,6 +88,12 @@ public class Util {
                 Environment.MEDIA_MOUNTED_READ_ONLY.equals(state);
     }
 
+    /**
+     * 根据intent获取文件描述符
+     * @param context Context
+     * @param intent Intent
+     * @return FileDescriptor
+     */
     public static FileDescriptor getFileDescriptor(Context context, Intent intent) {
         try {
             Uri pic = intent.getData();
@@ -97,6 +108,32 @@ public class Util {
         }
         return null;
     }
+
+    /**
+     * 根据结果intent获取文件路径
+     * Intent的类型必须是{@link Intent#ACTION_GET_CONTENT}
+     * @param intent Intent
+     * @return String
+     */
+    public static String getPathFromIntent(Intent intent) {
+        try {
+            Uri uri = intent.getData();
+            assert uri != null;
+            if ("content".equals(uri.getScheme())) {
+                assert uri.getLastPathSegment() != null;
+                /*
+                 * W/uri2string: content://com.android.providers.downloads.documents/document/raw%3A%2Fstorage%2Femulated%2F0%2FDownload%2Ffirst.db.bak.20190827095416
+                 * W/getPath: /document/raw:/storage/emulated/0/Download/first.db.bak.20190827095416
+                 * W/getLastPathSegment: raw:/storage/emulated/0/Download/first.db.bak.20190827095416
+                 */
+                return uri.getLastPathSegment().substring(4);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
 
     /**
      * 保存到内部存储
@@ -355,5 +392,114 @@ public class Util {
         } else {
             return new HashMap<>();
         }
+    }
+
+    /**
+     * 计时器类
+     * Created by due on 2019/4/29.
+     */
+    public static class TimeCounter {
+        public static long run(Runnable runnable) {
+            long s = System.currentTimeMillis();
+            runnable.run();
+            long t = System.currentTimeMillis() - s;
+            System.out.println("time(ms):" + t);
+            return t;
+        }
+    }
+
+    /**
+     * 压缩一个文件为zip文件
+     * @param file 源文件
+     * @param target 目标文件
+     * @return File
+     */
+    public static File zipFile(File file, File target) {
+        if (file == null || !file.isFile()) {
+            return null;
+        }
+        if (target == null) {
+            target = new File(file.getParentFile(), file.getName() + ".zip");
+        }
+        if (!target.exists()) {
+            try {
+                if (!target.createNewFile()) {
+                    return null;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        try (
+                ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(target));
+                BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file))
+        ) {
+            // 越高压缩效果越好
+            zos.setLevel(7);
+            // zip文件的注释
+            zos.setComment("zip file");
+            // zip内部展示的文件，前边加上文件夹层次可以放到文件夹中；文件夹名需要最后加上 “/”(文件夹分隔符)
+            ZipEntry zipEntry = new ZipEntry(file.getName());
+//            zipEntry.setComment(file.getName());
+            zos.putNextEntry(zipEntry);// 自动关闭上一个entry
+            byte[] buffer = new byte[1024000];
+            int len;
+            while ((len = bis.read(buffer)) != -1) {
+                zos.write(buffer, 0, len);
+            }
+            zos.closeEntry();
+            zos.finish();
+            return target;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * 解压一个单文件压缩生成的zip，还原为单文件
+     * 需要保证没有目录层次
+     * @param zip zip文件
+     * @param dist 解压后的文件
+     * @return File
+     */
+    public static File unzipSingleFile(File zip, File dist) {
+        if (zip == null || !zip.isFile()) {
+            return null;
+        }
+        if (dist == null) {
+            int dotIndex = zip.getName().lastIndexOf(".");
+            if (dotIndex > 0) {
+                dist = new File(zip.getParentFile(), zip.getName().substring(0, dotIndex));
+            } else {
+                dist = new File(zip.getParentFile(), zip.getName() + ".unzip");
+            }
+        }
+        if (!dist.exists()) {
+            try {
+                if (!dist.createNewFile()) {
+                    return null;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        try (ZipFile zipFile = new ZipFile(zip)) {
+            ZipEntry zipEntry = zipFile.entries().nextElement();
+            try (
+                 BufferedInputStream in = new BufferedInputStream(zipFile.getInputStream(zipEntry));
+                 BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(dist))
+            ) {
+                byte[] buffer = new byte[1024000];
+                int len;
+                while ((len = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, len);
+                }
+            }
+            return dist;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

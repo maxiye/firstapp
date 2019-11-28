@@ -2,10 +2,9 @@ package com.maxiye.first;
 
 import android.support.annotation.NonNull;
 
-import com.maxiye.first.util.ApiUtil;
 import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.StringUtil;
-import com.maxiye.first.util.TimeCounter;
+import com.maxiye.first.util.Util.TimeCounter;
 import com.maxiye.first.util.Util;
 import static com.maxiye.first.util.Util.log;
 
@@ -14,8 +13,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.w3c.dom.NodeList;
 
 import java.io.File;
@@ -521,5 +518,29 @@ public class ExampleUnitTest {
                 e.printStackTrace();
             }
         });
+    }
+
+    @Test
+    public void zipFileTest() {
+        String downloadDir = "I:\\phpStudy\\PHPTutorial\\WWW\\";
+        File src = new File(downloadDir + "first.db.bak.20191122133155");
+        File target = new File(downloadDir + "first.db.bak.20191122133155.zip");
+        Util.zipFile(src, target);
+    }
+
+    @Test
+    public void subStringTest() {
+        String testStr = "sss.dddd.zip";
+        System.out.println(testStr.substring(0, 1));
+        System.out.println(testStr.substring(0, 8));
+    }
+
+    @Test
+    public void unzipSingleFileTest() {
+        String downloadDir = "I:\\phpStudy\\PHPTutorial\\WWW\\";
+        File src = new File(downloadDir + "first.db.bak.20191122133155.zip");
+        File target = new File(downloadDir + "first.db.bak.20191122133155zip");
+        Util.unzipSingleFile(src, target);
+        Util.unzipSingleFile(src, null);
     }
 }

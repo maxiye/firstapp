@@ -70,7 +70,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -239,13 +238,11 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 toast.show();
                 break;
             case INTENT_PICK_DB_BAK_REQCODE:
-                Uri bak = data.getData();
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     try {
-                        assert bak != null;
-                        assert bak.getLastPathSegment() != null;
+                        String path = Util.getPathFromIntent(data);
                         // raw:/storage/emulated/0/Download/xxx.db.bak
-                        Files.copy(Paths.get(bak.getLastPathSegment().substring(4)), getDatabasePath(DbHelper.DB_NAME).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        DbHelper.restore(this, Paths.get(path));
                         alert("Success");
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -562,7 +559,9 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                     Util.getDefaultSingleThreadExecutor().execute(() -> DbHelper.backup(this));
                     break;
                 case R.id.restore_db:
-                    DbHelper.restore(this);
+                    Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                    intent.setType("*/*");
+                    startActivityForResult(Intent.createChooser(intent, getString(R.string.choose_a_backup)), INTENT_PICK_DB_BAK_REQCODE);
                     break;
                 case R.id.restore_db_from_net:
                     restoreDbFromWebDav();
@@ -658,7 +657,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                                 }
                                 ResponseBody responseBody = new WebdavUtil(this).get(WebdavUtil.HOST + path);
                                 Files.write(backFile, responseBody.bytes());
-                                Files.copy(backFile, getDatabasePath(DbHelper.DB_NAME).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                                DbHelper.restore(this, backFile);
                                 res = getString(R.string.success) + ": " + backFile.toString();
                             } catch (Exception e) {
                                 res = e.getLocalizedMessage();

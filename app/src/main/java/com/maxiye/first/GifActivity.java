@@ -354,9 +354,13 @@ public class GifActivity extends AppCompatActivity {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
+    /**
+     * 获取spy对象
+     * @return BaseSpy
+     */
     private BaseSpy getSpy()
     {
-        return SpyGetter.INSTANCE.getSpy(webName + type, webName, webCfg);
+        return SpyGetter.getSpy(webName, type, webCfg);
     }
 
     private void initPage() {

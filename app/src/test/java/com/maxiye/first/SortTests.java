@@ -1,6 +1,6 @@
 package com.maxiye.first;
 
-import com.maxiye.first.util.TimeCounter;
+import com.maxiye.first.util.Util.TimeCounter;
 
 import org.junit.Test;
 
