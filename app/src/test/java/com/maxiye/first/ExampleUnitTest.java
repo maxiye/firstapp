@@ -1,6 +1,6 @@
 package com.maxiye.first;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.StringUtil;

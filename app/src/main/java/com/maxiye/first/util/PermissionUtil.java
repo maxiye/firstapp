@@ -2,7 +2,7 @@ package com.maxiye.first.util;
 
 import android.app.Activity;
 import android.content.pm.PackageManager;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.widget.Toast;
 
 import java.util.function.IntConsumer;

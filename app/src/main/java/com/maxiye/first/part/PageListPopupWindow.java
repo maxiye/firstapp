@@ -3,9 +3,11 @@ package com.maxiye.first.part;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.PixelFormat;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -282,7 +284,7 @@ public class PageListPopupWindow {
         rv = popupWindow.getContentView().findViewById(R.id.popupwindow_rv);
         rv.setLayoutManager(new LinearLayoutManager(context));
         DividerItemDecoration divider = new DividerItemDecoration(context, DividerItemDecoration.VERTICAL);
-        divider.setDrawable(Objects.requireNonNull(context.getDrawable(R.drawable.gif_rv_divider)));
+        divider.setDrawable(Objects.requireNonNull(ContextCompat.getDrawable(context, R.drawable.gif_rv_divider)));
         // 分隔线
         rv.addItemDecoration(divider);
         ma = new GifWebRvAdapter();

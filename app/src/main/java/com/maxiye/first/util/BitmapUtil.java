@@ -12,8 +12,8 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.ThumbnailUtils;
 import android.os.Environment;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.util.Base64;
 import android.util.SparseArray;
 import android.view.Window;
@@ -745,6 +745,9 @@ public class BitmapUtil {
     public static int[] getDuplicateIds(String type, int level) {
         File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);
         File[] fileList = dir.listFiles(file -> file.isFile() && file.length() > 1024);
+        if (fileList == null) {
+            return new int[1];
+        }
         int count = fileList.length;
         ImageMetaCache metaCache = new ImageMetaCache(dir, count);
         setDuplicateLevel(level);
@@ -795,6 +798,9 @@ public class BitmapUtil {
     public static int[] getDuplicateIdsExt(String type, int level) {
         File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);
         File[] fileList = dir.listFiles(file -> file.isFile() && file.length() > 1024);
+        if (fileList == null) {
+            return new int[1];
+        }
         int count = fileList.length;
         // 缓存id
         HashMap<String, Integer> name2IdMap = new HashMap<>(count);
@@ -805,8 +811,8 @@ public class BitmapUtil {
         }
         // id递增排序
         Arrays.sort(fileList, (f1, f2) -> {
-            int id1 = name2IdMap.get(f1.getName());
-            int id2 = name2IdMap.get(f2.getName());
+            Integer id1 = name2IdMap.get(f1.getName());
+            Integer id2 = name2IdMap.get(f2.getName());
             return Integer.compare(id1, id2);
         });
         ImageMetaCache metaCache = new ImageMetaCache(dir, count);

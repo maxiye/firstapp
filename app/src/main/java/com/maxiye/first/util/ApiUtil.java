@@ -112,8 +112,9 @@ public class ApiUtil {
             MyLog.w("apiUtil-cookie", res2.cookies().toString());
             Type typeToken = new TypeToken<HashMap<String, Object>>(){}.getType();
             HashMap<String, Object> resObj = new Gson().fromJson(resBody, typeToken);
+            Object success = resObj.get("S");
             // 登录失败
-            if ("-1".equals(resObj.get("S").toString())) {
+            if (success != null && "-1".equals(success.toString())) {
                 throw new Exception("登录失败");
             }
             SharedPreferences.Editor editor = sharedPreferences.edit();

@@ -1,10 +1,12 @@
 package com.maxiye.first.api;
 
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -32,7 +34,7 @@ public class WeatherActivity extends AppCompatActivity {
         RecyclerView rv = findViewById(R.id.weather_ret_rv);
         rv.setLayoutManager(new LinearLayoutManager(this));
         DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
-        divider.setDrawable(Objects.requireNonNull(getDrawable(R.drawable.gif_rv_divider)));
+        divider.setDrawable(Objects.requireNonNull(ContextCompat.getDrawable(this, R.drawable.gif_rv_divider)));
         // 分隔线
         rv.addItemDecoration(divider);
         ma = new WeatherRetRvAdapter();

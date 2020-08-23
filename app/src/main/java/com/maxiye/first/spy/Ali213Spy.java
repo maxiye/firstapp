@@ -1,6 +1,6 @@
 package com.maxiye.first.spy;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.google.gson.JsonObject;
 import com.maxiye.first.util.MyLog;

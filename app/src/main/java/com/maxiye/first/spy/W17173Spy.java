@@ -2,6 +2,7 @@ package com.maxiye.first.spy;
 
 import com.google.gson.JsonObject;
 import com.maxiye.first.util.MyLog;
+import com.maxiye.first.util.StringUtil;
 
 import java.util.HashMap;
 
@@ -41,10 +42,12 @@ final class W17173Spy extends BaseSpy {
     @Override
     void handleImgInfo(HashMap<String, String> imgInfo) {
         String url = imgInfo.get("url");
-        if (url.startsWith("//")) {
-            imgInfo.put("url", "http:" + url);
-        } else if (!url.contains("http")) {
-            imgInfo.put("url", "http://" + url);
+        if (StringUtil.notBlank(url)) {
+            if (url.startsWith("//")) {
+                imgInfo.put("url", "http:" + url);
+            } else if (!url.contains("http")) {
+                imgInfo.put("url", "http://" + url);
+            }
         }
 
     }
