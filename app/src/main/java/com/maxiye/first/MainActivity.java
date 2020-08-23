@@ -99,6 +99,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
     private static final int INTENT_IMG_REVERSE_REQCODE = 107;
     private static final int INTENT_IMG_DOT_TXT_REQCODE = 108;
     private static final int INTENT_IMG_SINGLE_CHAN_REQCODE = 109;
+    private static final int INTENT_IMG_DOT_EX_REQCODE = 110;
     private long lastPressTime = 0;
     public static Context contextOfApplication;
 
@@ -264,6 +265,9 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 break;
             case INTENT_IMG_SINGLE_CHAN_REQCODE:
                 showBitmap(data, BitmapUtil::convertSingleChannel, "single-chan");
+                break;
+            case INTENT_IMG_DOT_EX_REQCODE:
+                showBitmap(data, BitmapUtil::convertComic, "dot-ex");
                 break;
             default:
                 break;
@@ -715,6 +719,9 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                     break;
                 case R.id.dot_bitmap_txt:
                     startBitmapActivity(INTENT_IMG_DOT_TXT_REQCODE);
+                    break;
+                case R.id.dot_bitmap_comic:
+                    startBitmapActivity(INTENT_IMG_DOT_EX_REQCODE);
                     break;
                 default:
                     break;

@@ -36,22 +36,22 @@ public class WeatherRetRvAdapter extends RecyclerView.Adapter<WeatherRetRvAdapte
         mData = data;
     }
 
-    @SuppressWarnings({"unused", "WeakerAccess"})
+    @SuppressWarnings({"unused"})
     public List<String[]> getData() {
         return mData;
     }
 
-    @SuppressWarnings({"unused", "WeakerAccess"})
+    @SuppressWarnings({"unused"})
     public String[] getItemData(int position) {
         return mData.get(position);
     }
 
-    @SuppressWarnings({"unused", "WeakerAccess"})
+    @SuppressWarnings({"unused"})
     public void setOnItemClickListener(IntConsumer onItemClickListener) {
         this.clickListener = onItemClickListener;
     }
 
-    @SuppressWarnings({"unused", "WeakerAccess"})
+    @SuppressWarnings({"unused"})
     public void setOnItemLongClickListener(OnItemLongClickListener onItemLongClickListener) {
         this.longClickListener = onItemLongClickListener;
     }

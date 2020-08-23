@@ -81,15 +81,11 @@ public class WebViewActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_BACK:
-                if (webview != null && webview.canGoBack()) {
-                    webview.goBack();
-                    return true;
-                }
-                break;
-            default:
-                break;
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (webview != null && webview.canGoBack()) {
+                webview.goBack();
+                return true;
+            }
         }
         return super.onKeyDown(keyCode, event);
     }

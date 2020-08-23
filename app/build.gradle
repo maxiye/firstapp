@@ -2,14 +2,14 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 27
-    buildToolsVersion '28.0.3'
+    buildToolsVersion '27.0.3'
     defaultConfig {
         applicationId "com.maxiye.first"
         minSdkVersion 26
         //noinspection OldTargetApi
         targetSdkVersion 27
-        versionCode 160
-        versionName "1.6.0"
+        versionCode 161
+        versionName "1.6.1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = false
         resConfigs "en", "zh"
@@ -34,17 +34,17 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.squareup.okhttp3:okhttp:3.12.5'
     implementation 'com.google.code.gson:gson:2.8.6'
-    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.18'
+    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.19'
     implementation 'com.android.support:design:27.1.1'
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.android.support:support-v4:27.1.1'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    implementation 'com.android.support.constraint:constraint-layout:2.0.0'
     androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    implementation 'org.jsoup:jsoup:1.12.1'
+    implementation 'org.jsoup:jsoup:1.13.1'
     testImplementation 'com.thegrizzlylabs.sardine-android:sardine-android:0.4'// WebDAV
-    testImplementation 'junit:junit:4.12'
-    testImplementation 'org.powermock:powermock-module-junit4:2.0.2'
-    testImplementation 'org.powermock:powermock-api-mockito2:2.0.2'
+    testImplementation 'junit:junit:4.13'
+    testImplementation 'org.powermock:powermock-module-junit4:2.0.5'
+    testImplementation 'org.powermock:powermock-api-mockito2:2.0.5'
 }

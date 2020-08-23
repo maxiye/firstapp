@@ -248,7 +248,7 @@ public class SettingActivity extends AppCompatActivity {
                 InputType.TYPE_CLASS_NUMBER,
                 null,
                 input -> {
-                    sp.edit().putInt(DUPLICATE_LEVEL, Integer.valueOf(input))
+                    sp.edit().putInt(DUPLICATE_LEVEL, Integer.parseInt(input))
                             .apply();
                     TextView duplicateLevel = findViewById(R.id.duplicate_level);
                     duplicateLevel.setText(input);

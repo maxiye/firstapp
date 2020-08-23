@@ -1582,6 +1582,7 @@ public class GifActivity extends AppCompatActivity {
             imgView.setOnTouchListener(new View.OnTouchListener() {
                 private int favImgPos = position;
                 private int vScrollX;
+                @SuppressWarnings("FieldCanBeLocal")
                 private float mPosX, mPosY, mCurPosX, mCurPosY;
                 private final Runnable runnable = imgView::performLongClick;
                 private final Handler handler = new Handler();
@@ -1741,7 +1742,7 @@ public class GifActivity extends AppCompatActivity {
         @Nullable
         private int[] cutOffIds(int offset) {
             if (duplicateIds.length > offset) {
-                int limit = duplicateIds.length >= offset + PAGE_SIZE ? PAGE_SIZE + offset : duplicateIds.length;
+                int limit = Math.min(duplicateIds.length, offset + PAGE_SIZE);
                 return Arrays.copyOfRange(duplicateIds, offset, limit);
             } else {
                 return null;
@@ -1817,7 +1818,7 @@ public class GifActivity extends AppCompatActivity {
             if (ids != null) {
                 for (int i = 0, index = 0; i < ids.length; i++) {
                     for (int j = index; j < count; j++) {
-                        if (ids[i] == Integer.valueOf((favoriteList.get(j).get("id").toString()))) {
+                        if (ids[i] == Integer.parseInt((favoriteList.get(j).get("id").toString()))) {
                             Map<String, Object> tmp = favoriteList.set(index++, favoriteList.get(j));
                             favoriteList.set(j, tmp);
                             break;
@@ -2545,7 +2546,7 @@ public class GifActivity extends AppCompatActivity {
         }
 
         @Override
-        public void setPrimaryItem(ViewGroup container, int position, Object object) {
+        public void setPrimaryItem(@NonNull ViewGroup container, int position, @NonNull Object object) {
             currentFragment = (PlaceholderFragment) object;
             page = position + 1;
             super.setPrimaryItem(container, position, object);

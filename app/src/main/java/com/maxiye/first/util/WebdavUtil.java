@@ -232,7 +232,7 @@ public class WebdavUtil {
                             item.put("last_modified_format", lastModified);
                         }
                         if ("d:getcontentlength".equals(prop.getNodeName())) {
-                            item.put("length", String.format("%.2fMB", Float.valueOf(prop.getTextContent()) / 1024 / 1024));
+                            item.put("length", String.format("%.2fMB", Float.parseFloat(prop.getTextContent()) / 1024 / 1024));
                         }
                         if ("d:displayname".equals(prop.getNodeName())) {
                             item.put("name", prop.getTextContent());
@@ -307,7 +307,7 @@ public class WebdavUtil {
     }
 
     @SuppressWarnings("unused")
-    public class AuthenticationInterceptor implements Interceptor {
+    public static class AuthenticationInterceptor implements Interceptor {
 
         private String userName;
         private String password;

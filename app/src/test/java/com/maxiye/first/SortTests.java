@@ -113,7 +113,7 @@ public class SortTests {
     public void copyRangeTest() {
         int[] ints = new int[]{1,2,3,4,5,6,7};//
         int off = 1, len = 7;
-        int to = ints.length >= off + len ? len + off : ints.length;
+        int to = Math.min(ints.length, off + len);
         System.out.println(Arrays.toString(Arrays.copyOfRange(ints, 1, 7)));
     }
 }

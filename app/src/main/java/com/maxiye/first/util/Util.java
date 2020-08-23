@@ -249,7 +249,7 @@ public class Util {
         int pos = fileName.indexOf("_");
         // id < 99999
         if (pos < 6 && pos > 0) {
-            return Integer.valueOf(fileName.substring(0, pos));
+            return Integer.parseInt(fileName.substring(0, pos));
         }
         return 0;
     }

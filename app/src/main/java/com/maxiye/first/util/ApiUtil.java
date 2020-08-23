@@ -110,9 +110,10 @@ public class ApiUtil {
             String resBody = res2.body();
             MyLog.w("apiUtil-login", resBody);
             MyLog.w("apiUtil-cookie", res2.cookies().toString());
-            HashMap resObj = new Gson().fromJson(resBody, HashMap.class);
+            Type typeToken = new TypeToken<HashMap<String, Object>>(){}.getType();
+            HashMap<String, Object> resObj = new Gson().fromJson(resBody, typeToken);
             // 登录失败
-            if ("-1".equals(resObj.get("success").toString())) {
+            if ("-1".equals(resObj.get("S").toString())) {
                 throw new Exception("登录失败");
             }
             SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -165,13 +166,13 @@ public class ApiUtil {
             for (Element e : elements) {
                 Elements tds = e.children();
                 HashMap<String, Object> item = new HashMap<>(10);
-                item.put("title", tds.eq(2).text());
+                item.put("title", tds.eq(1).text());
                 item.put("icon", tds.eq(2).text());
-                item.put("status", tds.eq(3).text());
-                item.put("type", tds.eq(4).text());
-                item.put("limit", tds.eq(5).text());
-                item.put("start", tds.eq(6).text());
-                item.put("end", tds.eq(7).text());
+                item.put("status", tds.eq(2).text());
+                item.put("type", tds.eq(3).text());
+                item.put("limit", tds.eq(4).text());
+                item.put("start", tds.eq(5).text());
+                item.put("end", tds.eq(6).text());
                 String url = e.select("a").attr("href");
                 item.put("url", url);
                 Map<String, String> params = Util.getUrlParam(url);

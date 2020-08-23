@@ -83,7 +83,7 @@ public class ExampleInstrumentedTest {
                 int pos = name.indexOf("_");
                 int id = Integer.MAX_VALUE;
                 if (pos < 6 && pos > 0) {
-                    id = Integer.valueOf(name.substring(0, pos));
+                    id = Integer.parseInt(name.substring(0, pos));
                 }
                 name2IdMap.put(f, id);
             }
@@ -100,7 +100,7 @@ public class ExampleInstrumentedTest {
                 int pos = name.indexOf("_");
                 int id = Integer.MAX_VALUE;
                 if (pos < 6 && pos > 0) {
-                    id = Integer.valueOf(name.substring(0, pos));
+                    id = Integer.parseInt(name.substring(0, pos));
                 }
                 name2IdMap.put(name, id);
             }

@@ -23,12 +23,8 @@ public class CommonActivity extends AppCompatActivity {
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             String type = bundle.getString(TYPE, TYPE_PROXY);
-            switch (type) {
-                case TYPE_PROXY:
-                    new ProxySetting().init();
-                    break;
-                default:
-                    break;
+            if (TYPE_PROXY.equals(type)) {
+                new ProxySetting().init();
             }
         }
     }

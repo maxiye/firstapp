@@ -428,7 +428,7 @@ public class BitmapUtil {
         boolean[] modes = new boolean[]{true, false, false};
         offset = offset / 3 + 1;
         while (offset > 0) {
-            int off = offset > 255 ? 255 : offset;
+            int off = Math.min(offset, 255);
             for (int i = 0; i < rgb.length; i++) {
                 if (modes[i]) {
                     rgb[i] += off;
@@ -995,7 +995,7 @@ public class BitmapUtil {
         String hash = Base64.encodeToString(fName.getBytes(), Base64.NO_PADDING | Base64.NO_WRAP);
         long meta;
         if (props.containsKey(hash)) {
-            meta = Long.valueOf(props.getProperty(hash));
+            meta = Long.parseLong(props.getProperty(hash));
         } else {
             meta = BitmapUtil.calcImgMeta(BitmapUtil.getBitmap(file, 8, 8));
             props.setProperty(hash, String.valueOf(meta));

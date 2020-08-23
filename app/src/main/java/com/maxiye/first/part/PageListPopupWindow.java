@@ -318,7 +318,7 @@ public class PageListPopupWindow {
             pageEdit.setOnEditorActionListener((textView, i, keyEvent) -> {
                 String nowPageStr = pageEdit.getText().toString();
                 int nowPage = StringUtil.notBlank(nowPageStr) ? Integer.parseInt(nowPageStr) : 1;
-                page = nowPage > pages ? pages : nowPage;
+                page = Math.min(nowPage, pages);
                 MyLog.w("FavoriteGoPage", "pagePopup:" + page);
                 pageEdit.setText(page + "");
                 ma.setData(updateList(page, where));

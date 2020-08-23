@@ -50,7 +50,7 @@ public class AppLvAdapter extends ArrayAdapter<Map<String, Object>> {
      * @param resource int
      * @param objects List<Map<String, Object>>
      */
-    public AppLvAdapter(@NonNull Context context, @LayoutRes int resource, @NonNull List<Map<String, Object>> objects) {
+    AppLvAdapter(@NonNull Context context, @LayoutRes int resource, @NonNull List<Map<String, Object>> objects) {
         super(context, resource, objects);
         this.context = context;
         this.res = resource;

@@ -90,25 +90,25 @@
     },
     "17173": {
       "web_root": "http://news.17173.com",
-      "spy_root": "http://news.17173.com/game/gif.shtml",
+      "spy_root": "http://news.17173.com/zhengjing/",
       "spy_img_web_root": "http://news.17173.com",
       "icon": "http://ue.17173cdn.com/images/lib/v1/favicon-hd.ico",
       "local_icon": "17173.ico",
       "img_web_reg": {
-        "reg": "<a href=\"([^\"]+content/(\\d+/\\d+)_1\\.shtml)\"[^>]+>(正经GIF囧图\\S+)</a>",
+        "reg": "<a href=\"([^\"]+content/(\\d+/\\d+)_1\\.shtml)\"[^>]+>(正惊GIF：\\S+)</a>",
         "art_id_idx": 2,
         "title_idx": 3
       },
       "img_web": "http://news.17173.com/content/%1$s_1.shtml",
-      "img_web_2nd": "http://news.17173.com/content/404",
+      "img_web_2nd": "http://news.17173.com/content/%1$s_%2$d.shtml",
       "img_reg": {
-        "reg": "<p class=\"p-image\"[\\s\\S]*?<img.*?data-src=\"//([^\"]+?(\\.gif))(![^\"]+)?\"[^>]+></p>[\r\n\\s\t]+<p style=\"text-align: center[^>]+>([^<]+)</p>",
+        "reg": "<p[\\s\\S]*?<img.*?data-src=\"//([^\"]+?(\\.gif))(![^\"]+)?\"[^>]+></p>[\r\n\\s\t]+<p style=\"text-align: center[^>]+>([^<]+)</p>",
         "img_url_idx": 1,
         "img_ext_idx": 2,
         "img_title_idx": 4
       },
       "title_reg": {
-        "reg": "<title>([^<]+)</title>",
+        "reg": "<title>([^_]+).*?</title>",
         "title_idx": 1
       }
     },
@@ -300,29 +300,5 @@
         "title_idx": 1
       }
     }
-    /*"3bnbn": {
-      "web_root": "http://3bnbn.net/art/Zpic/",
-      "spy_root": "http://3bnbn.net/art/Zpic/",
-      "spy_img_web_root": "http://3bnbn.net",
-      "icon": "http://tu.duowan.com/favicon.ico",
-      "local_icon": "duowan.ico",
-      "img_web_reg": {
-        "reg": "<li><a href=\"([^\"]+/([0-9]+)\\.html)\"[^>]*><span[^>]*>[^<]*</span>(\\S+)</a>",
-        "art_id_idx": 2,
-        "title_idx": 3
-      },
-      "img_web": "http://3bnbn.net/art/html/%1$s.html",
-      "img_web_2nd": "http://www.duowan.com/s/404/404.html",
-      "img_reg": {
-        "reg": "<img src=\"([^\"]+(\\.(jpg|jpeg|png|bmp)))\"[^>]*?>(.*?)<br",
-        "img_url_idx": 1,
-        "img_ext_idx": 2,
-        "img_title_idx": 4
-      },
-      "title_reg": {
-        "reg": "<title>([^<]+)</title>",
-        "title_idx": 1
-      }
-    }*/
   }
 }
