@@ -31,6 +31,7 @@ import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.provider.Settings;
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -175,6 +176,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
 
     @Override
     protected void onActivityResult(int reqCode, int resCode, Intent data) {
+        super.onActivityResult(reqCode, resCode, data);
         if (resCode != RESULT_OK || data == null) {
             alert("bad res!");
             return;
@@ -240,15 +242,9 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 break;
             case INTENT_PICK_DB_BAK_REQCODE:
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    try {
-                        String path = Util.getPathFromIntent(data);
-                        // raw:/storage/emulated/0/Download/xxx.db.bak
-                        DbHelper.restore(this, Paths.get(path));
-                        alert("Success");
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        alert("Error：" + e.getMessage());
-                    }
+                    String path = Util.getPathFromIntent(data);
+                    // raw:/storage/emulated/0/Download/xxx.db.bak
+                    DbHelper.restore(this, Paths.get(path));
                 }
                 break;
             case INTENT_IMG_GRAY_REQCODE:
@@ -601,7 +597,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 });
                 return;
             }
-            Drawable icon = getDrawable(R.drawable.ic_insert_drive_file_black_24dp);
+            Drawable icon = ContextCompat.getDrawable(this, R.drawable.ic_insert_drive_file_black_24dp);
             final List<Map<String, Object>>  files = lists.stream()
                     .filter(item -> "file".equals(item.get("type").toString()))
                     .sorted((f1, f2) -> -f1.get("last_modified").toString().compareTo(f2.get("last_modified").toString()))

@@ -3,6 +3,7 @@ package com.maxiye.first.util;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
@@ -134,6 +135,21 @@ public class Util {
         return "";
     }
 
+    /**
+     * 获取文件content-type
+     *
+     * @param context Context
+     * @param file File
+     * @param authority string
+     * @return string
+     */
+    public static String getMimeType(Context context,File file,@NonNull String authority){
+        Uri uri;
+        uri = FileProvider.getUriForFile(context, authority, file);
+
+        ContentResolver resolver = context.getContentResolver();
+        return resolver.getType(uri);
+    }
 
     /**
      * 保存到内部存储

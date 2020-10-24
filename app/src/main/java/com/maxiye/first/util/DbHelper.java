@@ -1,17 +1,20 @@
 package com.maxiye.first.util;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Environment;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import android.widget.Toast;
 
 import com.maxiye.first.GifActivity;
@@ -92,15 +95,15 @@ public class DbHelper extends SQLiteOpenHelper {
     private static final String DROP_BOOK = "DROP TABLE IF EXISTS " + TB_BOOK;
     private static final String DROP_IMG_WEB = "DROP TABLE IF EXISTS " + TB_IMG_WEB;
     private static final String DROP_IMG_WEB_ITEM = "DROP TABLE IF EXISTS " + TB_IMG_WEB_ITEM;
-    private final Context mCont;
+    private final Activity mCont;
 
-    public DbHelper(Context context) {
+    public DbHelper(Activity context) {
         super(context, DB_NAME, null, DB_VERSION);
         mCont = context;
         checkBakup();
     }
 
-    public static SQLiteDatabase newDb(Context context) {
+    public static SQLiteDatabase newDb(Activity context) {
         return new DbHelper(context).getWritableDatabase();
     }
 
@@ -195,7 +198,11 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    public static void backup(Context context) {
+    public static void backup(Activity context) {
+        if (PackageManager.PERMISSION_GRANTED != context.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            PermissionUtil.req(context, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PermissionUtil.RequestCode.STORAGE_READ, (result) -> Util.getDefaultSingleThreadExecutor().execute(() -> backup(context)));
+            return;
+        }
         // 通知栏
         NotificationManager notificationManager = NotificationTool.getNotificationManager(context);
         Notification notification = new Notification.Builder(context, NotificationTool.CHANNEL_1)
@@ -219,8 +226,8 @@ public class DbHelper extends SQLiteOpenHelper {
             SharedPreferences sp = context.getSharedPreferences(SettingActivity.SETTING, Context.MODE_PRIVATE);
             sp.edit().putLong(SettingActivity.BACKUP_TIME, System.currentTimeMillis()).apply();
             MyLog.w("Dbhelper:backup db", WebdavUtil.BASE_URL + bak.getName());
-            boolean useWebdav = sp.getBoolean(SettingActivity.WEBDAV_ON_OFF, true);
-            boolean isSuccess = !useWebdav || new WebdavUtil(context).put(WebdavUtil.BASE_URL + bak.getName(), db);
+            boolean useWebdav = sp.getBoolean(SettingActivity.WEBDAV_ON_OFF, false);
+            boolean isSuccess = !useWebdav || new WebdavUtil(context).put(WebdavUtil.BASE_URL + bak.getName(), bak);
             if (isSuccess) {
                 Notification notification2 = new Notification.Builder(context, "1")
                         .setSmallIcon(R.drawable.ic_cloud_done_black_24dp)
@@ -260,15 +267,22 @@ public class DbHelper extends SQLiteOpenHelper {
      * @param activity 上下文
      * @param path 备份文件path
      */
-    public static void restore(Activity activity, Path path) throws IOException {
-        File backup = Util.unzipSingleFile(path.toFile(), null);
-        if (backup == null || !backup.exists()) {
-            throw new IOException("Backup file is not a zip");
-        }
-        Files.copy(backup.toPath(), activity.getDatabasePath(DB_NAME).toPath(), StandardCopyOption.REPLACE_EXISTING);
-        if (!backup.delete()) {
-            throw new IOException("unzip file delete error");
-        }
+    public static void restore(Activity activity, Path path) {
+        PermissionUtil.req(activity, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PermissionUtil.RequestCode.STORAGE_READ, (result) -> {
+            try {
+                File backup = Util.unzipSingleFile(path.toFile(), null);
+                if (backup == null || !backup.exists()) {
+                    throw new IOException("Backup file is not a zip");
+                }
+                Files.copy(backup.toPath(), activity.getDatabasePath(DB_NAME).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                if (!backup.delete()) {
+                    throw new IOException("unzip file delete error");
+                }
+                Toast.makeText(activity, "Success", Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                Toast.makeText(activity, e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     /**

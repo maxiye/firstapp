@@ -2,23 +2,21 @@ package com.maxiye.first;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.maxiye.first.util.BitmapUtil;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+
 
 /**
  * Instrumentation test, which will execute on an Android device.
  *
  * @see <a href="http://d.android.com/tools/testing">Testing documentation</a>
  */
-@RunWith(AndroidJUnit4.class)
 public class BitmapTest {
     @Test
     public void singleChannelTest() throws IOException {

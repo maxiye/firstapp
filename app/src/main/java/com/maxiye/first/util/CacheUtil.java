@@ -4,8 +4,10 @@ package com.maxiye.first.util;
   数据库助手
   Created by due on 2018/5/3.
  */
+
 import android.content.Context;
 import android.os.Environment;
+
 import androidx.annotation.NonNull;
 
 import java.io.File;
@@ -44,7 +46,7 @@ public class CacheUtil {
     /**
      * @param context Activity
      * @return string String
-     *             获取当前缓存
+     * 获取当前缓存
      */
     @NonNull
     @SuppressWarnings({"unused"})
@@ -58,8 +60,7 @@ public class CacheUtil {
     }
 
     /**
-     * @param context
-     *            删除缓存
+     * @param context 删除缓存
      */
     public static void clearAllCache(@NonNull Context context) {
         deleteDir(context.getCacheDir());
@@ -88,13 +89,14 @@ public class CacheUtil {
     }
 
     /**
-    * 获取文件
-    * Context.getExternalFilesDir() --> SDCard/Android/data/你的应用的包名/files/
-    * 目录，一般放一些长时间保存的数据
-    * Context.getExternalCacheDir() -->
-    * SDCard/Android/data/你的应用包名/cache/目录，一般存放临时缓存数据
+     * 获取文件
+     * Context.getExternalFilesDir() --> SDCard/Android/data/你的应用的包名/files/
+     * 目录，一般放一些长时间保存的数据
+     * Context.getExternalCacheDir() -->
+     * SDCard/Android/data/你的应用包名/cache/目录，一般存放临时缓存数据
+     *
      * @param file File
-    */
+     */
     private static long getFolderSize(File file) {
         long size = 0;
         try {
@@ -119,15 +121,16 @@ public class CacheUtil {
     /**
      * 格式化单位
      * 计算缓存的大小
-     * @param size int
+     *
+     * @param size double
      * @return string
      */
     @NonNull
-    private static String getFormatSize(double size) {
+    public static String getFormatSize(double size) {
         double kiloByte = size / 1024;
         if (kiloByte < 1) {
             // return size + "Byte";
-            return "0K";
+            return (long) size + "B";
         }
 
         double megaByte = kiloByte / 1024;
@@ -187,8 +190,9 @@ public class CacheUtil {
 
     /**
      * 清除部分缓存
+     *
      * @param directory File
-     * @param size total size
+     * @param size      total size
      */
     private static void clearOld(@NonNull File directory, double size) {
         File[] fileList = directory.listFiles(File::isFile);
@@ -218,6 +222,7 @@ public class CacheUtil {
 
     /**
      * 缓存超过400M，自动清空
+     *
      * @param context Context
      */
     @SuppressWarnings({"unused"})
