@@ -6,10 +6,11 @@ android {
     defaultConfig {
         applicationId "com.maxiye.first"
         minSdkVersion 26
+        //29：外置存储访问受限，wifi配置列表获取空
         //noinspection OldTargetApi
-        targetSdkVersion 27
-        versionCode 161
-        versionName "1.6.1"
+        targetSdkVersion 28
+        versionCode 10602
+        versionName "1.6.2"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         vectorDrawables.useSupportLibrary = false
         resConfigs "en", "zh"
@@ -35,10 +36,10 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:3.12.5'
     implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.19'
-    implementation 'com.google.android.material:material:1.2.0'
+    implementation 'com.google.android.material:material:1.2.1'
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.2'
     androidTestImplementation('androidx.test.espresso:espresso-core:3.1.0', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })

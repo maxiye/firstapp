@@ -1,7 +1,6 @@
 package com.maxiye.first.api;
 
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -14,9 +13,12 @@ import com.maxiye.first.util.Util;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 /**
  * @author due
  */
+@SuppressWarnings("unused")
 public class WorkdayActivity extends AppCompatActivity {
 
     @Override

@@ -3,11 +3,6 @@ package com.maxiye.first.part;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.PixelFormat;
-
-import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +23,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * 数据库助手
@@ -130,7 +130,11 @@ public class PageListPopupWindow {
      * @return view
      */
     public View getItemView(int position) {
-        return rv.getLayoutManager().findViewByPosition(position);
+        RecyclerView.LayoutManager layoutManager = rv.getLayoutManager();
+        if (layoutManager != null) {
+            return layoutManager.findViewByPosition(position);
+        }
+        return null;
     }
 
     public Map<String, Object> getItemData(int position) {

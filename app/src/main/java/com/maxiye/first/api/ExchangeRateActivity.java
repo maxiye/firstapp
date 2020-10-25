@@ -1,6 +1,5 @@
 package com.maxiye.first.api;
 
-import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
@@ -12,9 +11,12 @@ import com.maxiye.first.util.ApiUtil;
 import com.maxiye.first.util.StringUtil;
 import com.maxiye.first.util.Util;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 /**
  * @author due
  */
+@SuppressWarnings("unused")
 public class ExchangeRateActivity extends AppCompatActivity {
 
     @Override
@@ -22,7 +24,7 @@ public class ExchangeRateActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_exchange_rate);
         findViewById(android.R.id.content).setOnLongClickListener((v) -> ApiUtil.showPopupmenu(this, findViewById(R.id.scur)));
-        exchange(null);
+        exchange(findViewById(R.id.exchRate));
     }
 
     @SuppressWarnings("unused")

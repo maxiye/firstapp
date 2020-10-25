@@ -3,8 +3,6 @@ package com.maxiye.first.util;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.maxiye.first.SettingActivity;
 
@@ -31,6 +29,8 @@ import java.util.concurrent.TimeUnit;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import okhttp3.Authenticator;
 import okhttp3.Credentials;
 import okhttp3.Headers;
@@ -52,7 +52,7 @@ public class WebdavUtil {
     public static final String BASE_URL = "https://dav.jianguoyun.com/dav/maxiye/";
     public static final String HOST = "https://dav.jianguoyun.com";
 
-    private OkHttpClient client;
+    private final OkHttpClient client;
     private String rawRes;
     private String error;
 
@@ -70,6 +70,8 @@ public class WebdavUtil {
         String user = sharedPreferences.getString(SettingActivity.WEBDAV_USER, "null");
         String pwd = sharedPreferences.getString(SettingActivity.WEBDAV_PWD, "null");
         MyLog.w("WebdavUtil-account", user + " -> " + pwd);
+        assert user != null;
+        assert pwd != null;
         client = new OkHttpClient.Builder()
                 .authenticator(new BasicAuthenticator(user, pwd))
                 .readTimeout(1200, TimeUnit.SECONDS)
@@ -271,8 +273,8 @@ public class WebdavUtil {
     }
 
     private static class BasicAuthenticator implements Authenticator {
-        private String userName;
-        private String password;
+        private final String userName;
+        private final String password;
 
         BasicAuthenticator(@NonNull String userName, @NonNull String password) {
             this.userName = userName;
@@ -309,8 +311,8 @@ public class WebdavUtil {
     @SuppressWarnings("unused")
     public static class AuthenticationInterceptor implements Interceptor {
 
-        private String userName;
-        private String password;
+        private final String userName;
+        private final String password;
 
         public AuthenticationInterceptor(@NonNull String userName, @NonNull String password) {
             this.userName = userName;

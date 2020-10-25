@@ -19,6 +19,7 @@ public class MyReceiver extends BroadcastReceiver {
         //音频监听
         if (Intent.ACTION_MEDIA_BUTTON.equals(intent.getAction())) {
             KeyEvent event = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+            assert event != null;
             if (KeyEvent.KEYCODE_MEDIA_PLAY == event.getKeyCode()) {
                 Toast.makeText(context, "Pressed play btn", Toast.LENGTH_SHORT).show();
             }

@@ -12,9 +12,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Environment;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
 import android.widget.Toast;
 
 import com.maxiye.first.GifActivity;
@@ -30,6 +27,9 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**数据库助手
  * {@code 第27条：消除未检查警告 }
@@ -215,10 +215,11 @@ public class DbHelper extends SQLiteOpenHelper {
         notificationManager.notify(1, notification);
         File db = context.getDatabasePath(DB_NAME);
         File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/maxiye/");
+        // new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "maxiye/")
         File bak = new File(downloadDir, DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now()) + ".db.bak.zip");
         try {
-            if (!downloadDir.exists()) {
-                downloadDir.mkdirs();
+            if (!downloadDir.exists() && !downloadDir.mkdirs()) {
+                throw new IOException("创建文件夹失败：" + downloadDir.getAbsolutePath());
             }
             if (Util.zipFile(db, bak) == null) {
                 throw new IOException("Zip file error");
@@ -242,6 +243,7 @@ public class DbHelper extends SQLiteOpenHelper {
             }
         } catch (IOException e) {
             e.printStackTrace();
+            context.runOnUiThread(() -> Toast.makeText(context, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show());
             Notification notification2 = new Notification.Builder(context, "1")
                     .setSmallIcon(R.drawable.ic_cloud_done_black_24dp)
                     .setContentTitle(context.getText(R.string.backup_db))

@@ -24,7 +24,7 @@ public class NetworkUtil {
      * 自反性,对称性,传递性,一致性,null比较
      * {@code 第11条：覆盖equals方法时总要覆盖hashCode方法}
      */
-    private HashMap<Object, ConnectivityManager.NetworkCallback> callbackList = new HashMap<>(2);
+    private final HashMap<Object, ConnectivityManager.NetworkCallback> callbackList = new HashMap<>(2);
     private static NetworkUtil instance;
 
     private NetworkUtil() {

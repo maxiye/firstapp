@@ -1,20 +1,21 @@
 package com.maxiye.first;
 
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
-import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
-import androidx.appcompat.widget.ListPopupWindow;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.PopupWindow;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.maxiye.first.part.PageListPopupWindow;
 import com.maxiye.first.util.ApiUtil;
 import com.maxiye.first.util.Util;
@@ -22,10 +23,17 @@ import com.maxiye.first.util.Util;
 import java.util.List;
 import java.util.Map;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.ListPopupWindow;
+import androidx.core.content.ContextCompat;
+
 /**
  * @author due
  */
 public class SettingActivity extends AppCompatActivity {
+    // 设备管理应用请求
+    private static final int INTENT_ADMIN_DEVICE_REQCODE = 100;
     private SharedPreferences sp;
     public static final String SETTING = "com.maxiye.first.SETTING";
     /**
@@ -114,6 +122,26 @@ public class SettingActivity extends AppCompatActivity {
         sp = getSharedPreferences(SETTING, Context.MODE_PRIVATE);
         //初始化设置
         initSetting();
+        enableDeviceAdmin();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode != RESULT_OK) {
+            alert("资源请求拒绝");
+            return;
+        }
+        switch (requestCode) {
+            case INTENT_ADMIN_DEVICE_REQCODE: {
+                alert("请求已通过");
+            }
+            case 0: {
+                break;
+            }
+            default:
+                break;
+        }
     }
 
     private void alert(String tip) {
@@ -124,8 +152,8 @@ public class SettingActivity extends AppCompatActivity {
      * {@code 第42条：lambda表达式优于匿名类}
      */
     private void initSetting() {
-        Switch showSystemApps = findViewById(R.id.setting_show_system);
-        Switch webdavOnOff = findViewById(R.id.webdav_on_off);
+        SwitchMaterial showSystemApps = findViewById(R.id.setting_show_system);
+        SwitchMaterial webdavOnOff = findViewById(R.id.webdav_on_off);
         TextView webdavUser = findViewById(R.id.webdav_user_view);
         TextView webdavPwd = findViewById(R.id.webdav_pwd_view);
         TextView apiUser = findViewById(R.id.api_user_view);
@@ -172,7 +200,7 @@ public class SettingActivity extends AppCompatActivity {
                     });
                     return;
                 }
-                Drawable icon = getDrawable(R.drawable.ic_cloud_queue_black_24dp);
+                Drawable icon = ContextCompat.getDrawable(SettingActivity.this, R.drawable.ic_cloud_queue_black_24dp);
                 for (Map<String, Object> item : list) {
                     String name = item.get("title").toString();
                     String status = item.get("status").toString();
@@ -323,5 +351,24 @@ public class SettingActivity extends AppCompatActivity {
                     TextView apiUser = findViewById(R.id.api_user_view);
                     apiUser.setText(input);
                 });
+    }
+
+    /**
+     * 激活设备管理应用
+     *
+     * 设置为DeviceOwner {@code adb shell dpm set-device-owner com.maxiye.first/.MyDeviceAdminReceiver}
+     */
+    public void enableDeviceAdmin() {
+        DevicePolicyManager devicePolicyManager = (DevicePolicyManager)getSystemService(
+                Context.DEVICE_POLICY_SERVICE);
+        ComponentName comName = new ComponentName(this, MyDeviceAdminReceiver.class);
+        if (!devicePolicyManager.isAdminActive(comName)) {
+            Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
+            intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, comName);
+            intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "激活此设备管理员后可免root停用应用");
+            startActivityForResult(intent, INTENT_ADMIN_DEVICE_REQCODE);
+        } else {
+            Toast.makeText(this, "此App已成为设备管理应用", Toast.LENGTH_SHORT).show();
+        }
     }
 }

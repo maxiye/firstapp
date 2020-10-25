@@ -30,12 +30,6 @@ import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.provider.Settings;
-import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.ListPopupWindow;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -63,7 +57,6 @@ import com.maxiye.first.util.StringUtil;
 import com.maxiye.first.util.Util;
 import com.maxiye.first.util.WebdavUtil;
 
-
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
@@ -82,13 +75,19 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.ListPopupWindow;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import okhttp3.ResponseBody;
 
 /**
  * @author due
  * // @SuppressWarnings({"unused", "WeakerAccess"})  SameParameterValue unchecked FieldCanBeLocal deprecation(过时)   UnusedParameters  InflateParams
  */
-@SuppressWarnings("AlibabaRemoveCommentedCode")
+@SuppressWarnings({"AlibabaRemoveCommentedCode"})
 public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
     private final int INTENT_CONTACT_PICK_REQCODE = 100;
     private final int INTENT_IMG_VIEW_REQCODE = 101;
@@ -158,6 +157,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 return true;
             case R.id.test_action_net_set:
                 addNetSetShortcut();
+                return true;
             case R.id.proxy_shortcut:
                 addProxyShortcut();
                 return true;
@@ -279,6 +279,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
+    @SuppressWarnings("unused")
     public void openApplist(View view) {
         startActivity(new Intent(this, ApplistActivity.class));
     }
@@ -308,7 +309,6 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
                 toast.show();
             }
             if (itt.getType().contains("text/plain")) {
-                // noinspection ConstantConditions
                 alert(itt.getExtras().get(Intent.EXTRA_TEXT).toString());
             }
             alert(itt.getType());
@@ -441,6 +441,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         scm.requestPinShortcut(si, null);
     }
 
+    @SuppressWarnings("unused")
     public void testNFC(View view) {
         NfcAdapter nfc;
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC)) {
@@ -453,7 +454,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
 
     }
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "unused"})
     public void testAudio(View view) {
         SharedPreferences sp = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor spEditor = sp.edit();
@@ -537,6 +538,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
      *
      * @param view View
      */
+    @SuppressWarnings("unused")
     public void getGif(View view) {
         Intent getGifInt = new Intent(this, GifActivity.class);
         getGifInt.putExtra(GifActivity.WEB_NAME_ARG, "gamersky");
@@ -750,12 +752,13 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
 
     @NonNull
     private File createTempFile() throws IOException {
-        String timestamp = DateTimeFormatter.ofPattern("YYYYMMdd_HHmmss").format(LocalDateTime.now());
+        String timestamp = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss").format(LocalDateTime.now());
         String imgName = "JPEG_" + timestamp + "_";
         File storedir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         return File.createTempFile(imgName, ".jpg", storedir);
     }
 
+    @SuppressWarnings("unused")
     public void capture(View view) {
         PermissionUtil.req(this, new String[]{Manifest.permission.CAMERA}, PermissionUtil.RequestCode.CAPTURE, (result) -> {
             Intent cap = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -876,6 +879,7 @@ public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuI
         alert(getString(R.string.success));
     }
 
+    @SuppressWarnings("unused")
     public void proxySetting(View view) {
         Intent proxy = new Intent(this, CommonActivity.class);
         proxy.putExtra(CommonActivity.TYPE, CommonActivity.TYPE_PROXY);

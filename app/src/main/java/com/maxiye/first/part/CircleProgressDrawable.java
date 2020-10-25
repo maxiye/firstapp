@@ -48,6 +48,7 @@ public class CircleProgressDrawable extends Drawable {
             cpd = new CircleProgressDrawable();
         }
 
+        @SuppressWarnings("unused")
         public Builder color(int start, int end) {
             cpd.startColor = start;
             cpd.endColor = end;

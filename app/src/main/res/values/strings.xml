@@ -13,7 +13,6 @@
     <string name="test_audio">Test Audio</string>
     <string name="test_camera">Test Camera</string>
     <string name="loading">Loading…</string>
-    <string name="test">Test</string>
     <string name="alert_exit">Press once more to exit</string>
     <string name="app_icon">App Icon</string>
     <string name="search">Search</string>
@@ -24,9 +23,7 @@
     <string name="test_contact">Test Contact</string>
     <string name="test_pic">Test Pick Picture</string>
     <string name="get_gif">Get Pic</string>
-    <string name="refresh">Refresh</string>
     <string name="gif_desc">Gif Desc</string>
-    <string name="section_format">Hello World from Section: %1$d</string>
     <string name="download">Download</string>
     <string name="change_art_id">Change Article Id</string>
     <string name="switch_web">Switch Web</string>
@@ -105,7 +102,6 @@
     <string name="bookmark">Bookmark</string>
     <string name="add_bookmark">Add Bookmark</string>
     <string name="not_existed_bookmark">Bookmark is not existed!</string>
-    <string name="back">Back</string>
     <string name="error_tip">Error： %1$s</string>
     <string name="get_all">Get All</string>
     <string name="success_tip">Success： %1$d</string>

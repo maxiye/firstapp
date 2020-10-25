@@ -10,10 +10,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.content.FileProvider;
-import androidx.appcompat.app.AlertDialog;
 import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -49,6 +45,11 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import pl.droidsonroids.gif.GifImageView;
 
 /**
@@ -143,6 +144,7 @@ public class Util {
      * @param authority string
      * @return string
      */
+    @SuppressWarnings("unused")
     public static String getMimeType(Context context,File file,@NonNull String authority){
         Uri uri;
         uri = FileProvider.getUriForFile(context, authority, file);
@@ -179,7 +181,7 @@ public class Util {
     public static void saveFileEx(File file, String content) {
         if (isExternalStorageWritable()) {
             try {
-                if (!file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
+                if (file.getParentFile() != null && !file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
                     throw new IOException("create dir error");
                 }
                 if (!file.exists() && !file.createNewFile()) {
@@ -372,7 +374,7 @@ public class Util {
     public static void loading(Context context) {
         loading = new Dialog(context, android.R.style.Theme_Material_Dialog_Alert);
         GifImageView imgView = new GifImageView(context);
-        imgView.setImageDrawable(context.getDrawable(R.drawable.ic_autorenew_black_24dp));
+        imgView.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_autorenew_black_24dp));
         imgView.setMinimumHeight(180);
         imgView.setMinimumWidth(180);
         Animation anim = AnimationUtils.loadAnimation(context, R.anim.load_rotate);
@@ -430,9 +432,9 @@ public class Util {
      * @param target 目标文件
      * @return File
      */
-    public static File zipFile(File file, File target) {
+    public static File zipFile(File file, File target) throws IOException {
         if (file == null || !file.isFile()) {
-            return null;
+            throw new IOException("文件不存在：" + file.getAbsolutePath());
         }
         if (target == null) {
             target = new File(file.getParentFile(), file.getName() + ".zip");

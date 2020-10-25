@@ -32,7 +32,7 @@
                 android:textColor="@color/colorDarkGray"/>
         </LinearLayout>
 
-        <Switch
+        <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/setting_show_system"
             android:layout_centerVertical="true"
             android:layout_width="wrap_content"
@@ -137,7 +137,7 @@
                 android:textColor="@color/colorDarkGray"/>
         </LinearLayout>
 
-        <Switch
+        <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/webdav_on_off"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

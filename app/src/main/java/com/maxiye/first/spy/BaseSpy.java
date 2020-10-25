@@ -1,8 +1,5 @@
 package com.maxiye.first.spy;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
 import com.google.gson.JsonObject;
 import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.StringUtil;
@@ -14,6 +11,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.ResponseBody;
@@ -38,9 +37,8 @@ public class BaseSpy {
 
     private static final Pattern TITLE_PATTERN = Pattern.compile("[\r\n\\s\t\\\\/]");
     private static final HashMap<String, Pattern> PATTERN_CACHES = new HashMap<>(33);
-    @SuppressWarnings("unused,FieldCanBeLocal")
-    private String webName;
-    JsonObject webCfg;
+    private final String webName;
+    final JsonObject webCfg;
     private int urlIdx,extIdx,titleIdx,realUrlIdx;
     String curUrl;
     String urlTpl, urlTpl2;

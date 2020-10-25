@@ -14,7 +14,6 @@
     <string name="test_audio">测试音频</string>
     <string name="test_camera">测试相机</string>
     <string name="loading">加载中…</string>
-    <string name="test">测试</string>
     <string name="alert_exit">再按一次退出程序</string>
     <string name="app_icon">app图标</string>
     <string name="search">搜索</string>
@@ -26,8 +25,6 @@
     <string name="test_pic">选择图片</string>
     <string name="get_gif">猎图</string>
     <string name="gif_desc">动态图描述</string>
-    <string name="section_format">页面: %1$d</string>
-    <string name="refresh">刷新</string>
     <string name="download">下载</string>
     <string name="change_art_id">前往文章</string>
     <string name="switch_web">切换网站</string>
@@ -102,7 +99,6 @@
     <string name="bookmark">书签</string>
     <string name="add_bookmark">流连</string>
     <string name="not_existed_bookmark">书签不存在</string>
-    <string name="back">返回</string>
     <string name="error_tip">覆水难收： %1$s</string>
     <string name="get_all">一览无余</string>
     <string name="success_tip">凯旋奏鸣： %1$d</string>

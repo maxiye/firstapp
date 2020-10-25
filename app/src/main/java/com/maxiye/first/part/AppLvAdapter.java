@@ -2,9 +2,6 @@ package com.maxiye.first.part;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import androidx.annotation.LayoutRes;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +14,9 @@ import com.maxiye.first.R;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * app列表适配器
@@ -47,13 +47,12 @@ public class AppLvAdapter extends ArrayAdapter<Map<String, Object>> {
      * {@code 第27条：消除未检查警告} extends ArrayAdapter<Map<String, Object>>
      * SuppressWarnings("unchecked")
      * @param context Context
-     * @param resource int
      * @param objects List<Map<String, Object>>
      */
-    AppLvAdapter(@NonNull Context context, @LayoutRes int resource, @NonNull List<Map<String, Object>> objects) {
-        super(context, resource, objects);
+    AppLvAdapter(@NonNull Context context, @NonNull List<Map<String, Object>> objects) {
+        super(context, R.layout.listview_applist, objects);
         this.context = context;
-        this.res = resource;
+        this.res = R.layout.listview_applist;
         this.data = objects;
     }
 

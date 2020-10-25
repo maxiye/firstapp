@@ -280,6 +280,7 @@ public class ApiUtil {
         }
     }
 
+    @SuppressWarnings("SameReturnValue")
     public static boolean showPopupmenu(Activity context, View view) {
         PopupMenu pMenu = new PopupMenu(context, view);
         pMenu.getMenuInflater().inflate(R.menu.test_activity_api_popupmenu, pMenu.getMenu());

@@ -9,8 +9,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,6 +31,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 
 
 /**
@@ -219,7 +220,7 @@ public class ApplistFragment extends Fragment {
                 im.setVisibility(View.GONE);
                 if (mapList != null) {
                     ListView lv = activity.findViewById(R.id.applist_frg_lv);
-                    lv.setAdapter(new AppLvAdapter(activity, R.layout.listview_applist, mapList));
+                    lv.setAdapter(new AppLvAdapter(activity, mapList));
                 } else {
                     tv.setText("NULL");
                 }

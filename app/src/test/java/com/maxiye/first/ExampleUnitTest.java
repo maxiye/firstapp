@@ -1,12 +1,9 @@
 package com.maxiye.first;
 
-import androidx.annotation.NonNull;
-
 import com.maxiye.first.util.MyLog;
 import com.maxiye.first.util.StringUtil;
-import com.maxiye.first.util.Util.TimeCounter;
 import com.maxiye.first.util.Util;
-import static com.maxiye.first.util.Util.log;
+import com.maxiye.first.util.Util.TimeCounter;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -39,12 +36,14 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
+import androidx.annotation.NonNull;
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 
+import static com.maxiye.first.util.Util.log;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -521,7 +520,7 @@ public class ExampleUnitTest {
     }
 
     @Test
-    public void zipFileTest() {
+    public void zipFileTest() throws IOException {
         String downloadDir = "I:\\phpStudy\\PHPTutorial\\WWW\\";
         File src = new File(downloadDir + "first.db.bak.20191122133155");
         File target = new File(downloadDir + "first.db.bak.20191122133155.zip");

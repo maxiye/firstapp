@@ -1,9 +1,6 @@
 package com.maxiye.first.part;
 
 import android.content.Context;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.PopupWindow;
@@ -13,6 +10,11 @@ import com.maxiye.first.R;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * 数据库助手
@@ -110,7 +112,7 @@ public class MyPopupMenu {
         popupWindow.setOutsideTouchable(true);
         RecyclerView rv = popupWindow.getContentView().findViewById(R.id.popupmenu_rv);
         DividerItemDecoration divider = new DividerItemDecoration(context, DividerItemDecoration.VERTICAL);
-        divider.setDrawable(Objects.requireNonNull(context.getDrawable(R.drawable.gif_rv_divider)));
+        divider.setDrawable(Objects.requireNonNull(ContextCompat.getDrawable(context, R.drawable.gif_rv_divider)));
         // 分隔线
         rv.addItemDecoration(divider);
         rv.setLayoutManager(new LinearLayoutManager(context));

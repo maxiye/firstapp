@@ -1,12 +1,6 @@
 package com.maxiye.first.api;
 
-import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
-
-import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -20,9 +14,16 @@ import com.maxiye.first.util.Util;
 import java.util.List;
 import java.util.Objects;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 /**
  * @author due
  */
+@SuppressWarnings("unused")
 public class WeatherActivity extends AppCompatActivity {
     private WeatherRetRvAdapter ma;
 

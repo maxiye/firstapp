@@ -12,8 +12,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.ThumbnailUtils;
 import android.os.Environment;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import android.util.Base64;
 import android.util.SparseArray;
 import android.view.Window;
@@ -37,6 +35,9 @@ import java.util.UUID;
 import java.util.function.IntUnaryOperator;
 import java.util.function.UnaryOperator;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import pl.droidsonroids.gif.GifImageView;
 
 /**
@@ -813,7 +814,7 @@ public class BitmapUtil {
         Arrays.sort(fileList, (f1, f2) -> {
             Integer id1 = name2IdMap.get(f1.getName());
             Integer id2 = name2IdMap.get(f2.getName());
-            return Integer.compare(id1, id2);
+            return Integer.compare(id1 == null ? 0 : (int) id1, id2 == null ? 0 : (int) id2);
         });
         ImageMetaCache metaCache = new ImageMetaCache(dir, count);
         setDuplicateLevel(level);
@@ -821,8 +822,8 @@ public class BitmapUtil {
         long[][] metaArray = new long[count][4];
         for (int i = 0, j = 0; i < count; i++) {
             String fname = fileList[i].getName();
-            int id = name2IdMap.get(fname);
-            if (id != 0) {
+            Integer id = name2IdMap.get(fname);
+            if (id != null && id != 0) {
                 int key = 0, mSize = metaCache.size();
                 while (j < mSize && (key = metaCache.keyAt(j)) < id) {
                     ++j;
@@ -875,7 +876,7 @@ public class BitmapUtil {
     public static ImageView loadImg(Context context) {
         final Dialog dialog = new Dialog(context, android.R.style.Theme_Material_Dialog_Alert);
         GifImageView imgView = new GifImageView(context);
-        imgView.setImageDrawable(context.getDrawable(R.drawable.ic_autorenew_orange_24dp));
+        imgView.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_autorenew_orange_24dp));
         Objects.requireNonNull(dialog.getWindow()).setBackgroundDrawable(new ColorDrawable(0x3f009688));
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         imgView.setMinimumHeight(180);
@@ -922,8 +923,9 @@ public class BitmapUtil {
     public static void saveBitmap(Activity context, File file, Bitmap bitmap) {
         PermissionUtil.req(context, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PermissionUtil.RequestCode.STORAGE_WRITE, (result) -> {
             try {
-                if (!file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
-                    Toast.makeText(context, "create dir error: " + file.getParentFile().getAbsolutePath(), Toast.LENGTH_SHORT).show();
+                File parent = file.getParentFile();
+                if (parent != null && !parent.exists() && !parent.mkdirs()) {
+                    Toast.makeText(context, "create dir error: " + parent.getAbsolutePath(), Toast.LENGTH_SHORT).show();
                 }
                 if (!file.exists() && !file.createNewFile()) {
                     Toast.makeText(context, "create file error: " + file.getParentFile().getAbsolutePath(), Toast.LENGTH_SHORT).show();

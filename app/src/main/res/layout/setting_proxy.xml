@@ -82,7 +82,7 @@
                 android:textColor="@color/actionTitle"/>
         </LinearLayout>
 
-        <Switch
+        <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/proxy_on_off"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

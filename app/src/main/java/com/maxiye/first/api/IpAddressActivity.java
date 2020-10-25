@@ -1,6 +1,5 @@
 package com.maxiye.first.api;
 
-import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
@@ -11,9 +10,12 @@ import com.maxiye.first.util.ApiUtil;
 import com.maxiye.first.util.StringUtil;
 import com.maxiye.first.util.Util;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 /**
  * @author due
  */
+@SuppressWarnings("unused")
 public class IpAddressActivity extends AppCompatActivity {
 
     @Override

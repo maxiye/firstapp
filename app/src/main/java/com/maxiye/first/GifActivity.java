@@ -25,20 +25,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import com.google.android.material.snackbar.Snackbar;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.core.content.FileProvider;
-import androidx.fragment.app.FragmentStatePagerAdapter;
-import androidx.viewpager.widget.PagerAdapter;
-import androidx.viewpager.widget.ViewPager;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.ListPopupWindow;
 import android.text.Html;
 import android.text.InputType;
 import android.util.DisplayMetrics;
@@ -62,6 +48,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -116,6 +103,20 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.ListPopupWindow;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.fragment.app.FragmentStatePagerAdapter;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.viewpager.widget.PagerAdapter;
+import androidx.viewpager.widget.ViewPager;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.ConnectionPool;
@@ -199,7 +200,7 @@ public class GifActivity extends AppCompatActivity {
     private JsonObject webCfg;
     private String[] webList;
     private HashMap<String, Drawable> iconCacheList;
-    private Properties prop = new Properties();
+    private final Properties prop = new Properties();
     private OkHttpClient okHttpClient;
     private ThreadPoolExecutor threadPoolExecutor;
     private DiskLruCache diskLruCache;
@@ -287,7 +288,7 @@ public class GifActivity extends AppCompatActivity {
     private void watchNetwork() {
         NetworkUtil.register(this, new ConnectivityManager.NetworkCallback() {
             @Override
-            public void onAvailable(Network network) {
+            public void onAvailable(@NonNull Network network) {
                 if (isGprs = NetworkUtil.isGprs(getApplicationContext())) {
                     alert(getString(R.string.gprs_network));
                     gprsContinue = false;
@@ -296,7 +297,7 @@ public class GifActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onLost(Network network) {
+            public void onLost(@NonNull Network network) {
                 alert(getString(R.string.no_internet));
                 super.onLost(network);
             }
@@ -477,8 +478,8 @@ public class GifActivity extends AppCompatActivity {
     public Drawable getCachedIcon(String name) {
         if (iconCacheList == null) {
             iconCacheList = new HashMap<>(8);
-            iconCacheList.put("default", getDrawable(R.drawable.ic_image_black_24dp));
-            iconCacheList.put("loading", getDrawable(R.drawable.ic_autorenew_black_24dp));
+            iconCacheList.put("default", ContextCompat.getDrawable(this, R.drawable.ic_image_black_24dp));
+            iconCacheList.put("loading", ContextCompat.getDrawable(this, R.drawable.ic_autorenew_black_24dp));
             try (InputStream is = getAssets().open("img_spy_config.json")) {
                 JsonObject icons = new Gson().fromJson(new InputStreamReader(is), JsonObject.class).getAsJsonObject("icon");
                 for (String key : icons.keySet()) {
@@ -749,6 +750,7 @@ public class GifActivity extends AppCompatActivity {
         });
     }
 
+    @SuppressWarnings("unused")
     public void goPage(MenuItem item) {
         //实例化布局
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_edittext, findViewById(R.id.get_img_ll), false);
@@ -782,6 +784,7 @@ public class GifActivity extends AppCompatActivity {
         Objects.requireNonNull(dialog.getWindow()).setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
     }
 
+    @SuppressWarnings("unused")
     public void changeUrl(MenuItem item) {
         //实例化布局
         View view2 = LayoutInflater.from(this).inflate(R.layout.dialog_edittext, findViewById(R.id.get_img_ll), false);
@@ -835,6 +838,7 @@ public class GifActivity extends AppCompatActivity {
         //Objects.requireNonNull(dialog2.getWindow()).setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
     }
 
+    @SuppressWarnings("unused")
     public void switchType(MenuItem item) {
         PopupMenu pMenu = new PopupMenu(this, findViewById(R.id.gif_tpl_hidden_top), Gravity.END);
         Menu menu = Util.enableMenuIcon(pMenu.getMenu());
@@ -855,6 +859,7 @@ public class GifActivity extends AppCompatActivity {
         pMenu.show();
     }
 
+    @SuppressWarnings("unused")
     public void switchWeb(MenuItem item) {
         PopupMenu pMenu = new PopupMenu(this, findViewById(R.id.gif_tpl_hidden_top), Gravity.END);
         Menu menu = Util.enableMenuIcon(pMenu.getMenu());
@@ -874,6 +879,7 @@ public class GifActivity extends AppCompatActivity {
         pMenu.show();
     }
 
+    @SuppressWarnings("unused")
     public void browserOpen(MenuItem item) {
         new AlertDialog.Builder(this)
                 .setTitle(R.string.browser_open)
@@ -918,7 +924,8 @@ public class GifActivity extends AppCompatActivity {
         loading.dismiss();
     }
 
-    public void oneKey(MenuItem item) {
+    @SuppressWarnings("unused")
+    public void oneKey(@SuppressWarnings("unused") MenuItem item) {
         new AlertDialog.Builder(this)
                 .setTitle(R.string.one_key_get)
                 .setIcon(R.drawable.ic_flash_on_black_24dp)
@@ -966,6 +973,7 @@ public class GifActivity extends AppCompatActivity {
                 .show();
     }
 
+    @SuppressWarnings("unused")
     public void bookmarkOperation(MenuItem item) {
         ListPopupWindow bookmarkMenu = new ListPopupWindow(this);
         bookmarkMenu.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new
@@ -1091,7 +1099,8 @@ public class GifActivity extends AppCompatActivity {
         if (pos < bookmark.size() && pos >= 0) {
             try {
                 HashMap<String, String> mark = bookmark.get(pos);
-                locate(mark.get("type"), mark.get("web_name"), mark.get("art_id"), Integer.parseInt(mark.get("page")));
+                String page = mark.get("page");
+                locate(mark.get("type"), mark.get("web_name"), mark.get("art_id"), Integer.parseInt(page == null ? "0" : page));
                 if (del) {
                     bookmark.remove(pos);
                     Type typeToken = new TypeToken<LinkedList<HashMap<String,String>>>(){}.getType();
@@ -1229,6 +1238,7 @@ public class GifActivity extends AppCompatActivity {
             cus.close();
             return historyList;
         }
+        @SuppressWarnings("SameReturnValue")
         private boolean longClickCallback(@NonNull PageListPopupWindow pageListPopupWindow, int position) {
             // 使用rv.getChildAt只能获取可见的item，0表示当前屏幕可见第一个item
             PopupMenu pMenu = new PopupMenu(GifActivity.this, pageListPopupWindow.getItemView(position));
@@ -1270,12 +1280,14 @@ public class GifActivity extends AppCompatActivity {
      * {@code 第43条：方法引用优于lambda表达式}
      * @param item MenuItem
      */
+    @SuppressWarnings("unused")
     @SuppressLint({"SetTextI18n"})
     public void history(MenuItem item) {
         History history = new History();
         history.show();
     }
 
+    @SuppressWarnings("unused")
     @SuppressLint({"SetTextI18n"})
     public void favorites(MenuItem item) {
         Favorite favorite = new Favorite();
@@ -1494,6 +1506,7 @@ public class GifActivity extends AppCompatActivity {
         private int[] getRepeatedItems(int level) {
             File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + type);
             File[] fileList = dir.listFiles(file -> file.isFile() && file.length() > 1024);
+            assert fileList != null;
             int count = fileList.length;
             Properties props = new Properties();
             File propFile = new File(dir, "meta");
@@ -1584,8 +1597,9 @@ public class GifActivity extends AppCompatActivity {
             imgView.setOnTouchListener(new View.OnTouchListener() {
                 private int favImgPos = position;
                 private int vScrollX;
+                private float mPosX, mPosY, mCurPosX;
                 @SuppressWarnings("FieldCanBeLocal")
-                private float mPosX, mPosY, mCurPosX, mCurPosY;
+                private float mCurPosY;
                 private final Runnable runnable = imgView::performLongClick;
                 private final Handler handler = new Handler();
 
@@ -2031,7 +2045,7 @@ public class GifActivity extends AppCompatActivity {
         protected void onPostExecute(Drawable drawable) {
             GifImageView imgView = imgViewWR.get();
             if (drawable == null) {
-                Drawable errShow = gifActivityWR.get().getDrawable(R.drawable.ic_close_black_24dp);
+                Drawable errShow = ContextCompat.getDrawable(gifActivityWR.get(), R.drawable.ic_close_black_24dp);
                 imgView.setImageDrawable(errShow);
             } else {
                 imgView.setImageDrawable(drawable);
@@ -2128,6 +2142,7 @@ public class GifActivity extends AppCompatActivity {
         ContentValues ctv = new ContentValues(2);
         String ext = imgInfo.get("ext");
         String name = imgInfo.get("title");
+        assert name != null;
         name = name.substring(0, name.lastIndexOf(".")) + ext;
         imgInfo.put("title", name);
         ctv.put("ext", ext);
@@ -2224,27 +2239,26 @@ public class GifActivity extends AppCompatActivity {
         private static final int MSG_TYPE_LOADING = 104;
         private GifActivity activity;
         private MyHandler handler;
+        private boolean isFirstLoad = true; // 是否第一次加载
 
         public PlaceholderFragment() {
-        }
-
-        @Override
-        public void onDestroy() {
-            activity = null;
-            handler = null;
-            super.onDestroy();
         }
 
         /**
          * Returns a new instance of this fragment for the given section
          * number.
          */
-        static PlaceholderFragment newInstance(int page, GifActivity activity) {
+        static PlaceholderFragment newInstance(int page) {
             PlaceholderFragment fragment = new PlaceholderFragment();
             fragment.page = page;
-            fragment.activity = activity;
             fragment.handler = new MyHandler(fragment);
             return fragment;
+        }
+
+        @Override
+        public void onCreate(@Nullable Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            activity = (GifActivity) getActivity();
         }
 
         @SuppressLint("SetTextI18n")
@@ -2271,10 +2285,12 @@ public class GifActivity extends AppCompatActivity {
         }
 
         @Override
-        public void setUserVisibleHint(boolean isVisibleToUser) {
-            super.setUserVisibleHint(isVisibleToUser);
-            activity.okHttpClient.dispatcher().cancelAll();
-            if (isVisibleToUser) {
+        public void onResume() {
+            super.onResume();
+            // 新的懒加载方案
+            if (isFirstLoad) {
+                activity.okHttpClient.dispatcher().cancelAll();
+                // 将数据加载逻辑放到onResume()方法中
                 // 滑动冲突解决
                 View view = getView();
                 if (view != null) {
@@ -2282,8 +2298,21 @@ public class GifActivity extends AppCompatActivity {
                     refreshLayout.setEnabled(view.getScrollY() == 0);
                 }
                 checkLoad(1);
+                isFirstLoad = false;
             }
+        }
 
+        @Override
+        public void onDestroyView() {
+            super.onDestroyView();
+            isFirstLoad = true;
+        }
+
+        @Override
+        public void onDestroy() {
+            super.onDestroy();
+            activity = null;
+            handler = null;
         }
 
         void send(int what, int arg1, int arg2, Object obj) {
@@ -2310,6 +2339,7 @@ public class GifActivity extends AppCompatActivity {
             return activity.getCacheKey(getImgOffset(index));
         }
 
+        @SuppressWarnings("SameReturnValue")
         private boolean longClickCb(int position, View view) {
             focusedPosition = position;
             ListPopupWindow listMenu = new ListPopupWindow(activity);
@@ -2457,6 +2487,7 @@ public class GifActivity extends AppCompatActivity {
                 }
             } else {
                 String url = StringUtil.notBlank(imgInfo.get("real_url")) ? imgInfo.get("real_url") : imgInfo.get("url");
+                assert url != null;
                 Request request = new Request.Builder().url(url).build();
                 activity.okHttpClient.newCall(request).enqueue(new Callback() {
                     @Override
@@ -2531,15 +2562,16 @@ public class GifActivity extends AppCompatActivity {
     class SectionsPagerAdapter extends FragmentPagerAdapter {
 
         SectionsPagerAdapter(FragmentManager fm) {
-            super(fm);
+            super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
         }
 
+        @NonNull
         @Override
         public Fragment getItem(int position) {
             MyLog.w("start", "getItem:" + position);
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
-            return PlaceholderFragment.newInstance(position + 1, GifActivity.this);
+            return PlaceholderFragment.newInstance(position + 1);
         }
 
         @Override
@@ -2582,7 +2614,7 @@ public class GifActivity extends AppCompatActivity {
 
         @SuppressLint("SetTextI18n")
         @Override
-        public void handleMessage(Message msg) {
+        public void handleMessage(@NonNull Message msg) {
             PlaceholderFragment fragment = fragmentRef.get();
             if (fragment == null || fragment.activity == null || fragment.getView() == null) {
                 return;
@@ -2637,7 +2669,7 @@ public class GifActivity extends AppCompatActivity {
                     break;
                 case PlaceholderFragment.MSG_TYPE_EMPTY:
                     imageView.clearAnimation();
-                    imageView.setImageDrawable(activity.getDrawable(R.drawable.ic_close_black_24dp));
+                    imageView.setImageDrawable(ContextCompat.getDrawable(activity, R.drawable.ic_close_black_24dp));
                     break;
                 default:
                     break;

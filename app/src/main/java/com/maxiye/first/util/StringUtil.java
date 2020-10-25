@@ -32,7 +32,7 @@ public class StringUtil {
         char[] chars = unicode.toCharArray();
         char[] resultChars = new char[chars.length];
         int i = 0, j = 0;
-        for (;i < chars.length;) {
+        while (i < chars.length) {
             if (chars[i] == '\\' && chars[i + 1] == 'u') {
                 String item = String.valueOf(chars, i + 2, 4);
                 if (UNICODE_DIGIT_PATTERN.matcher(item).matches()) {
@@ -63,8 +63,9 @@ public class StringUtil {
         String result = unicode;
         while (mt.find()) {
             String item = mt.group(1);
-            if (notBlank(item)) {
-                result = result.replace(mt.group(0), String.valueOf((char) (Integer.parseInt(item, 16))));
+            String origin = mt.group(0);
+            if (notBlank(item) && notBlank(origin)) {
+                result = result.replace(origin, String.valueOf((char) (Integer.parseInt(item, 16))));
             }
         }
         return result;
@@ -84,12 +85,15 @@ public class StringUtil {
         while (mt.find()) {
             int byte1, byte2;
             String item = mt.group(1);
+            String origin = mt.group(0);
             // 第一个byte是高位，相当于‘十位’
+            assert item != null;
+            assert origin != null;
             byte1 = Integer.parseInt(item.substring(0, 2), 16) << 8;
             // 这是‘个位’
             byte2 = Integer.parseInt(item.substring(2), 16);
             // 位或优化性能
-            result = result.replace(mt.group(0), String.valueOf((char) (byte1 | byte2)));
+            result = result.replace(origin, String.valueOf((char) (byte1 | byte2)));
         }
         return result;
     }

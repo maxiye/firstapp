@@ -2,10 +2,11 @@ package com.maxiye.first.util;
 
 import android.app.Activity;
 import android.content.pm.PackageManager;
-import androidx.annotation.NonNull;
 import android.widget.Toast;
 
 import java.util.function.IntConsumer;
+
+import androidx.annotation.NonNull;
 
 /**
  * 权限请求助手
@@ -26,6 +27,7 @@ public class PermissionUtil {
      * public static final int STORAGE_READ = 201;
      * public static final int CAPTURE = 202;
      * public static final int STORAGE_WRITE = 203;
+     * public static final int FINE_LOCATION = 204;
      */
     public enum RequestCode {
         /**
@@ -34,7 +36,8 @@ public class PermissionUtil {
         CALL(200),
         STORAGE_READ(201),
         CAPTURE(202),
-        STORAGE_WRITE(203);
+        STORAGE_WRITE(203),
+        CHANGE_WIFI_STATE(205);
 
         private final int code;
 
